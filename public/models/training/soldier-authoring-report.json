@@ -1,0 +1,990 @@
+{
+  "input": "public\\models\\vietnam_people_army_rigged.glb",
+  "output": "D:\\GDQP-WEBSITE - Copy\\public\\models\\training\\soldier-animated.glb",
+  "blender": "5.2.1 LTS",
+  "armature": "GDQP_Humanoid_Skeleton",
+  "boneMapping": {
+    "root": "Armature",
+    "hips": "Hips",
+    "spine": "Spine",
+    "chest": "Chest",
+    "neck": "Neck",
+    "head": "Head",
+    "l_upperarm": "LeftUpperArm",
+    "l_forearm": "LeftForearm",
+    "l_hand": "LeftHand",
+    "l_thigh": "LeftUpLeg",
+    "l_shin": "LeftLeg",
+    "l_foot": "LeftFoot",
+    "l_toe": "LeftToeBase",
+    "r_upperarm": "RightUpperArm",
+    "r_forearm": "RightForearm",
+    "r_hand": "RightHand",
+    "r_thigh": "RightUpLeg",
+    "r_shin": "RightLeg",
+    "r_foot": "RightFoot",
+    "r_toe": "RightToeBase"
+  },
+  "bones": [
+    {
+      "name": "Armature",
+      "parent": null
+    },
+    {
+      "name": "Hips",
+      "parent": "Armature"
+    },
+    {
+      "name": "Spine",
+      "parent": "Hips"
+    },
+    {
+      "name": "Chest",
+      "parent": "Spine"
+    },
+    {
+      "name": "Neck",
+      "parent": "Chest"
+    },
+    {
+      "name": "Head",
+      "parent": "Neck"
+    },
+    {
+      "name": "LeftUpperArm",
+      "parent": "Chest"
+    },
+    {
+      "name": "LeftForearm",
+      "parent": "LeftUpperArm"
+    },
+    {
+      "name": "LeftHand",
+      "parent": "LeftForearm"
+    },
+    {
+      "name": "RightUpperArm",
+      "parent": "Chest"
+    },
+    {
+      "name": "RightForearm",
+      "parent": "RightUpperArm"
+    },
+    {
+      "name": "RightHand",
+      "parent": "RightForearm"
+    },
+    {
+      "name": "LeftUpLeg",
+      "parent": "Hips"
+    },
+    {
+      "name": "LeftLeg",
+      "parent": "LeftUpLeg"
+    },
+    {
+      "name": "LeftFoot",
+      "parent": "LeftLeg"
+    },
+    {
+      "name": "LeftToeBase",
+      "parent": "LeftFoot"
+    },
+    {
+      "name": "RightUpLeg",
+      "parent": "Hips"
+    },
+    {
+      "name": "RightLeg",
+      "parent": "RightUpLeg"
+    },
+    {
+      "name": "RightFoot",
+      "parent": "RightLeg"
+    },
+    {
+      "name": "RightToeBase",
+      "parent": "RightFoot"
+    }
+  ],
+  "preservedClips": [
+    {
+      "name": "DiDeu",
+      "duration": 2.0
+    },
+    {
+      "name": "Nghi",
+      "duration": 0.5
+    },
+    {
+      "name": "Nghiem",
+      "duration": 0.44999996821085614
+    },
+    {
+      "name": "QuayPhai_90",
+      "duration": 0.8500000635782877
+    },
+    {
+      "name": "QuaySau_180",
+      "duration": 0.8500000635782877
+    },
+    {
+      "name": "QuayTrai_90",
+      "duration": 0.8500000635782877
+    }
+  ],
+  "authoredClips": [
+    {
+      "name": "Idle",
+      "duration": 3.0,
+      "loop": true
+    },
+    {
+      "name": "Attention",
+      "duration": 2.0,
+      "loop": true
+    },
+    {
+      "name": "AtEase",
+      "duration": 3.0,
+      "loop": true
+    },
+    {
+      "name": "Walk",
+      "duration": 1.3333333333333333,
+      "loop": true
+    },
+    {
+      "name": "Run",
+      "duration": 0.8333333333333334,
+      "loop": true
+    },
+    {
+      "name": "TurnLeft",
+      "duration": 1.25,
+      "loop": false
+    },
+    {
+      "name": "TurnRight",
+      "duration": 1.25,
+      "loop": false
+    },
+    {
+      "name": "Salute",
+      "duration": 2.5,
+      "loop": false
+    },
+    {
+      "name": "SitDown",
+      "duration": 2.0,
+      "loop": false
+    },
+    {
+      "name": "StandUp",
+      "duration": 2.0,
+      "loop": false
+    },
+    {
+      "name": "LookAround",
+      "duration": 4.0,
+      "loop": true
+    }
+  ],
+  "meshCount": 44,
+  "vertices": 44590,
+  "triangles": 59962,
+  "textureChanges": [
+    {
+      "name": "Image_0",
+      "originalSize": [
+        512,
+        1024
+      ],
+      "exportSize": [
+        512,
+        1024
+      ]
+    },
+    {
+      "name": "Image_1",
+      "originalSize": [
+        512,
+        1024
+      ],
+      "exportSize": [
+        512,
+        1024
+      ]
+    },
+    {
+      "name": "Image_10",
+      "originalSize": [
+        512,
+        512
+      ],
+      "exportSize": [
+        512,
+        512
+      ]
+    },
+    {
+      "name": "Image_11",
+      "originalSize": [
+        512,
+        512
+      ],
+      "exportSize": [
+        512,
+        512
+      ]
+    },
+    {
+      "name": "Image_12",
+      "originalSize": [
+        512,
+        512
+      ],
+      "exportSize": [
+        512,
+        512
+      ]
+    },
+    {
+      "name": "Image_13",
+      "originalSize": [
+        512,
+        512
+      ],
+      "exportSize": [
+        512,
+        512
+      ]
+    },
+    {
+      "name": "Image_14",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_15",
+      "originalSize": [
+        512,
+        512
+      ],
+      "exportSize": [
+        512,
+        512
+      ]
+    },
+    {
+      "name": "Image_16",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_17",
+      "originalSize": [
+        512,
+        512
+      ],
+      "exportSize": [
+        512,
+        512
+      ]
+    },
+    {
+      "name": "Image_18",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_19",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_2",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_20",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_21",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_22",
+      "originalSize": [
+        512,
+        512
+      ],
+      "exportSize": [
+        512,
+        512
+      ]
+    },
+    {
+      "name": "Image_23",
+      "originalSize": [
+        512,
+        512
+      ],
+      "exportSize": [
+        512,
+        512
+      ]
+    },
+    {
+      "name": "Image_24",
+      "originalSize": [
+        512,
+        512
+      ],
+      "exportSize": [
+        512,
+        512
+      ]
+    },
+    {
+      "name": "Image_25",
+      "originalSize": [
+        512,
+        256
+      ],
+      "exportSize": [
+        512,
+        256
+      ]
+    },
+    {
+      "name": "Image_26",
+      "originalSize": [
+        512,
+        512
+      ],
+      "exportSize": [
+        512,
+        512
+      ]
+    },
+    {
+      "name": "Image_27",
+      "originalSize": [
+        512,
+        512
+      ],
+      "exportSize": [
+        512,
+        512
+      ]
+    },
+    {
+      "name": "Image_28",
+      "originalSize": [
+        512,
+        512
+      ],
+      "exportSize": [
+        512,
+        512
+      ]
+    },
+    {
+      "name": "Image_29",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_3",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_30",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_31",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_32",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_33",
+      "originalSize": [
+        512,
+        512
+      ],
+      "exportSize": [
+        512,
+        512
+      ]
+    },
+    {
+      "name": "Image_34",
+      "originalSize": [
+        256,
+        256
+      ],
+      "exportSize": [
+        256,
+        256
+      ]
+    },
+    {
+      "name": "Image_35",
+      "originalSize": [
+        512,
+        512
+      ],
+      "exportSize": [
+        512,
+        512
+      ]
+    },
+    {
+      "name": "Image_36",
+      "originalSize": [
+        512,
+        512
+      ],
+      "exportSize": [
+        512,
+        512
+      ]
+    },
+    {
+      "name": "Image_37",
+      "originalSize": [
+        256,
+        256
+      ],
+      "exportSize": [
+        256,
+        256
+      ]
+    },
+    {
+      "name": "Image_38",
+      "originalSize": [
+        512,
+        256
+      ],
+      "exportSize": [
+        512,
+        256
+      ]
+    },
+    {
+      "name": "Image_39",
+      "originalSize": [
+        512,
+        256
+      ],
+      "exportSize": [
+        512,
+        256
+      ]
+    },
+    {
+      "name": "Image_4",
+      "originalSize": [
+        512,
+        512
+      ],
+      "exportSize": [
+        512,
+        512
+      ]
+    },
+    {
+      "name": "Image_40",
+      "originalSize": [
+        512,
+        256
+      ],
+      "exportSize": [
+        512,
+        256
+      ]
+    },
+    {
+      "name": "Image_41",
+      "originalSize": [
+        512,
+        256
+      ],
+      "exportSize": [
+        512,
+        256
+      ]
+    },
+    {
+      "name": "Image_42",
+      "originalSize": [
+        512,
+        256
+      ],
+      "exportSize": [
+        512,
+        256
+      ]
+    },
+    {
+      "name": "Image_43",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_44",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_45",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_46",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_47",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_48",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_49",
+      "originalSize": [
+        512,
+        1024
+      ],
+      "exportSize": [
+        512,
+        1024
+      ]
+    },
+    {
+      "name": "Image_5",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_50",
+      "originalSize": [
+        512,
+        1024
+      ],
+      "exportSize": [
+        512,
+        1024
+      ]
+    },
+    {
+      "name": "Image_51",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_52",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_53",
+      "originalSize": [
+        1024,
+        512
+      ],
+      "exportSize": [
+        1024,
+        512
+      ]
+    },
+    {
+      "name": "Image_54",
+      "originalSize": [
+        1024,
+        512
+      ],
+      "exportSize": [
+        1024,
+        512
+      ]
+    },
+    {
+      "name": "Image_55",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_56",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_57",
+      "originalSize": [
+        1024,
+        512
+      ],
+      "exportSize": [
+        1024,
+        512
+      ]
+    },
+    {
+      "name": "Image_58",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_59",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_6",
+      "originalSize": [
+        512,
+        512
+      ],
+      "exportSize": [
+        512,
+        512
+      ]
+    },
+    {
+      "name": "Image_60",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_61",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_62",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_63",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_64",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_65",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_66",
+      "originalSize": [
+        512,
+        1024
+      ],
+      "exportSize": [
+        512,
+        1024
+      ]
+    },
+    {
+      "name": "Image_67",
+      "originalSize": [
+        512,
+        1024
+      ],
+      "exportSize": [
+        512,
+        1024
+      ]
+    },
+    {
+      "name": "Image_68",
+      "originalSize": [
+        1024,
+        1024
+      ],
+      "exportSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "Image_69",
+      "originalSize": [
+        1024,
+        512
+      ],
+      "exportSize": [
+        1024,
+        512
+      ]
+    },
+    {
+      "name": "Image_7",
+      "originalSize": [
+        512,
+        512
+      ],
+      "exportSize": [
+        512,
+        512
+      ]
+    },
+    {
+      "name": "Image_70",
+      "originalSize": [
+        1024,
+        512
+      ],
+      "exportSize": [
+        1024,
+        512
+      ]
+    },
+    {
+      "name": "Image_8",
+      "originalSize": [
+        512,
+        512
+      ],
+      "exportSize": [
+        512,
+        512
+      ]
+    },
+    {
+      "name": "Image_9",
+      "originalSize": [
+        512,
+        512
+      ],
+      "exportSize": [
+        512,
+        512
+      ]
+    }
+  ],
+  "normalizationScale": 1.2438604134787299,
+  "heightMeters": 1.75,
+  "feetY": 0,
+  "up": "+Y",
+  "forward": "+Z",
+  "notes": [
+    "Original supplied skin and vertex groups retained; no re-rigging or decimation.",
+    "New walk/run use analytic two-link leg placement; source weight quality limits deformation quality.",
+    "SitDown is a seat-height squat with feet planted; no chair asset required.",
+    "Original six actions remain available alongside the eleven English actions."
+  ]
+}

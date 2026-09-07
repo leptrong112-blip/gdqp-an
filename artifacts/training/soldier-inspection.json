@@ -1,0 +1,4031 @@
+[
+  {
+    "file": "public/models/vietnam_people_army_clean.glb",
+    "bytes": 49390128,
+    "megabytes": 49.39,
+    "generator": "https://github.com/mikedh/trimesh",
+    "scenes": [
+      "(unnamed)"
+    ],
+    "meshCount": 44,
+    "vertices": 44590,
+    "triangles": 59962,
+    "textureCount": 71,
+    "skins": [],
+    "clips": [],
+    "meshes": [
+      {
+        "name": "Vest.smd_milsim_VPA_1_1_K20_vest_0",
+        "primitives": [
+          {
+            "vertices": 2851,
+            "triangles": 4279,
+            "material": "milsim_VPA_1_1_K20_vest",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Vest.smd_buckle_master_olive_0",
+        "primitives": [
+          {
+            "vertices": 614,
+            "triangles": 568,
+            "material": "buckle_master_olive",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Vest.smd_milsim_VPA_1_1_K20_id_pouch.jpg_0",
+        "primitives": [
+          {
+            "vertices": 389,
+            "triangles": 457,
+            "material": "milsim_VPA_1_1_K20_id_pouch.jpg",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Radio.smd_radio_0",
+        "primitives": [
+          {
+            "vertices": 2065,
+            "triangles": 2732,
+            "material": "radio",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Radio.smd_ptt_ghost_black_0",
+        "primitives": [
+          {
+            "vertices": 1449,
+            "triangles": 1332,
+            "material": "ptt_ghost_black",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Radio.smd_hero_alex_radio_pouch_a_0",
+        "primitives": [
+          {
+            "vertices": 1113,
+            "triangles": 1068,
+            "material": "hero_alex_radio_pouch_a",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Pouches_B.smd_mp_yegor_ar_mag_pouch_stencil_0",
+        "primitives": [
+          {
+            "vertices": 372,
+            "triangles": 484,
+            "material": "mp_yegor_ar_mag_pouch_stencil",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Pouches_B.smd_price_ar_mag_pouch_urban_0",
+        "primitives": [
+          {
+            "vertices": 757,
+            "triangles": 994,
+            "material": "price_ar_mag_pouch_urban",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Pouches_A.smd_VPA_ar_mag_pouch_0",
+        "primitives": [
+          {
+            "vertices": 2208,
+            "triangles": 3009,
+            "material": "VPA_ar_mag_pouch",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Pouches_A.smd_mp_VPA_black_boots_a_0",
+        "primitives": [
+          {
+            "vertices": 383,
+            "triangles": 562,
+            "material": "mp_VPA_black_boots_a",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Pouch_Left.smd_sas_urban_medical_pouch_0",
+        "primitives": [
+          {
+            "vertices": 312,
+            "triangles": 440,
+            "material": "sas_urban_medical_pouch",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Pistol_Mags_Pouch.smd_pouch_mag_pistol_ghost_0",
+        "primitives": [
+          {
+            "vertices": 1957,
+            "triangles": 2572,
+            "material": "pouch_mag_pistol_ghost",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Pistol_Mags.smd_smg_pistol_mag_0",
+        "primitives": [
+          {
+            "vertices": 116,
+            "triangles": 96,
+            "material": "smg_pistol_mag",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Mags.smd_ar_mag_0",
+        "primitives": [
+          {
+            "vertices": 888,
+            "triangles": 1008,
+            "material": "ar_mag",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Mag_Pouch_Left.smd_wyatt_ar_mag_pouch_black_0",
+        "primitives": [
+          {
+            "vertices": 772,
+            "triangles": 1024,
+            "material": "wyatt_ar_mag_pouch_black",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Mag_Left.smd_ar_mag_0",
+        "primitives": [
+          {
+            "vertices": 148,
+            "triangles": 168,
+            "material": "ar_mag",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Hydration_Pack.smd_usmc_hydration_a_0",
+        "primitives": [
+          {
+            "vertices": 1217,
+            "triangles": 1516,
+            "material": "usmc_hydration_a",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Hydration_Pack.smd_buckle_master_desert_0",
+        "primitives": [
+          {
+            "vertices": 1102,
+            "triangles": 1124,
+            "material": "buckle_master_desert",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Hydration_Pack.smd_buckle_master_urban_0",
+        "primitives": [
+          {
+            "vertices": 972,
+            "triangles": 748,
+            "material": "buckle_master_urban",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Hook.smd_price_ar_mag_pouch_urban_0",
+        "primitives": [
+          {
+            "vertices": 22,
+            "triangles": 30,
+            "material": "price_ar_mag_pouch_urban",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Hook.smd_price_carabiner_black_0",
+        "primitives": [
+          {
+            "vertices": 268,
+            "triangles": 256,
+            "material": "price_carabiner_black",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Grenade_Pouch_Left.smd_usmc_grenade_top_0",
+        "primitives": [
+          {
+            "vertices": 72,
+            "triangles": 48,
+            "material": "usmc_grenade_top",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Grenade_Pouch_Left.smd_usmc_grenade_pouch_brown_0",
+        "primitives": [
+          {
+            "vertices": 572,
+            "triangles": 792,
+            "material": "usmc_grenade_pouch_brown",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Flashbangs.smd_mp_VPA_black_boots_a_0",
+        "primitives": [
+          {
+            "vertices": 188,
+            "triangles": 262,
+            "material": "mp_VPA_black_boots_a",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Flashbangs.smd_milsim_ranger_1_1_flash_grenade_pouch_0",
+        "primitives": [
+          {
+            "vertices": 746,
+            "triangles": 648,
+            "material": "milsim_ranger_1_1_flash_grenade_pouch",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Flashbangs.smd_flash_grenade_01_0",
+        "primitives": [
+          {
+            "vertices": 728,
+            "triangles": 586,
+            "material": "flash_grenade_01",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Chemlights.smd_chemlight_a_yellow_0",
+        "primitives": [
+          {
+            "vertices": 1072,
+            "triangles": 1008,
+            "material": "chemlight_a_yellow",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Chemlights.smd_hero_alex_hydration_nozzle_a_0",
+        "primitives": [
+          {
+            "vertices": 180,
+            "triangles": 280,
+            "material": "hero_alex_hydration_nozzle_a",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "body.smd_mp_VPA_black_boots_a_0",
+        "primitives": [
+          {
+            "vertices": 1412,
+            "triangles": 2247,
+            "material": "mp_VPA_black_boots_a",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "body.smd_milsim_VPA_1_1_K20_shirt_0",
+        "primitives": [
+          {
+            "vertices": 2890,
+            "triangles": 4970,
+            "material": "milsim_VPA_1_1_K20_shirt",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "body.smd_milsim_VPA_K20_pants_tactical_g3_0",
+        "primitives": [
+          {
+            "vertices": 2775,
+            "triangles": 4956,
+            "material": "milsim_VPA_K20_pants_tactical_g3",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "body.smd_VPA_Black_Gloves_0",
+        "primitives": [
+          {
+            "vertices": 2602,
+            "triangles": 4052,
+            "material": "VPA_Black_Gloves",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "body.smd_base_male_arm_l_skintone_01_0",
+        "primitives": [
+          {
+            "vertices": 600,
+            "triangles": 1052,
+            "material": "base_male_arm_l_skintone_01",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "belt.smd_milsim_ranger_1_1_parts_belt_dual_molle_0",
+        "primitives": [
+          {
+            "vertices": 818,
+            "triangles": 920,
+            "material": "milsim_ranger_1_1_parts_belt_dual_molle",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Kneepad.smd_usmc_lmg_kneepad_0",
+        "primitives": [
+          {
+            "vertices": 1130,
+            "triangles": 1264,
+            "material": "usmc_lmg_kneepad",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Holster.smd_spetsnaz_holster_black_0",
+        "primitives": [
+          {
+            "vertices": 2039,
+            "triangles": 2306,
+            "material": "spetsnaz_holster_black",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Holster.smd_hero_alex_cloth_holster_a_black_0",
+        "primitives": [
+          {
+            "vertices": 134,
+            "triangles": 112,
+            "material": "hero_alex_cloth_holster_a_black",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Helmet.smd_milsim_VPA_1_1_k20_basic_helmet_0",
+        "primitives": [
+          {
+            "vertices": 717,
+            "triangles": 1187,
+            "material": "milsim_VPA_1_1_k20_basic_helmet",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Helmet.smd_milsim_VPA_1_1_domino_helmet_0",
+        "primitives": [
+          {
+            "vertices": 1266,
+            "triangles": 1604,
+            "material": "milsim_VPA_1_1_domino_helmet",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Headphones.smd_usmc_headset_0",
+        "primitives": [
+          {
+            "vertices": 1194,
+            "triangles": 1241,
+            "material": "usmc_headset",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Head.smd_milsim_VPA_1_1_balaclava_0",
+        "primitives": [
+          {
+            "vertices": 1672,
+            "triangles": 2838,
+            "material": "milsim_VPA_1_1_balaclava",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Head.smd_head_sc_m_dunn_0",
+        "primitives": [
+          {
+            "vertices": 1158,
+            "triangles": 2146,
+            "material": "head_sc_m_dunn",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Head.smd_head_sc_m_dunn_eyes_0",
+        "primitives": [
+          {
+            "vertices": 290,
+            "triangles": 552,
+            "material": "head_sc_m_dunn_eyes",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Head.smd_head_shared_eyelashes_0",
+        "primitives": [
+          {
+            "vertices": 360,
+            "triangles": 424,
+            "material": "head_shared_eyelashes",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0"
+            ]
+          }
+        ]
+      }
+    ],
+    "hierarchy": [
+      {
+        "index": 0,
+        "name": "world",
+        "parent": null,
+        "mesh": null,
+        "skin": null
+      },
+      {
+        "index": 1,
+        "name": "Vest.smd_milsim_VPA_1_1_K20_vest_0",
+        "parent": 0,
+        "mesh": 0,
+        "skin": null
+      },
+      {
+        "index": 2,
+        "name": "Vest.smd_buckle_master_olive_0",
+        "parent": 0,
+        "mesh": 1,
+        "skin": null
+      },
+      {
+        "index": 3,
+        "name": "Vest.smd_milsim_VPA_1_1_K20_id_pouch.jpg_0",
+        "parent": 0,
+        "mesh": 2,
+        "skin": null
+      },
+      {
+        "index": 4,
+        "name": "Radio.smd_radio_0",
+        "parent": 0,
+        "mesh": 3,
+        "skin": null
+      },
+      {
+        "index": 5,
+        "name": "Radio.smd_ptt_ghost_black_0",
+        "parent": 0,
+        "mesh": 4,
+        "skin": null
+      },
+      {
+        "index": 6,
+        "name": "Radio.smd_hero_alex_radio_pouch_a_0",
+        "parent": 0,
+        "mesh": 5,
+        "skin": null
+      },
+      {
+        "index": 7,
+        "name": "Pouches_B.smd_mp_yegor_ar_mag_pouch_stencil_0",
+        "parent": 0,
+        "mesh": 6,
+        "skin": null
+      },
+      {
+        "index": 8,
+        "name": "Pouches_B.smd_price_ar_mag_pouch_urban_0",
+        "parent": 0,
+        "mesh": 7,
+        "skin": null
+      },
+      {
+        "index": 9,
+        "name": "Pouches_A.smd_VPA_ar_mag_pouch_0",
+        "parent": 0,
+        "mesh": 8,
+        "skin": null
+      },
+      {
+        "index": 10,
+        "name": "Pouches_A.smd_mp_VPA_black_boots_a_0",
+        "parent": 0,
+        "mesh": 9,
+        "skin": null
+      },
+      {
+        "index": 11,
+        "name": "Pouch_Left.smd_sas_urban_medical_pouch_0",
+        "parent": 0,
+        "mesh": 10,
+        "skin": null
+      },
+      {
+        "index": 12,
+        "name": "Pistol_Mags_Pouch.smd_pouch_mag_pistol_ghost_0",
+        "parent": 0,
+        "mesh": 11,
+        "skin": null
+      },
+      {
+        "index": 13,
+        "name": "Pistol_Mags.smd_smg_pistol_mag_0",
+        "parent": 0,
+        "mesh": 12,
+        "skin": null
+      },
+      {
+        "index": 14,
+        "name": "Mags.smd_ar_mag_0",
+        "parent": 0,
+        "mesh": 13,
+        "skin": null
+      },
+      {
+        "index": 15,
+        "name": "Mag_Pouch_Left.smd_wyatt_ar_mag_pouch_black_0",
+        "parent": 0,
+        "mesh": 14,
+        "skin": null
+      },
+      {
+        "index": 16,
+        "name": "Mag_Left.smd_ar_mag_0",
+        "parent": 0,
+        "mesh": 15,
+        "skin": null
+      },
+      {
+        "index": 17,
+        "name": "Hydration_Pack.smd_usmc_hydration_a_0",
+        "parent": 0,
+        "mesh": 16,
+        "skin": null
+      },
+      {
+        "index": 18,
+        "name": "Hydration_Pack.smd_buckle_master_desert_0",
+        "parent": 0,
+        "mesh": 17,
+        "skin": null
+      },
+      {
+        "index": 19,
+        "name": "Hydration_Pack.smd_buckle_master_urban_0",
+        "parent": 0,
+        "mesh": 18,
+        "skin": null
+      },
+      {
+        "index": 20,
+        "name": "Hook.smd_price_ar_mag_pouch_urban_0",
+        "parent": 0,
+        "mesh": 19,
+        "skin": null
+      },
+      {
+        "index": 21,
+        "name": "Hook.smd_price_carabiner_black_0",
+        "parent": 0,
+        "mesh": 20,
+        "skin": null
+      },
+      {
+        "index": 22,
+        "name": "Grenade_Pouch_Left.smd_usmc_grenade_top_0",
+        "parent": 0,
+        "mesh": 21,
+        "skin": null
+      },
+      {
+        "index": 23,
+        "name": "Grenade_Pouch_Left.smd_usmc_grenade_pouch_brown_0",
+        "parent": 0,
+        "mesh": 22,
+        "skin": null
+      },
+      {
+        "index": 24,
+        "name": "Flashbangs.smd_mp_VPA_black_boots_a_0",
+        "parent": 0,
+        "mesh": 23,
+        "skin": null
+      },
+      {
+        "index": 25,
+        "name": "Flashbangs.smd_milsim_ranger_1_1_flash_grenade_pouch_0",
+        "parent": 0,
+        "mesh": 24,
+        "skin": null
+      },
+      {
+        "index": 26,
+        "name": "Flashbangs.smd_flash_grenade_01_0",
+        "parent": 0,
+        "mesh": 25,
+        "skin": null
+      },
+      {
+        "index": 27,
+        "name": "Chemlights.smd_chemlight_a_yellow_0",
+        "parent": 0,
+        "mesh": 26,
+        "skin": null
+      },
+      {
+        "index": 28,
+        "name": "Chemlights.smd_hero_alex_hydration_nozzle_a_0",
+        "parent": 0,
+        "mesh": 27,
+        "skin": null
+      },
+      {
+        "index": 29,
+        "name": "body.smd_mp_VPA_black_boots_a_0",
+        "parent": 0,
+        "mesh": 28,
+        "skin": null
+      },
+      {
+        "index": 30,
+        "name": "body.smd_milsim_VPA_1_1_K20_shirt_0",
+        "parent": 0,
+        "mesh": 29,
+        "skin": null
+      },
+      {
+        "index": 31,
+        "name": "body.smd_milsim_VPA_K20_pants_tactical_g3_0",
+        "parent": 0,
+        "mesh": 30,
+        "skin": null
+      },
+      {
+        "index": 32,
+        "name": "body.smd_VPA_Black_Gloves_0",
+        "parent": 0,
+        "mesh": 31,
+        "skin": null
+      },
+      {
+        "index": 33,
+        "name": "body.smd_base_male_arm_l_skintone_01_0",
+        "parent": 0,
+        "mesh": 32,
+        "skin": null
+      },
+      {
+        "index": 34,
+        "name": "belt.smd_milsim_ranger_1_1_parts_belt_dual_molle_0",
+        "parent": 0,
+        "mesh": 33,
+        "skin": null
+      },
+      {
+        "index": 35,
+        "name": "Kneepad.smd_usmc_lmg_kneepad_0",
+        "parent": 0,
+        "mesh": 34,
+        "skin": null
+      },
+      {
+        "index": 36,
+        "name": "Holster.smd_spetsnaz_holster_black_0",
+        "parent": 0,
+        "mesh": 35,
+        "skin": null
+      },
+      {
+        "index": 37,
+        "name": "Holster.smd_hero_alex_cloth_holster_a_black_0",
+        "parent": 0,
+        "mesh": 36,
+        "skin": null
+      },
+      {
+        "index": 38,
+        "name": "Helmet.smd_milsim_VPA_1_1_k20_basic_helmet_0",
+        "parent": 0,
+        "mesh": 37,
+        "skin": null
+      },
+      {
+        "index": 39,
+        "name": "Helmet.smd_milsim_VPA_1_1_domino_helmet_0",
+        "parent": 0,
+        "mesh": 38,
+        "skin": null
+      },
+      {
+        "index": 40,
+        "name": "Headphones.smd_usmc_headset_0",
+        "parent": 0,
+        "mesh": 39,
+        "skin": null
+      },
+      {
+        "index": 41,
+        "name": "Head.smd_milsim_VPA_1_1_balaclava_0",
+        "parent": 0,
+        "mesh": 40,
+        "skin": null
+      },
+      {
+        "index": 42,
+        "name": "Head.smd_head_sc_m_dunn_0",
+        "parent": 0,
+        "mesh": 41,
+        "skin": null
+      },
+      {
+        "index": 43,
+        "name": "Head.smd_head_sc_m_dunn_eyes_0",
+        "parent": 0,
+        "mesh": 42,
+        "skin": null
+      },
+      {
+        "index": 44,
+        "name": "Head.smd_head_shared_eyelashes_0",
+        "parent": 0,
+        "mesh": 43,
+        "skin": null
+      }
+    ]
+  },
+  {
+    "file": "public/models/vietnam_people_army_rigged.glb",
+    "bytes": 51568036,
+    "megabytes": 51.57,
+    "generator": "https://github.com/mikedh/trimesh; GDQP Humanoid Rig Builder",
+    "scenes": [
+      "Vietnam People Army - Rigged"
+    ],
+    "meshCount": 44,
+    "vertices": 44590,
+    "triangles": 59962,
+    "textureCount": 71,
+    "skins": [
+      {
+        "name": "GDQP_Humanoid_Skeleton",
+        "skeleton": "Armature",
+        "bones": [
+          {
+            "index": 45,
+            "name": "Armature",
+            "parent": null
+          },
+          {
+            "index": 46,
+            "name": "Hips",
+            "parent": "Armature"
+          },
+          {
+            "index": 47,
+            "name": "Spine",
+            "parent": "Hips"
+          },
+          {
+            "index": 48,
+            "name": "Chest",
+            "parent": "Spine"
+          },
+          {
+            "index": 49,
+            "name": "Neck",
+            "parent": "Chest"
+          },
+          {
+            "index": 50,
+            "name": "Head",
+            "parent": "Neck"
+          },
+          {
+            "index": 51,
+            "name": "LeftUpperArm",
+            "parent": "Chest"
+          },
+          {
+            "index": 52,
+            "name": "LeftForearm",
+            "parent": "LeftUpperArm"
+          },
+          {
+            "index": 53,
+            "name": "LeftHand",
+            "parent": "LeftForearm"
+          },
+          {
+            "index": 54,
+            "name": "RightUpperArm",
+            "parent": "Chest"
+          },
+          {
+            "index": 55,
+            "name": "RightForearm",
+            "parent": "RightUpperArm"
+          },
+          {
+            "index": 56,
+            "name": "RightHand",
+            "parent": "RightForearm"
+          },
+          {
+            "index": 57,
+            "name": "LeftUpLeg",
+            "parent": "Hips"
+          },
+          {
+            "index": 58,
+            "name": "LeftLeg",
+            "parent": "LeftUpLeg"
+          },
+          {
+            "index": 59,
+            "name": "LeftFoot",
+            "parent": "LeftLeg"
+          },
+          {
+            "index": 60,
+            "name": "LeftToeBase",
+            "parent": "LeftFoot"
+          },
+          {
+            "index": 61,
+            "name": "RightUpLeg",
+            "parent": "Hips"
+          },
+          {
+            "index": 62,
+            "name": "RightLeg",
+            "parent": "RightUpLeg"
+          },
+          {
+            "index": 63,
+            "name": "RightFoot",
+            "parent": "RightLeg"
+          },
+          {
+            "index": 64,
+            "name": "RightToeBase",
+            "parent": "RightFoot"
+          }
+        ],
+        "inverseBindMatrixCount": 20
+      }
+    ],
+    "clips": [
+      {
+        "name": "Nghiem",
+        "duration": 0.44999998807907104,
+        "channels": 10,
+        "loop": false,
+        "largestLoopEndpointDifference": 0
+      },
+      {
+        "name": "Nghi",
+        "duration": 0.5,
+        "channels": 10,
+        "loop": false,
+        "largestLoopEndpointDifference": 0.30563113279640675
+      },
+      {
+        "name": "QuayTrai_90",
+        "duration": 0.8500000238418579,
+        "channels": 6,
+        "loop": false,
+        "largestLoopEndpointDifference": 0.7071067690849304
+      },
+      {
+        "name": "QuayPhai_90",
+        "duration": 0.8500000238418579,
+        "channels": 6,
+        "loop": false,
+        "largestLoopEndpointDifference": 0.7071067690849304
+      },
+      {
+        "name": "QuaySau_180",
+        "duration": 0.8500000238418579,
+        "channels": 6,
+        "loop": false,
+        "largestLoopEndpointDifference": 1
+      },
+      {
+        "name": "DiDeu",
+        "duration": 2,
+        "channels": 11,
+        "loop": true,
+        "largestLoopEndpointDifference": 0
+      }
+    ],
+    "meshes": [
+      {
+        "name": "Vest.smd_milsim_VPA_1_1_K20_vest_0",
+        "primitives": [
+          {
+            "vertices": 2851,
+            "triangles": 4279,
+            "material": "milsim_VPA_1_1_K20_vest",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL",
+              "TANGENT"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Vest.smd_buckle_master_olive_0",
+        "primitives": [
+          {
+            "vertices": 614,
+            "triangles": 568,
+            "material": "buckle_master_olive",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Vest.smd_milsim_VPA_1_1_K20_id_pouch.jpg_0",
+        "primitives": [
+          {
+            "vertices": 389,
+            "triangles": 457,
+            "material": "milsim_VPA_1_1_K20_id_pouch.jpg",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL",
+              "TANGENT"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Radio.smd_radio_0",
+        "primitives": [
+          {
+            "vertices": 2065,
+            "triangles": 2732,
+            "material": "radio",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Radio.smd_ptt_ghost_black_0",
+        "primitives": [
+          {
+            "vertices": 1449,
+            "triangles": 1332,
+            "material": "ptt_ghost_black",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL",
+              "TANGENT"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Radio.smd_hero_alex_radio_pouch_a_0",
+        "primitives": [
+          {
+            "vertices": 1113,
+            "triangles": 1068,
+            "material": "hero_alex_radio_pouch_a",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL",
+              "TANGENT"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Pouches_B.smd_mp_yegor_ar_mag_pouch_stencil_0",
+        "primitives": [
+          {
+            "vertices": 372,
+            "triangles": 484,
+            "material": "mp_yegor_ar_mag_pouch_stencil",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Pouches_B.smd_price_ar_mag_pouch_urban_0",
+        "primitives": [
+          {
+            "vertices": 757,
+            "triangles": 994,
+            "material": "price_ar_mag_pouch_urban",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Pouches_A.smd_VPA_ar_mag_pouch_0",
+        "primitives": [
+          {
+            "vertices": 2208,
+            "triangles": 3009,
+            "material": "VPA_ar_mag_pouch",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL",
+              "TANGENT"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Pouches_A.smd_mp_VPA_black_boots_a_0",
+        "primitives": [
+          {
+            "vertices": 383,
+            "triangles": 562,
+            "material": "mp_VPA_black_boots_a",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL",
+              "TANGENT"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Pouch_Left.smd_sas_urban_medical_pouch_0",
+        "primitives": [
+          {
+            "vertices": 312,
+            "triangles": 440,
+            "material": "sas_urban_medical_pouch",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL",
+              "TANGENT"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Pistol_Mags_Pouch.smd_pouch_mag_pistol_ghost_0",
+        "primitives": [
+          {
+            "vertices": 1957,
+            "triangles": 2572,
+            "material": "pouch_mag_pistol_ghost",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Pistol_Mags.smd_smg_pistol_mag_0",
+        "primitives": [
+          {
+            "vertices": 116,
+            "triangles": 96,
+            "material": "smg_pistol_mag",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Mags.smd_ar_mag_0",
+        "primitives": [
+          {
+            "vertices": 888,
+            "triangles": 1008,
+            "material": "ar_mag",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL",
+              "TANGENT"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Mag_Pouch_Left.smd_wyatt_ar_mag_pouch_black_0",
+        "primitives": [
+          {
+            "vertices": 772,
+            "triangles": 1024,
+            "material": "wyatt_ar_mag_pouch_black",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Mag_Left.smd_ar_mag_0",
+        "primitives": [
+          {
+            "vertices": 148,
+            "triangles": 168,
+            "material": "ar_mag",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL",
+              "TANGENT"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Hydration_Pack.smd_usmc_hydration_a_0",
+        "primitives": [
+          {
+            "vertices": 1217,
+            "triangles": 1516,
+            "material": "usmc_hydration_a",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL",
+              "TANGENT"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Hydration_Pack.smd_buckle_master_desert_0",
+        "primitives": [
+          {
+            "vertices": 1102,
+            "triangles": 1124,
+            "material": "buckle_master_desert",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Hydration_Pack.smd_buckle_master_urban_0",
+        "primitives": [
+          {
+            "vertices": 972,
+            "triangles": 748,
+            "material": "buckle_master_urban",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Hook.smd_price_ar_mag_pouch_urban_0",
+        "primitives": [
+          {
+            "vertices": 22,
+            "triangles": 30,
+            "material": "price_ar_mag_pouch_urban",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Hook.smd_price_carabiner_black_0",
+        "primitives": [
+          {
+            "vertices": 268,
+            "triangles": 256,
+            "material": "price_carabiner_black",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Grenade_Pouch_Left.smd_usmc_grenade_top_0",
+        "primitives": [
+          {
+            "vertices": 72,
+            "triangles": 48,
+            "material": "usmc_grenade_top",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Grenade_Pouch_Left.smd_usmc_grenade_pouch_brown_0",
+        "primitives": [
+          {
+            "vertices": 572,
+            "triangles": 792,
+            "material": "usmc_grenade_pouch_brown",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Flashbangs.smd_mp_VPA_black_boots_a_0",
+        "primitives": [
+          {
+            "vertices": 188,
+            "triangles": 262,
+            "material": "mp_VPA_black_boots_a",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL",
+              "TANGENT"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Flashbangs.smd_milsim_ranger_1_1_flash_grenade_pouch_0",
+        "primitives": [
+          {
+            "vertices": 746,
+            "triangles": 648,
+            "material": "milsim_ranger_1_1_flash_grenade_pouch",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Flashbangs.smd_flash_grenade_01_0",
+        "primitives": [
+          {
+            "vertices": 728,
+            "triangles": 586,
+            "material": "flash_grenade_01",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Chemlights.smd_chemlight_a_yellow_0",
+        "primitives": [
+          {
+            "vertices": 1072,
+            "triangles": 1008,
+            "material": "chemlight_a_yellow",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL",
+              "TANGENT"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Chemlights.smd_hero_alex_hydration_nozzle_a_0",
+        "primitives": [
+          {
+            "vertices": 180,
+            "triangles": 280,
+            "material": "hero_alex_hydration_nozzle_a",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "body.smd_mp_VPA_black_boots_a_0",
+        "primitives": [
+          {
+            "vertices": 1412,
+            "triangles": 2247,
+            "material": "mp_VPA_black_boots_a",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL",
+              "TANGENT"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "body.smd_milsim_VPA_1_1_K20_shirt_0",
+        "primitives": [
+          {
+            "vertices": 2890,
+            "triangles": 4970,
+            "material": "milsim_VPA_1_1_K20_shirt",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL",
+              "TANGENT"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "body.smd_milsim_VPA_K20_pants_tactical_g3_0",
+        "primitives": [
+          {
+            "vertices": 2775,
+            "triangles": 4956,
+            "material": "milsim_VPA_K20_pants_tactical_g3",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL",
+              "TANGENT"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "body.smd_VPA_Black_Gloves_0",
+        "primitives": [
+          {
+            "vertices": 2602,
+            "triangles": 4052,
+            "material": "VPA_Black_Gloves",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL",
+              "TANGENT"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "body.smd_base_male_arm_l_skintone_01_0",
+        "primitives": [
+          {
+            "vertices": 600,
+            "triangles": 1052,
+            "material": "base_male_arm_l_skintone_01",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL",
+              "TANGENT"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "belt.smd_milsim_ranger_1_1_parts_belt_dual_molle_0",
+        "primitives": [
+          {
+            "vertices": 818,
+            "triangles": 920,
+            "material": "milsim_ranger_1_1_parts_belt_dual_molle",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL",
+              "TANGENT"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Kneepad.smd_usmc_lmg_kneepad_0",
+        "primitives": [
+          {
+            "vertices": 1130,
+            "triangles": 1264,
+            "material": "usmc_lmg_kneepad",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL",
+              "TANGENT"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Holster.smd_spetsnaz_holster_black_0",
+        "primitives": [
+          {
+            "vertices": 2039,
+            "triangles": 2306,
+            "material": "spetsnaz_holster_black",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL",
+              "TANGENT"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Holster.smd_hero_alex_cloth_holster_a_black_0",
+        "primitives": [
+          {
+            "vertices": 134,
+            "triangles": 112,
+            "material": "hero_alex_cloth_holster_a_black",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Helmet.smd_milsim_VPA_1_1_k20_basic_helmet_0",
+        "primitives": [
+          {
+            "vertices": 717,
+            "triangles": 1187,
+            "material": "milsim_VPA_1_1_k20_basic_helmet",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL",
+              "TANGENT"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Helmet.smd_milsim_VPA_1_1_domino_helmet_0",
+        "primitives": [
+          {
+            "vertices": 1266,
+            "triangles": 1604,
+            "material": "milsim_VPA_1_1_domino_helmet",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL",
+              "TANGENT"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Headphones.smd_usmc_headset_0",
+        "primitives": [
+          {
+            "vertices": 1194,
+            "triangles": 1241,
+            "material": "usmc_headset",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL",
+              "TANGENT"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Head.smd_milsim_VPA_1_1_balaclava_0",
+        "primitives": [
+          {
+            "vertices": 1672,
+            "triangles": 2838,
+            "material": "milsim_VPA_1_1_balaclava",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL",
+              "TANGENT"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Head.smd_head_sc_m_dunn_0",
+        "primitives": [
+          {
+            "vertices": 1158,
+            "triangles": 2146,
+            "material": "head_sc_m_dunn",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL",
+              "TANGENT"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Head.smd_head_sc_m_dunn_eyes_0",
+        "primitives": [
+          {
+            "vertices": 290,
+            "triangles": 552,
+            "material": "head_sc_m_dunn_eyes",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Head.smd_head_shared_eyelashes_0",
+        "primitives": [
+          {
+            "vertices": 360,
+            "triangles": 424,
+            "material": "head_shared_eyelashes",
+            "attributes": [
+              "POSITION",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0",
+              "NORMAL",
+              "TANGENT"
+            ]
+          }
+        ]
+      }
+    ],
+    "hierarchy": [
+      {
+        "index": 0,
+        "name": "VietnamPeopleArmy_Rigged",
+        "parent": null,
+        "mesh": null,
+        "skin": null
+      },
+      {
+        "index": 1,
+        "name": "Vest.smd_milsim_VPA_1_1_K20_vest_0",
+        "parent": null,
+        "mesh": 0,
+        "skin": 0
+      },
+      {
+        "index": 2,
+        "name": "Vest.smd_buckle_master_olive_0",
+        "parent": null,
+        "mesh": 1,
+        "skin": 0
+      },
+      {
+        "index": 3,
+        "name": "Vest.smd_milsim_VPA_1_1_K20_id_pouch.jpg_0",
+        "parent": null,
+        "mesh": 2,
+        "skin": 0
+      },
+      {
+        "index": 4,
+        "name": "Radio.smd_radio_0",
+        "parent": null,
+        "mesh": 3,
+        "skin": 0
+      },
+      {
+        "index": 5,
+        "name": "Radio.smd_ptt_ghost_black_0",
+        "parent": null,
+        "mesh": 4,
+        "skin": 0
+      },
+      {
+        "index": 6,
+        "name": "Radio.smd_hero_alex_radio_pouch_a_0",
+        "parent": null,
+        "mesh": 5,
+        "skin": 0
+      },
+      {
+        "index": 7,
+        "name": "Pouches_B.smd_mp_yegor_ar_mag_pouch_stencil_0",
+        "parent": null,
+        "mesh": 6,
+        "skin": 0
+      },
+      {
+        "index": 8,
+        "name": "Pouches_B.smd_price_ar_mag_pouch_urban_0",
+        "parent": null,
+        "mesh": 7,
+        "skin": 0
+      },
+      {
+        "index": 9,
+        "name": "Pouches_A.smd_VPA_ar_mag_pouch_0",
+        "parent": null,
+        "mesh": 8,
+        "skin": 0
+      },
+      {
+        "index": 10,
+        "name": "Pouches_A.smd_mp_VPA_black_boots_a_0",
+        "parent": null,
+        "mesh": 9,
+        "skin": 0
+      },
+      {
+        "index": 11,
+        "name": "Pouch_Left.smd_sas_urban_medical_pouch_0",
+        "parent": null,
+        "mesh": 10,
+        "skin": 0
+      },
+      {
+        "index": 12,
+        "name": "Pistol_Mags_Pouch.smd_pouch_mag_pistol_ghost_0",
+        "parent": null,
+        "mesh": 11,
+        "skin": 0
+      },
+      {
+        "index": 13,
+        "name": "Pistol_Mags.smd_smg_pistol_mag_0",
+        "parent": null,
+        "mesh": 12,
+        "skin": 0
+      },
+      {
+        "index": 14,
+        "name": "Mags.smd_ar_mag_0",
+        "parent": null,
+        "mesh": 13,
+        "skin": 0
+      },
+      {
+        "index": 15,
+        "name": "Mag_Pouch_Left.smd_wyatt_ar_mag_pouch_black_0",
+        "parent": null,
+        "mesh": 14,
+        "skin": 0
+      },
+      {
+        "index": 16,
+        "name": "Mag_Left.smd_ar_mag_0",
+        "parent": null,
+        "mesh": 15,
+        "skin": 0
+      },
+      {
+        "index": 17,
+        "name": "Hydration_Pack.smd_usmc_hydration_a_0",
+        "parent": null,
+        "mesh": 16,
+        "skin": 0
+      },
+      {
+        "index": 18,
+        "name": "Hydration_Pack.smd_buckle_master_desert_0",
+        "parent": null,
+        "mesh": 17,
+        "skin": 0
+      },
+      {
+        "index": 19,
+        "name": "Hydration_Pack.smd_buckle_master_urban_0",
+        "parent": null,
+        "mesh": 18,
+        "skin": 0
+      },
+      {
+        "index": 20,
+        "name": "Hook.smd_price_ar_mag_pouch_urban_0",
+        "parent": null,
+        "mesh": 19,
+        "skin": 0
+      },
+      {
+        "index": 21,
+        "name": "Hook.smd_price_carabiner_black_0",
+        "parent": null,
+        "mesh": 20,
+        "skin": 0
+      },
+      {
+        "index": 22,
+        "name": "Grenade_Pouch_Left.smd_usmc_grenade_top_0",
+        "parent": null,
+        "mesh": 21,
+        "skin": 0
+      },
+      {
+        "index": 23,
+        "name": "Grenade_Pouch_Left.smd_usmc_grenade_pouch_brown_0",
+        "parent": null,
+        "mesh": 22,
+        "skin": 0
+      },
+      {
+        "index": 24,
+        "name": "Flashbangs.smd_mp_VPA_black_boots_a_0",
+        "parent": null,
+        "mesh": 23,
+        "skin": 0
+      },
+      {
+        "index": 25,
+        "name": "Flashbangs.smd_milsim_ranger_1_1_flash_grenade_pouch_0",
+        "parent": null,
+        "mesh": 24,
+        "skin": 0
+      },
+      {
+        "index": 26,
+        "name": "Flashbangs.smd_flash_grenade_01_0",
+        "parent": null,
+        "mesh": 25,
+        "skin": 0
+      },
+      {
+        "index": 27,
+        "name": "Chemlights.smd_chemlight_a_yellow_0",
+        "parent": null,
+        "mesh": 26,
+        "skin": 0
+      },
+      {
+        "index": 28,
+        "name": "Chemlights.smd_hero_alex_hydration_nozzle_a_0",
+        "parent": null,
+        "mesh": 27,
+        "skin": 0
+      },
+      {
+        "index": 29,
+        "name": "body.smd_mp_VPA_black_boots_a_0",
+        "parent": null,
+        "mesh": 28,
+        "skin": 0
+      },
+      {
+        "index": 30,
+        "name": "body.smd_milsim_VPA_1_1_K20_shirt_0",
+        "parent": null,
+        "mesh": 29,
+        "skin": 0
+      },
+      {
+        "index": 31,
+        "name": "body.smd_milsim_VPA_K20_pants_tactical_g3_0",
+        "parent": null,
+        "mesh": 30,
+        "skin": 0
+      },
+      {
+        "index": 32,
+        "name": "body.smd_VPA_Black_Gloves_0",
+        "parent": null,
+        "mesh": 31,
+        "skin": 0
+      },
+      {
+        "index": 33,
+        "name": "body.smd_base_male_arm_l_skintone_01_0",
+        "parent": null,
+        "mesh": 32,
+        "skin": 0
+      },
+      {
+        "index": 34,
+        "name": "belt.smd_milsim_ranger_1_1_parts_belt_dual_molle_0",
+        "parent": null,
+        "mesh": 33,
+        "skin": 0
+      },
+      {
+        "index": 35,
+        "name": "Kneepad.smd_usmc_lmg_kneepad_0",
+        "parent": null,
+        "mesh": 34,
+        "skin": 0
+      },
+      {
+        "index": 36,
+        "name": "Holster.smd_spetsnaz_holster_black_0",
+        "parent": null,
+        "mesh": 35,
+        "skin": 0
+      },
+      {
+        "index": 37,
+        "name": "Holster.smd_hero_alex_cloth_holster_a_black_0",
+        "parent": null,
+        "mesh": 36,
+        "skin": 0
+      },
+      {
+        "index": 38,
+        "name": "Helmet.smd_milsim_VPA_1_1_k20_basic_helmet_0",
+        "parent": null,
+        "mesh": 37,
+        "skin": 0
+      },
+      {
+        "index": 39,
+        "name": "Helmet.smd_milsim_VPA_1_1_domino_helmet_0",
+        "parent": null,
+        "mesh": 38,
+        "skin": 0
+      },
+      {
+        "index": 40,
+        "name": "Headphones.smd_usmc_headset_0",
+        "parent": null,
+        "mesh": 39,
+        "skin": 0
+      },
+      {
+        "index": 41,
+        "name": "Head.smd_milsim_VPA_1_1_balaclava_0",
+        "parent": null,
+        "mesh": 40,
+        "skin": 0
+      },
+      {
+        "index": 42,
+        "name": "Head.smd_head_sc_m_dunn_0",
+        "parent": null,
+        "mesh": 41,
+        "skin": 0
+      },
+      {
+        "index": 43,
+        "name": "Head.smd_head_sc_m_dunn_eyes_0",
+        "parent": null,
+        "mesh": 42,
+        "skin": 0
+      },
+      {
+        "index": 44,
+        "name": "Head.smd_head_shared_eyelashes_0",
+        "parent": null,
+        "mesh": 43,
+        "skin": 0
+      },
+      {
+        "index": 45,
+        "name": "Armature",
+        "parent": null,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "index": 46,
+        "name": "Hips",
+        "parent": 45,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          0,
+          0.72,
+          0
+        ]
+      },
+      {
+        "index": 47,
+        "name": "Spine",
+        "parent": 46,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          0,
+          0.14,
+          0
+        ]
+      },
+      {
+        "index": 48,
+        "name": "Chest",
+        "parent": 47,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          0,
+          0.16000000000000003,
+          0
+        ]
+      },
+      {
+        "index": 49,
+        "name": "Neck",
+        "parent": 48,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          0,
+          0.15999999999999992,
+          0
+        ]
+      },
+      {
+        "index": 50,
+        "name": "Head",
+        "parent": 49,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          0,
+          0.1100000000000001,
+          0
+        ]
+      },
+      {
+        "index": 51,
+        "name": "LeftUpperArm",
+        "parent": 48,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          0.135,
+          0.040000000000000036,
+          0
+        ]
+      },
+      {
+        "index": 52,
+        "name": "LeftForearm",
+        "parent": 51,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          0.13,
+          -0.13,
+          0.09
+        ]
+      },
+      {
+        "index": 53,
+        "name": "LeftHand",
+        "parent": 52,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          0.10499999999999998,
+          -0.1100000000000001,
+          0.09
+        ]
+      },
+      {
+        "index": 54,
+        "name": "RightUpperArm",
+        "parent": 48,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          -0.135,
+          0.040000000000000036,
+          0
+        ]
+      },
+      {
+        "index": 55,
+        "name": "RightForearm",
+        "parent": 54,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          -0.13,
+          -0.13,
+          0.09
+        ]
+      },
+      {
+        "index": 56,
+        "name": "RightHand",
+        "parent": 55,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          -0.10499999999999998,
+          -0.1100000000000001,
+          0.09
+        ]
+      },
+      {
+        "index": 57,
+        "name": "LeftUpLeg",
+        "parent": 46,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          0.078,
+          -0.020000000000000018,
+          0
+        ]
+      },
+      {
+        "index": 58,
+        "name": "LeftLeg",
+        "parent": 57,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          0,
+          -0.29999999999999993,
+          0
+        ]
+      },
+      {
+        "index": 59,
+        "name": "LeftFoot",
+        "parent": 58,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          0,
+          -0.30000000000000004,
+          0.015
+        ]
+      },
+      {
+        "index": 60,
+        "name": "LeftToeBase",
+        "parent": 59,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          0,
+          -0.05500000000000001,
+          0.09
+        ]
+      },
+      {
+        "index": 61,
+        "name": "RightUpLeg",
+        "parent": 46,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          -0.078,
+          -0.020000000000000018,
+          0
+        ]
+      },
+      {
+        "index": 62,
+        "name": "RightLeg",
+        "parent": 61,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          0,
+          -0.29999999999999993,
+          0
+        ]
+      },
+      {
+        "index": 63,
+        "name": "RightFoot",
+        "parent": 62,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          0,
+          -0.30000000000000004,
+          0.015
+        ]
+      },
+      {
+        "index": 64,
+        "name": "RightToeBase",
+        "parent": 63,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          0,
+          -0.05500000000000001,
+          0.09
+        ]
+      }
+    ]
+  },
+  {
+    "file": "public/models/training/soldier-animated.glb",
+    "bytes": 12607912,
+    "megabytes": 12.61,
+    "generator": "Khronos glTF Blender I/O v5.2.40",
+    "scenes": [
+      "Vietnamese Soldier - Training Animations"
+    ],
+    "meshCount": 44,
+    "vertices": 44680,
+    "triangles": 59962,
+    "textureCount": 67,
+    "skins": [
+      {
+        "name": "GDQP_Humanoid_Skeleton",
+        "bones": [
+          {
+            "index": 19,
+            "name": "Armature",
+            "parent": "GDQP_Humanoid_Skeleton"
+          },
+          {
+            "index": 18,
+            "name": "Hips",
+            "parent": "Armature"
+          },
+          {
+            "index": 3,
+            "name": "LeftUpLeg",
+            "parent": "Hips"
+          },
+          {
+            "index": 2,
+            "name": "LeftLeg",
+            "parent": "LeftUpLeg"
+          },
+          {
+            "index": 1,
+            "name": "LeftFoot",
+            "parent": "LeftLeg"
+          },
+          {
+            "index": 0,
+            "name": "LeftToeBase",
+            "parent": "LeftFoot"
+          },
+          {
+            "index": 7,
+            "name": "RightUpLeg",
+            "parent": "Hips"
+          },
+          {
+            "index": 6,
+            "name": "RightLeg",
+            "parent": "RightUpLeg"
+          },
+          {
+            "index": 5,
+            "name": "RightFoot",
+            "parent": "RightLeg"
+          },
+          {
+            "index": 4,
+            "name": "RightToeBase",
+            "parent": "RightFoot"
+          },
+          {
+            "index": 17,
+            "name": "Spine",
+            "parent": "Hips"
+          },
+          {
+            "index": 16,
+            "name": "Chest",
+            "parent": "Spine"
+          },
+          {
+            "index": 10,
+            "name": "LeftUpperArm",
+            "parent": "Chest"
+          },
+          {
+            "index": 9,
+            "name": "LeftForearm",
+            "parent": "LeftUpperArm"
+          },
+          {
+            "index": 8,
+            "name": "LeftHand",
+            "parent": "LeftForearm"
+          },
+          {
+            "index": 12,
+            "name": "Neck",
+            "parent": "Chest"
+          },
+          {
+            "index": 11,
+            "name": "Head",
+            "parent": "Neck"
+          },
+          {
+            "index": 15,
+            "name": "RightUpperArm",
+            "parent": "Chest"
+          },
+          {
+            "index": 14,
+            "name": "RightForearm",
+            "parent": "RightUpperArm"
+          },
+          {
+            "index": 13,
+            "name": "RightHand",
+            "parent": "RightForearm"
+          }
+        ],
+        "inverseBindMatrixCount": 20
+      }
+    ],
+    "clips": [
+      {
+        "name": "AtEase",
+        "duration": 3,
+        "channels": 60,
+        "loop": true,
+        "largestLoopEndpointDifference": 0
+      },
+      {
+        "name": "Attention",
+        "duration": 2,
+        "channels": 60,
+        "loop": true,
+        "largestLoopEndpointDifference": 0
+      },
+      {
+        "name": "DiDeu",
+        "duration": 2,
+        "channels": 11,
+        "loop": null,
+        "largestLoopEndpointDifference": 0
+      },
+      {
+        "name": "Idle",
+        "duration": 3,
+        "channels": 60,
+        "loop": true,
+        "largestLoopEndpointDifference": 0
+      },
+      {
+        "name": "LookAround",
+        "duration": 4,
+        "channels": 60,
+        "loop": true,
+        "largestLoopEndpointDifference": 0
+      },
+      {
+        "name": "Nghi",
+        "duration": 0.5,
+        "channels": 10,
+        "loop": null,
+        "largestLoopEndpointDifference": 0.30563117656856775
+      },
+      {
+        "name": "Nghiem",
+        "duration": 0.44999995827674866,
+        "channels": 10,
+        "loop": null,
+        "largestLoopEndpointDifference": 0
+      },
+      {
+        "name": "QuayPhai_90",
+        "duration": 0.8500000834465027,
+        "channels": 6,
+        "loop": null,
+        "largestLoopEndpointDifference": 0.7071068286895716
+      },
+      {
+        "name": "QuaySau_180",
+        "duration": 0.8500000834465027,
+        "channels": 6,
+        "loop": null,
+        "largestLoopEndpointDifference": 1.0000000000000036
+      },
+      {
+        "name": "QuayTrai_90",
+        "duration": 0.8500000834465027,
+        "channels": 6,
+        "loop": null,
+        "largestLoopEndpointDifference": 0.7071068286895787
+      },
+      {
+        "name": "Run",
+        "duration": 0.8333333134651184,
+        "channels": 60,
+        "loop": true,
+        "largestLoopEndpointDifference": 0
+      },
+      {
+        "name": "Salute",
+        "duration": 2.5,
+        "channels": 60,
+        "loop": false,
+        "largestLoopEndpointDifference": 0
+      },
+      {
+        "name": "SitDown",
+        "duration": 2,
+        "channels": 60,
+        "loop": false,
+        "largestLoopEndpointDifference": 0
+      },
+      {
+        "name": "StandUp",
+        "duration": 2,
+        "channels": 60,
+        "loop": false,
+        "largestLoopEndpointDifference": 0
+      },
+      {
+        "name": "TurnLeft",
+        "duration": 1.25,
+        "channels": 60,
+        "loop": false,
+        "largestLoopEndpointDifference": 0
+      },
+      {
+        "name": "TurnRight",
+        "duration": 1.25,
+        "channels": 60,
+        "loop": false,
+        "largestLoopEndpointDifference": 0
+      },
+      {
+        "name": "Walk",
+        "duration": 1.3333333730697632,
+        "channels": 60,
+        "loop": true,
+        "largestLoopEndpointDifference": 0
+      }
+    ],
+    "meshes": [
+      {
+        "name": "belt.smd_milsim_ranger_1_1_parts_belt_dual_molle_0",
+        "primitives": [
+          {
+            "vertices": 818,
+            "triangles": 920,
+            "material": "milsim_ranger_1_1_parts_belt_dual_molle",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "body.smd_base_male_arm_l_skintone_01_0",
+        "primitives": [
+          {
+            "vertices": 600,
+            "triangles": 1052,
+            "material": "base_male_arm_l_skintone_01",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "body.smd_milsim_VPA_1_1_K20_shirt_0",
+        "primitives": [
+          {
+            "vertices": 2890,
+            "triangles": 4970,
+            "material": "milsim_VPA_1_1_K20_shirt",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "body.smd_milsim_VPA_K20_pants_tactical_g3_0",
+        "primitives": [
+          {
+            "vertices": 2775,
+            "triangles": 4956,
+            "material": "milsim_VPA_K20_pants_tactical_g3",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "body.smd_mp_VPA_black_boots_a_0",
+        "primitives": [
+          {
+            "vertices": 1412,
+            "triangles": 2247,
+            "material": "mp_VPA_black_boots_a",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "body.smd_VPA_Black_Gloves_0",
+        "primitives": [
+          {
+            "vertices": 2602,
+            "triangles": 4052,
+            "material": "VPA_Black_Gloves",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Chemlights.smd_chemlight_a_yellow_0",
+        "primitives": [
+          {
+            "vertices": 1073,
+            "triangles": 1008,
+            "material": "chemlight_a_yellow",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Chemlights.smd_hero_alex_hydration_nozzle_a_0",
+        "primitives": [
+          {
+            "vertices": 180,
+            "triangles": 280,
+            "material": "hero_alex_hydration_nozzle_a",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Flashbangs.smd_flash_grenade_01_0",
+        "primitives": [
+          {
+            "vertices": 749,
+            "triangles": 586,
+            "material": "flash_grenade_01",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Flashbangs.smd_milsim_ranger_1_1_flash_grenade_pouch_0",
+        "primitives": [
+          {
+            "vertices": 746,
+            "triangles": 648,
+            "material": "milsim_ranger_1_1_flash_grenade_pouch",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Flashbangs.smd_mp_VPA_black_boots_a_0",
+        "primitives": [
+          {
+            "vertices": 188,
+            "triangles": 262,
+            "material": "mp_VPA_black_boots_a",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Grenade_Pouch_Left.smd_usmc_grenade_pouch_brown_0",
+        "primitives": [
+          {
+            "vertices": 572,
+            "triangles": 792,
+            "material": "usmc_grenade_pouch_brown",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Grenade_Pouch_Left.smd_usmc_grenade_top_0",
+        "primitives": [
+          {
+            "vertices": 76,
+            "triangles": 48,
+            "material": "usmc_grenade_top",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Head.smd_head_sc_m_dunn_0",
+        "primitives": [
+          {
+            "vertices": 1158,
+            "triangles": 2146,
+            "material": "head_sc_m_dunn",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Head.smd_head_sc_m_dunn_eyes_0",
+        "primitives": [
+          {
+            "vertices": 290,
+            "triangles": 552,
+            "material": "head_sc_m_dunn_eyes",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Head.smd_head_shared_eyelashes_0",
+        "primitives": [
+          {
+            "vertices": 360,
+            "triangles": 424,
+            "material": "head_shared_eyelashes",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Head.smd_milsim_VPA_1_1_balaclava_0",
+        "primitives": [
+          {
+            "vertices": 1672,
+            "triangles": 2838,
+            "material": "milsim_VPA_1_1_balaclava",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Headphones.smd_usmc_headset_0",
+        "primitives": [
+          {
+            "vertices": 1196,
+            "triangles": 1241,
+            "material": "usmc_headset",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Helmet.smd_milsim_VPA_1_1_domino_helmet_0",
+        "primitives": [
+          {
+            "vertices": 1266,
+            "triangles": 1604,
+            "material": "milsim_VPA_1_1_domino_helmet",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Helmet.smd_milsim_VPA_1_1_k20_basic_helmet_0",
+        "primitives": [
+          {
+            "vertices": 717,
+            "triangles": 1187,
+            "material": "milsim_VPA_1_1_k20_basic_helmet",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Holster.smd_hero_alex_cloth_holster_a_black_0",
+        "primitives": [
+          {
+            "vertices": 134,
+            "triangles": 112,
+            "material": "hero_alex_cloth_holster_a_black",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Holster.smd_spetsnaz_holster_black_0",
+        "primitives": [
+          {
+            "vertices": 2039,
+            "triangles": 2306,
+            "material": "spetsnaz_holster_black",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Hook.smd_price_ar_mag_pouch_urban_0",
+        "primitives": [
+          {
+            "vertices": 22,
+            "triangles": 30,
+            "material": "price_ar_mag_pouch_urban",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Hook.smd_price_carabiner_black_0",
+        "primitives": [
+          {
+            "vertices": 268,
+            "triangles": 256,
+            "material": "price_carabiner_black",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Hydration_Pack.smd_buckle_master_desert_0",
+        "primitives": [
+          {
+            "vertices": 1112,
+            "triangles": 1124,
+            "material": "buckle_master_desert",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Hydration_Pack.smd_buckle_master_urban_0",
+        "primitives": [
+          {
+            "vertices": 982,
+            "triangles": 748,
+            "material": "buckle_master_urban",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Hydration_Pack.smd_usmc_hydration_a_0",
+        "primitives": [
+          {
+            "vertices": 1217,
+            "triangles": 1516,
+            "material": "usmc_hydration_a",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Kneepad.smd_usmc_lmg_kneepad_0",
+        "primitives": [
+          {
+            "vertices": 1130,
+            "triangles": 1264,
+            "material": "usmc_lmg_kneepad",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Mag_Left.smd_ar_mag_0",
+        "primitives": [
+          {
+            "vertices": 148,
+            "triangles": 168,
+            "material": "ar_mag",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Mag_Pouch_Left.smd_wyatt_ar_mag_pouch_black_0",
+        "primitives": [
+          {
+            "vertices": 772,
+            "triangles": 1024,
+            "material": "wyatt_ar_mag_pouch_black",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Mags.smd_ar_mag_0",
+        "primitives": [
+          {
+            "vertices": 888,
+            "triangles": 1008,
+            "material": "ar_mag",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Pistol_Mags.smd_smg_pistol_mag_0",
+        "primitives": [
+          {
+            "vertices": 124,
+            "triangles": 96,
+            "material": "smg_pistol_mag",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Pistol_Mags_Pouch.smd_pouch_mag_pistol_ghost_0",
+        "primitives": [
+          {
+            "vertices": 1957,
+            "triangles": 2572,
+            "material": "pouch_mag_pistol_ghost",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Pouch_Left.smd_sas_urban_medical_pouch_0",
+        "primitives": [
+          {
+            "vertices": 312,
+            "triangles": 440,
+            "material": "sas_urban_medical_pouch",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Pouches_A.smd_mp_VPA_black_boots_a_0",
+        "primitives": [
+          {
+            "vertices": 383,
+            "triangles": 562,
+            "material": "mp_VPA_black_boots_a",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Pouches_A.smd_VPA_ar_mag_pouch_0",
+        "primitives": [
+          {
+            "vertices": 2208,
+            "triangles": 3009,
+            "material": "VPA_ar_mag_pouch",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Pouches_B.smd_mp_yegor_ar_mag_pouch_stencil_0",
+        "primitives": [
+          {
+            "vertices": 372,
+            "triangles": 484,
+            "material": "mp_yegor_ar_mag_pouch_stencil",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Pouches_B.smd_price_ar_mag_pouch_urban_0",
+        "primitives": [
+          {
+            "vertices": 757,
+            "triangles": 994,
+            "material": "price_ar_mag_pouch_urban",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Radio.smd_hero_alex_radio_pouch_a_0",
+        "primitives": [
+          {
+            "vertices": 1115,
+            "triangles": 1068,
+            "material": "hero_alex_radio_pouch_a",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Radio.smd_ptt_ghost_black_0",
+        "primitives": [
+          {
+            "vertices": 1451,
+            "triangles": 1332,
+            "material": "ptt_ghost_black",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Radio.smd_radio_0",
+        "primitives": [
+          {
+            "vertices": 2087,
+            "triangles": 2732,
+            "material": "radio",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Vest.smd_buckle_master_olive_0",
+        "primitives": [
+          {
+            "vertices": 618,
+            "triangles": 568,
+            "material": "buckle_master_olive",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Vest.smd_milsim_VPA_1_1_K20_id_pouch.jpg_0",
+        "primitives": [
+          {
+            "vertices": 389,
+            "triangles": 457,
+            "material": "milsim_VPA_1_1_K20_id_pouch.jpg",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Vest.smd_milsim_VPA_1_1_K20_vest_0",
+        "primitives": [
+          {
+            "vertices": 2855,
+            "triangles": 4279,
+            "material": "milsim_VPA_1_1_K20_vest",
+            "attributes": [
+              "POSITION",
+              "NORMAL",
+              "TEXCOORD_0",
+              "JOINTS_0",
+              "WEIGHTS_0"
+            ]
+          }
+        ]
+      }
+    ],
+    "hierarchy": [
+      {
+        "index": 0,
+        "name": "LeftToeBase",
+        "parent": 1,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          -3.708508833355495e-9,
+          -0.05499996617436409,
+          0.0899999737739563
+        ]
+      },
+      {
+        "index": 1,
+        "name": "LeftFoot",
+        "parent": 2,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          -5.134280223195731e-10,
+          -0.29999998211860657,
+          0.014999999664723873
+        ]
+      },
+      {
+        "index": 2,
+        "name": "LeftLeg",
+        "parent": 3,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          0,
+          -0.2999999225139618,
+          -4.6629367034256575e-15
+        ]
+      },
+      {
+        "index": 3,
+        "name": "LeftUpLeg",
+        "parent": 18,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          0.07799999415874481,
+          -0.019999980926513672,
+          2.6698250277235047e-9
+        ]
+      },
+      {
+        "index": 4,
+        "name": "RightToeBase",
+        "parent": 5,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          -3.708508833355495e-9,
+          -0.05499996617436409,
+          0.0899999737739563
+        ]
+      },
+      {
+        "index": 5,
+        "name": "RightFoot",
+        "parent": 6,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          -5.134280223195731e-10,
+          -0.29999998211860657,
+          0.014999999664723873
+        ]
+      },
+      {
+        "index": 6,
+        "name": "RightLeg",
+        "parent": 7,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          0,
+          -0.2999999225139618,
+          -2.220446049250313e-15
+        ]
+      },
+      {
+        "index": 7,
+        "name": "RightUpLeg",
+        "parent": 18,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          -0.07799999415874481,
+          -0.019999980926513672,
+          -2.6698263599911343e-9
+        ]
+      },
+      {
+        "index": 8,
+        "name": "LeftHand",
+        "parent": 9,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          0.10500001162290573,
+          -0.10999995470046997,
+          0.08999999612569809
+        ]
+      },
+      {
+        "index": 9,
+        "name": "LeftForearm",
+        "parent": 10,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          0.12999995052814484,
+          -0.12999987602233887,
+          0.08999999612569809
+        ]
+      },
+      {
+        "index": 10,
+        "name": "LeftUpperArm",
+        "parent": 16,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          0.13500000536441803,
+          0.040000081062316895,
+          4.620852589454216e-9
+        ],
+        "scale": [
+          1,
+          0.9999998807907104,
+          1
+        ]
+      },
+      {
+        "index": 11,
+        "name": "Head",
+        "parent": 12,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          -2.156234533007663e-22,
+          0.1100001335144043,
+          -2.079525177815615e-15
+        ]
+      },
+      {
+        "index": 12,
+        "name": "Neck",
+        "parent": 16,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          1.3114187771462386e-23,
+          0.16000008583068848,
+          -3.7694262113225664e-15
+        ]
+      },
+      {
+        "index": 13,
+        "name": "RightHand",
+        "parent": 14,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          -0.10500002652406693,
+          -0.10999995470046997,
+          0.08999998867511749
+        ]
+      },
+      {
+        "index": 14,
+        "name": "RightForearm",
+        "parent": 15,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          -0.12999998033046722,
+          -0.12999987602233887,
+          0.0899999812245369
+        ]
+      },
+      {
+        "index": 15,
+        "name": "RightUpperArm",
+        "parent": 16,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          -0.13500000536441803,
+          0.040000081062316895,
+          -4.620852589454216e-9
+        ],
+        "scale": [
+          1,
+          0.9999998807907104,
+          1
+        ]
+      },
+      {
+        "index": 16,
+        "name": "Chest",
+        "parent": 17,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          3.646030222498115e-23,
+          0.15999996662139893,
+          -1.4731885009848858e-15
+        ]
+      },
+      {
+        "index": 17,
+        "name": "Spine",
+        "parent": 18,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          1.611641440971334e-22,
+          0.14000004529953003,
+          -2.5129510898926934e-15
+        ]
+      },
+      {
+        "index": 18,
+        "name": "Hips",
+        "parent": 19,
+        "mesh": null,
+        "skin": null,
+        "translation": [
+          -1.3206627123424909e-22,
+          0.7199999094009399,
+          2.5414245259311203e-15
+        ]
+      },
+      {
+        "index": 19,
+        "name": "Armature",
+        "parent": 65,
+        "mesh": null,
+        "skin": null
+      },
+      {
+        "index": 20,
+        "name": "belt.smd_milsim_ranger_1_1_parts_belt_dual_molle_0",
+        "parent": 65,
+        "mesh": 0,
+        "skin": 0
+      },
+      {
+        "index": 21,
+        "name": "body.smd_base_male_arm_l_skintone_01_0",
+        "parent": 65,
+        "mesh": 1,
+        "skin": 0
+      },
+      {
+        "index": 22,
+        "name": "body.smd_milsim_VPA_1_1_K20_shirt_0",
+        "parent": 65,
+        "mesh": 2,
+        "skin": 0
+      },
+      {
+        "index": 23,
+        "name": "body.smd_milsim_VPA_K20_pants_tactical_g3_0",
+        "parent": 65,
+        "mesh": 3,
+        "skin": 0
+      },
+      {
+        "index": 24,
+        "name": "body.smd_mp_VPA_black_boots_a_0",
+        "parent": 65,
+        "mesh": 4,
+        "skin": 0
+      },
+      {
+        "index": 25,
+        "name": "body.smd_VPA_Black_Gloves_0",
+        "parent": 65,
+        "mesh": 5,
+        "skin": 0
+      },
+      {
+        "index": 26,
+        "name": "Chemlights.smd_chemlight_a_yellow_0",
+        "parent": 65,
+        "mesh": 6,
+        "skin": 0
+      },
+      {
+        "index": 27,
+        "name": "Chemlights.smd_hero_alex_hydration_nozzle_a_0",
+        "parent": 65,
+        "mesh": 7,
+        "skin": 0
+      },
+      {
+        "index": 28,
+        "name": "Flashbangs.smd_flash_grenade_01_0",
+        "parent": 65,
+        "mesh": 8,
+        "skin": 0
+      },
+      {
+        "index": 29,
+        "name": "Flashbangs.smd_milsim_ranger_1_1_flash_grenade_pouch_0",
+        "parent": 65,
+        "mesh": 9,
+        "skin": 0
+      },
+      {
+        "index": 30,
+        "name": "Flashbangs.smd_mp_VPA_black_boots_a_0",
+        "parent": 65,
+        "mesh": 10,
+        "skin": 0
+      },
+      {
+        "index": 31,
+        "name": "Grenade_Pouch_Left.smd_usmc_grenade_pouch_brown_0",
+        "parent": 65,
+        "mesh": 11,
+        "skin": 0
+      },
+      {
+        "index": 32,
+        "name": "Grenade_Pouch_Left.smd_usmc_grenade_top_0",
+        "parent": 65,
+        "mesh": 12,
+        "skin": 0
+      },
+      {
+        "index": 33,
+        "name": "Head.smd_head_sc_m_dunn_0",
+        "parent": 65,
+        "mesh": 13,
+        "skin": 0
+      },
+      {
+        "index": 34,
+        "name": "Head.smd_head_sc_m_dunn_eyes_0",
+        "parent": 65,
+        "mesh": 14,
+        "skin": 0
+      },
+      {
+        "index": 35,
+        "name": "Head.smd_head_shared_eyelashes_0",
+        "parent": 65,
+        "mesh": 15,
+        "skin": 0
+      },
+      {
+        "index": 36,
+        "name": "Head.smd_milsim_VPA_1_1_balaclava_0",
+        "parent": 65,
+        "mesh": 16,
+        "skin": 0
+      },
+      {
+        "index": 37,
+        "name": "Headphones.smd_usmc_headset_0",
+        "parent": 65,
+        "mesh": 17,
+        "skin": 0
+      },
+      {
+        "index": 38,
+        "name": "Helmet.smd_milsim_VPA_1_1_domino_helmet_0",
+        "parent": 65,
+        "mesh": 18,
+        "skin": 0
+      },
+      {
+        "index": 39,
+        "name": "Helmet.smd_milsim_VPA_1_1_k20_basic_helmet_0",
+        "parent": 65,
+        "mesh": 19,
+        "skin": 0
+      },
+      {
+        "index": 40,
+        "name": "Holster.smd_hero_alex_cloth_holster_a_black_0",
+        "parent": 65,
+        "mesh": 20,
+        "skin": 0
+      },
+      {
+        "index": 41,
+        "name": "Holster.smd_spetsnaz_holster_black_0",
+        "parent": 65,
+        "mesh": 21,
+        "skin": 0
+      },
+      {
+        "index": 42,
+        "name": "Hook.smd_price_ar_mag_pouch_urban_0",
+        "parent": 65,
+        "mesh": 22,
+        "skin": 0
+      },
+      {
+        "index": 43,
+        "name": "Hook.smd_price_carabiner_black_0",
+        "parent": 65,
+        "mesh": 23,
+        "skin": 0
+      },
+      {
+        "index": 44,
+        "name": "Hydration_Pack.smd_buckle_master_desert_0",
+        "parent": 65,
+        "mesh": 24,
+        "skin": 0
+      },
+      {
+        "index": 45,
+        "name": "Hydration_Pack.smd_buckle_master_urban_0",
+        "parent": 65,
+        "mesh": 25,
+        "skin": 0
+      },
+      {
+        "index": 46,
+        "name": "Hydration_Pack.smd_usmc_hydration_a_0",
+        "parent": 65,
+        "mesh": 26,
+        "skin": 0
+      },
+      {
+        "index": 47,
+        "name": "Kneepad.smd_usmc_lmg_kneepad_0",
+        "parent": 65,
+        "mesh": 27,
+        "skin": 0
+      },
+      {
+        "index": 48,
+        "name": "Mag_Left.smd_ar_mag_0",
+        "parent": 65,
+        "mesh": 28,
+        "skin": 0
+      },
+      {
+        "index": 49,
+        "name": "Mag_Pouch_Left.smd_wyatt_ar_mag_pouch_black_0",
+        "parent": 65,
+        "mesh": 29,
+        "skin": 0
+      },
+      {
+        "index": 50,
+        "name": "Mags.smd_ar_mag_0",
+        "parent": 65,
+        "mesh": 30,
+        "skin": 0
+      },
+      {
+        "index": 51,
+        "name": "Pistol_Mags.smd_smg_pistol_mag_0",
+        "parent": 65,
+        "mesh": 31,
+        "skin": 0
+      },
+      {
+        "index": 52,
+        "name": "Pistol_Mags_Pouch.smd_pouch_mag_pistol_ghost_0",
+        "parent": 65,
+        "mesh": 32,
+        "skin": 0
+      },
+      {
+        "index": 53,
+        "name": "Pouch_Left.smd_sas_urban_medical_pouch_0",
+        "parent": 65,
+        "mesh": 33,
+        "skin": 0
+      },
+      {
+        "index": 54,
+        "name": "Pouches_A.smd_mp_VPA_black_boots_a_0",
+        "parent": 65,
+        "mesh": 34,
+        "skin": 0
+      },
+      {
+        "index": 55,
+        "name": "Pouches_A.smd_VPA_ar_mag_pouch_0",
+        "parent": 65,
+        "mesh": 35,
+        "skin": 0
+      },
+      {
+        "index": 56,
+        "name": "Pouches_B.smd_mp_yegor_ar_mag_pouch_stencil_0",
+        "parent": 65,
+        "mesh": 36,
+        "skin": 0
+      },
+      {
+        "index": 57,
+        "name": "Pouches_B.smd_price_ar_mag_pouch_urban_0",
+        "parent": 65,
+        "mesh": 37,
+        "skin": 0
+      },
+      {
+        "index": 58,
+        "name": "Radio.smd_hero_alex_radio_pouch_a_0",
+        "parent": 65,
+        "mesh": 38,
+        "skin": 0
+      },
+      {
+        "index": 59,
+        "name": "Radio.smd_ptt_ghost_black_0",
+        "parent": 65,
+        "mesh": 39,
+        "skin": 0
+      },
+      {
+        "index": 60,
+        "name": "Radio.smd_radio_0",
+        "parent": 65,
+        "mesh": 40,
+        "skin": 0
+      },
+      {
+        "index": 61,
+        "name": "Vest.smd_buckle_master_olive_0",
+        "parent": 65,
+        "mesh": 41,
+        "skin": 0
+      },
+      {
+        "index": 62,
+        "name": "Vest.smd_milsim_VPA_1_1_K20_id_pouch.jpg_0",
+        "parent": 65,
+        "mesh": 42,
+        "skin": 0
+      },
+      {
+        "index": 63,
+        "name": "Vest.smd_milsim_VPA_1_1_K20_vest_0",
+        "parent": 65,
+        "mesh": 43,
+        "skin": 0
+      },
+      {
+        "index": 64,
+        "name": "VietnamPeopleArmy_Rigged",
+        "parent": 65,
+        "mesh": null,
+        "skin": null
+      },
+      {
+        "index": 65,
+        "name": "GDQP_Humanoid_Skeleton",
+        "parent": 66,
+        "mesh": null,
+        "skin": null
+      },
+      {
+        "index": 66,
+        "name": "Soldier_1_75m",
+        "parent": null,
+        "mesh": null,
+        "skin": null,
+        "scale": [
+          1.2438603639602661,
+          1.2438603639602661,
+          1.2438603639602661
+        ]
+      }
+    ],
+    "validation": {
+      "requiredClips": "11/11",
+      "preservedRig": "20/20 joints",
+      "loopEndpoints": "continuous",
+      "finiteValues": true,
+      "accessorsWithinBounds": true
+    }
+  }
+]
