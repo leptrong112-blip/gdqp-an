@@ -1,0 +1,723 @@
+import { Lesson, QuizQuestion, AKPartDisassembly } from "./types";
+
+export const GDQP_LESSONS: Lesson[] = [
+  // LỚP 10
+  {
+    id: "l10-b1",
+    title: "Lịch sử quân sự và truyền thống lực lượng vũ trang",
+    grade: 10,
+    topic: "Lịch sử & Truyền thống",
+    description: "Tìm hiểu quá trình hình thành, chiến đấu và trưởng thành anh hùng của Quân đội nhân dân Việt Nam và Công an nhân dân Việt Nam.",
+    importance: "Giúp học sinh bồi đắp lòng tự hào, tự tôn dân tộc và hiểu rõ nguồn gốc 'Từ nhân dân mà ra, vì nhân dân mà phục vụ'.",
+    content: [
+      {
+        sectionTitle: "1. Sự thành lập Quân đội Nhân dân Việt Nam",
+        paragraphs: [
+          "Tiền thân của Quân đội nhân dân Việt Nam là Đội Việt Nam Tuyên truyền Giải phóng quân, được thành lập ngày 22 tháng 12 năm 1944 tại khu rừng Trần Hưng Đạo (tỉnh Cao Bằng) theo chỉ thị của Lãnh tụ Hồ Chí Minh.",
+          "Ban đầu đội chỉ gồm 34 chiến sĩ với vũ khí thô sơ, do đồng chí Võ Nguyên Giáp chỉ huy trực tiếp. Đội đã ra quân và lập chiến công đầu vang dội ở Phai Khắt và Nà Ngần, mở đầu truyền thống bách chiến bách thắng."
+        ],
+        bullets: [
+          "Tên gọi ban đầu: Đội Việt Nam Tuyên truyền Giải phóng quân",
+          "Ngày thành lập quân đội: 22/12/1944",
+          "Tổng tư lệnh đầu tiên: Đại tướng Võ Nguyên Giáp",
+          "Tên gọi 'Quân đội nhân dân Việt Nam' do Chủ tịch Hồ Chí Minh đặt, thể hiện tính chất giai cấp và nguồn gốc nhân dân sâu sắc hành động vì độc lập dân tộc."
+        ]
+      },
+      {
+        sectionTitle: "2. Sự ra đời của Công an Nhân dân Việt Nam",
+        paragraphs: [
+          "Công an nhân dân Việt Nam được thành lập trong những ngày sục sôi của Cách mạng tháng Tám, cụ thể vào ngày 19 tháng 8 năm 1945 gắn liền với thắng lợi vĩ đại của Cách mạng ở Hà Nội và các tỉnh.",
+          "Nhiệm vụ cốt lõi là bảo vệ chính quyền cách mạng non trẻ, trấn áp các lực lượng phản cách mạng, chống thù trong giặc ngoài, giữ vững an ninh và trật tự an toàn xã hội."
+        ]
+      },
+      {
+        sectionTitle: "3. Các truyền thống vẻ vang tiêu biểu",
+        paragraphs: [
+          "Trải qua hai cuộc kháng chiến chống thực dân Pháp và đế quốc Mỹ xâm lược, lực lượng vũ trang nhân dân Việt Nam đã đúc kết nên những truyền thống vô cùng quý báu."
+        ],
+        bullets: [
+          "Trung thành vô hạn với Tổ quốc, với Đảng, Nhà nước và Nhân dân.",
+          "Nhân dân đồng lòng, quân dân một ý chí gắn kết như cá với nước.",
+          "Đoàn kết quốc tế trong sáng, lập trường kiên định tự lực tự cường.",
+          "Kỷ luật sắt tự giác nghiêm minh, ham học tập rèn luyện chiến đấu nâng cao trình độ lĩnh hội kỹ chiến thuật."
+        ]
+      }
+    ]
+  },
+  {
+    id: "l10-b2",
+    title: "Đội ngũ ngũ - Đội ngũ từng người không có súng",
+    grade: 10,
+    topic: "Kỹ năng Quân sự",
+    description: "Học tập các điều lệnh đội ngũ cơ bản phục vụ huấn luyện, sinh hoạt tập thể quân sự học đường.",
+    importance: "Xây dựng tác phong nghiêm túc, tính kỷ luật, sự tập trung cao độ và thống nhất trong hoạt động tập thể.",
+    content: [
+      {
+        sectionTitle: "1. Động tác Nghiêm - Nghỉ",
+        paragraphs: [
+          "Động tác Nghiêm: Nghe khẩu lệnh 'Nghiêm!'. Người đứng thẳng, hai gót chân sát nhau, hai bàn chân mở rộng thành một góc 45 độ. Hai đầu gối thẳng, ngực nở, vai thăng bằng, tay buông tự nhiên dọc thân mình, mắt nhìn thẳng.",
+          "Động tác Nghỉ: Nghe khẩu lệnh 'Nghỉ!'. Trùng gối trái hoặc gối phải, thân trên vẫn thẳng tự nhiên. Khi mỏi có thể đổi chân nhưng không dịch chuyển gót chân."
+        ]
+      },
+      {
+        sectionTitle: "2. Động tác Quay tại chỗ",
+        paragraphs: [
+          "Quay bên Phải: Khẩu lệnh 'Bên phải - Quay!'. Dùng gót chân phải và mũi chân trái làm trụ quay người sang phải 90 độ, chân trái bước lên áp sát chân phải về tư thế nghiêm.",
+          "Quay bên Trái: Khẩu lệnh 'Bên trái - Quay!'. Dùng gót chân trái và mũi chân phải làm trụ quay người sang trái 90 độ, chân phải bước lên áp sát chân trái.",
+          "Quay Đằng sau: Khẩu lệnh 'Đằng sau - Quay!'. Dùng gót chân phải và mũi chân trái làm trụ quay cơ thể sang bên phải hướng ra sau 180 độ, rút chân trái về nghiêm."
+        ]
+      },
+      {
+        sectionTitle: "3. Đội ngũ tiểu đội phối hợp di động",
+        paragraphs: [
+          "Các động tác tiến, lui, qua phải, qua trái: Khi di chuyển từ 1 đến 5 bước, thực hiện bước dồn hoặc bước thường không quay người. Đi đều và dừng lại: Sử dụng trong hàng ngũ di động cự ly xa để bảo đảm đội hình đồng bộ, giữ vững hàng ngang cột dọc."
+        ]
+      }
+    ]
+  },
+  {
+    id: "l10-b3",
+    title: "Phòng chống ma túy và tệ nạn học đường",
+    grade: 10,
+    topic: "Pháp luật & An toàn",
+    description: "Ý thức và nhận diện để bảo vệ bản thân và cộng đồng học đường trước tác hại khủng khiếp của chất ma túy.",
+    importance: "Trực tiếp giúp học sinh lớp 10 có hành trang pháp luật vững chắc phòng vệ từ sớm, từ xa khỏi cám dỗ tệ nạn xã hội.",
+    content: [
+      {
+        sectionTitle: "1. Khái niệm và nhận dạng chất ma túy",
+        paragraphs: [
+          "Chất ma túy là các chất gây nghiện, chất hướng thần có nguồn gốc tự nhiên hoặc tổng hợp, được quy định trong danh mục do Chính phủ ban hành.",
+          "Khi đưa vào cơ thể, ma túy làm thay đổi trạng thái tâm lý, ý thức và gây lệ thuộc nặng nề cả thể chất lẫn tinh thần của người sử dụng."
+        ],
+        bullets: [
+          "Ma túy tự nhiên: Thuốc phiện, cần sa, heroin, cocaine.",
+          "Ma túy tổng hợp: Amphetamine, ma túy đá (methamphetamine), thuốc lắc (MDMA).",
+          "Các hình thức ngụy trang mới: Nước vui, bánh lười, cỏ Mỹ, tinh dầu thuốc lá điện tử chứa chất hướng thần tổng hợp cực nguy hiểm."
+        ]
+      },
+      {
+        sectionTitle: "2. Tác hại đối với sức khỏe & lối sống học sinh",
+        paragraphs: [
+          "Làm hủy hoại hệ thần kinh và tim mạch vĩnh viễn, dẫn đến suy nhược trí tuệ và rối loạn nhân cách.",
+          "Dễ làm phát sinh các hành vi vi phạm pháp luật nghiêm trọng để có tiền mua ma túy (trộm cắp, cướp giật, lừa đảo).",
+          "Hủy hoại tương lai học tập, hạnh phúc gia đình và tương lai sự nghiệp của thế hệ trẻ."
+        ]
+      },
+      {
+        sectionTitle: "3. Biện pháp phòng ngừa và trách nhiệm",
+        paragraphs: [
+          "Chủ động tránh xa lời rủ rê của kẻ xấu. Tuyệt đối không thử dù chỉ một lần. Tránh xa các sản phẩm thuốc lá điện tử không rõ nguồn gốc.",
+          "Có trách nhiệm thông báo kịp thời cho thầy cô giáo, cha mẹ hoặc cơ quan chức năng khi phát hiện những biểu hiện mua bán, tàng trữ hoặc sử dụng chất nghi vấn quanh trường học."
+        ]
+      }
+    ]
+  },
+
+  // LỚP 11
+  {
+    id: "l11-b1",
+    title: "Luật Nghĩa vụ quân sự và trách nhiệm của học sinh",
+    grade: 11,
+    topic: "Pháp luật & Trách nhiệm",
+    description: "Nắm vững các điều khoản, quyền lợi và nghĩa vụ hiến định của một công dân Việt Nam đối với Tổ quốc.",
+    importance: "Là nội dung pháp luật trọng tâm, bắt buộc nằm trong cấu trúc thi kiểm tra thường xuyên và kết thúc học kỳ lớp 11.",
+    content: [
+      {
+        sectionTitle: "1. Độ tuổi và thời hạn phục vụ tại ngũ",
+        paragraphs: [
+          "Mọi công dân nam đến độ tuổi thực hiện nghĩa vụ quân sự đều phải đăng ký và có nghĩa vụ tham gia khi có lệnh gọi nhập ngũ.",
+          "Thời hạn phục vụ tại ngũ của hạ sĩ quan và binh sĩ trong thời bình là 24 tháng (2 năm). Trong một số trường hợp đặc biệt, Bộ trưởng Bộ Quốc phòng có quyền kéo dài thời hạn phục vụ nhưng tối đa không quá 6 tháng."
+        ],
+        bullets: [
+          "Độ tuổi gọi nhập ngũ bình thường: Từ đủ 18 tuổi đến hết 25 tuổi.",
+          "Độ tuổi kéo dài khi đi học Đại học/Cao đẳng: Đến hết 27 tuổi.",
+          "Độ tuổi đăng ký nghĩa vụ quân sự lần đầu (với nam giới): Đủ 17 tuổi."
+        ]
+      },
+      {
+        sectionTitle: "2. Các đối tượng được Tạm hoãn gọi nhập ngũ",
+        paragraphs: [
+          "Quy định nhân đạo của Luật nhằm tạo điều kiện cho hậu phương và sự nghiệp học hành của công dân."
+        ],
+        bullets: [
+          "Chưa đủ sức khỏe phục vụ tại ngũ theo kết luận của Hội đồng khám sức khỏe quân sự.",
+          "Là lao động duy nhất trực tiếp nuôi dưỡng thân nhân không còn khả năng lao động.",
+          "Một con của bệnh binh, người nhiễm chất độc da cam suy giảm khả năng lao động từ 61% đến 80%.",
+          "Có anh, chị hoặc em ruột là hạ sĩ quan, binh sĩ đang phục vụ tại ngũ hoặc sĩ quan công an.",
+          "Người thuộc diện di dân, giãn dân trong 03 năm đầu đến các xã đặc biệt khó khăn.",
+          "Học sinh đang học tại cơ sở giáo dục phổ thông; sinh viên đang đào tạo trình độ đại học, cao đẳng hệ chính quy thuộc một cơ sở giáo dục một khóa học duy nhất."
+        ]
+      },
+      {
+        sectionTitle: "3. Các trường hợp được Miễn gọi nhập ngũ",
+        paragraphs: [
+          "Được miễn hẳn việc tham gia nhập ngũ trong thời bình."
+        ],
+        bullets: [
+          "Con của liệt sĩ, con của thương binh hạng một.",
+          "Một anh hoặc một em ruột của liệt sĩ.",
+          "Một con của thương binh hạng hai; một con của bệnh binh suy giảm khả năng lao động từ 81% trở lên.",
+          "Người làm công tác cơ yếu không phải là quân nhân, công an nhân dân.",
+          "Người có trình độ học vấn hoặc sức khỏe không đáp ứng yêu cầu tối thiểu."
+        ]
+      }
+    ]
+  },
+  {
+    id: "l11-b2",
+    title: "Chủ quyền lãnh thổ và biên giới quốc gia",
+    grade: 11,
+    topic: "Chủ quyền quốc gia",
+    description: "Nhận thức sâu sắc về vùng đất, vùng nước, vùng trời, thềm lục địa và hải đảo của Tổ quốc Việt Nam dân chủ cộng hòa.",
+    importance: "Giúp học sinh định hình rõ nét ranh giới thiêng liêng từ ải Nam Quan đến mũi Cà Mau, cùng quần đảo Hoàng Sa và Trường Sa vô giá.",
+    content: [
+      {
+        sectionTitle: "1. Các bộ phận cấu thành lãnh thổ quốc gia",
+        paragraphs: [
+          "Lãnh thổ quốc gia Việt Nam là một khối thống nhất toàn vẹn, bao gồm các bộ phận chính vững chắc:"
+        ],
+        bullets: [
+          "Vùng đất: Toàn bộ đất liền quốc gia và hải đảo thuộc chủ quyền Việt Nam.",
+          "Vùng nước: Bao gồm nội thủy, lãnh hải (rộng 12 hải lý tính từ đường cơ sở). Vùng nước cũng bao gồm hệ thống sông ngòi, vịnh biển.",
+          "Vùng trời: Không gian bao trùm trên vùng đất và vùng nước của lãnh thổ Việt Nam.",
+          "Vùng lòng đất: Phần đất nằm phía dưới vùng đất liền, biển đảo thuộc chủ quyền thiêng liêng quốc gia."
+        ]
+      },
+      {
+        sectionTitle: "2. Ý nghĩa và tầm quan trọng của Biên giới quốc gia",
+        paragraphs: [
+          "Biên giới quốc gia là giới hạn định ra ranh giới pháp lý lãnh thổ quốc gia, xác định quyền tối cao vô hạn của quốc gia trong phạm vi đó.",
+          "Giữ vững an ninh biên giới là nhiệm vụ sống còn quyết định sự phát triển lâu dài của đất nước, thúc đẩy giao bang hòa bình hữu nghị quốc tế."
+        ]
+      },
+      {
+        sectionTitle: "3. Trách nhiệm bảo vệ Tổ quốc của thế hệ trẻ",
+        paragraphs: [
+          "Tôn trọng và chấp hành nghiêm chỉnh luật pháp về biên giới hải đảo. Kiên quyết đấu tranh phản bác lại các quan điểm sai trái, xuyên tạc về biên giới, lãnh thổ.",
+          "Tích cực xây dựng ý chí kiên định bảo trì giang sơn tổ tiên để lại, sẵn sàng tham gia quân ngũ hoặc đóng góp nguồn trí tuệ để phòng vệ chủ quyền toàn diện."
+        ]
+      }
+    ]
+  },
+  {
+    id: "l11-b3",
+    title: "Súng tiểu liên AK và quy trình tháo lắp",
+    grade: 11,
+    topic: "Khí tài & Kỹ thuật",
+    description: "Học tập chi tiết tính năng chiến đấu, cấu tạo gồm 11 bộ phận chính của khẩu súng AK-47 huyền thoại và các thao tác an toàn.",
+    importance: "Là bài thực hành thực tế nhận điểm hệ số 2 trong các đợt kiểm tra thể chất quân sự thực địa học đường.",
+    content: [
+      {
+        sectionTitle: "1. Giới thiệu súng tiểu liên AK-47",
+        paragraphs: [
+          "Súng tiểu liên AK do Mikhail Kalashnikov (Liên Xô) thiết kế. Súng bắn tự động và bán tự động, sử dụng cỡ đạn 7,62 mm x 39 mm.",
+          "Tính năng chiến đấu vượt trội: Cực kỳ ổn định trong môi trường khắc nghiệt, chống cát bụi và nước tốt, dễ huấn luyện tháo lắp bảo trì.",
+          "Tầm bắn hiệu quả đối với mục tiêu mặt đất: tầm bắn thẳng mục tiêu người nằm là 350m, mục tiêu người chạy khom là 525m."
+        ],
+        bullets: [
+          "Hộp tiếp đạn sức chứa: 30 viên đạn.",
+          "Tầm bắn ghi trên thước ngắm: Lên tới 800m (với AK) hoặc 1000m (với AKM).",
+          "Trọng lượng súng không đạn: Khoảng 3,8 kg (rất vừa tầm nâng của học sinh cấp 3)."
+        ]
+      },
+      {
+        sectionTitle: "2. Cấu tạo gồm 11 bộ phận chính",
+        paragraphs: [
+          "Học sinh phải đọc thuộc lòng tên 11 bộ phận cấu thành để hoàn thành trắc nghiệm lý thuyết."
+        ],
+        bullets: [
+          "1. Nòng súng và hộp khóa nòng",
+          "2. Bộ phận ngắm (Thước ngắm, đầu ngắm)",
+          "3. Nắp hộp khóa nòng",
+          "4. Bệ khóa nòng và thoi đẩy",
+          "5. Khóa nòng",
+          "6. Bộ phận cò",
+          "7. Bộ phận đẩy về (Lò xo đẩy về)",
+          "8. Ống dẫn gas và ốp lót tay",
+          "9. Báng súng và tay cầm",
+          "10. Hộp tiếp đạn",
+          "11. Lê (hoặc thông nòng/phụ tùng đi kèm)"
+        ]
+      },
+      {
+        sectionTitle: "3. Quy tắc Tháo súng và Lắp súng an toàn",
+        paragraphs: [
+          "Nguyên tắc tháo lắp: Tháo trước thì lắp sau, tháo sau thì lắp trước. Đặt các bộ phận theo hàng thứ tự từ trái sang phải để tránh nhầm lẫn.",
+          "Cực kỳ quan trọng: Luôn tháo hộp tiếp đạn và bóp cò kiểm tra xem có đạn trong buồng nòng không (khám súng) trước khi tiến hành bước tiếp theo!"
+        ]
+      }
+    ]
+  },
+
+  // LỚP 12
+  {
+    id: "l12-b1",
+    title: "Tổ chức Quân đội và Công an nhân dân Việt Nam",
+    grade: 12,
+    topic: "Tổ chức & Cấp bậc",
+    description: "Học tập cơ cấu tổ chức bộ máy, hệ thống cấp bậc quân hàm trong lực lượng vũ trang nhân dân Việt Nam.",
+    importance: "Nội dung mang tính hệ thống quản lý nhà nước cao, chuẩn bị tốt cho học sinh thi đại học khối Quân sự - Công an.",
+    content: [
+      {
+        sectionTitle: "1. Tổ chức Quân đội Nhân dân Việt Nam",
+        paragraphs: [
+          "Hệ thống tổ chức QĐND Việt Nam dưới sự chỉ đạo tối cao trực tiếp của Đảng Cộng sản Việt Nam, người đứng đầu Nhà nước là Thống lĩnh lực lượng vũ trang (Chủ tịch nước).",
+          "Cơ quan quản lý hành chính hành động trực tiếp bảo vệ quốc phòng là Bộ Quốc phòng dưới sự lãnh đạo điều hành của Bộ trưởng Bộ Quốc phòng."
+        ],
+        bullets: [
+          "Lực lượng Thường trực: Quân đội chính quy, Bộ đội biên phòng.",
+          "Lực lượng Dự bị động viên: Toàn bộ quân nhân dự bị đã qua huấn luyện sẵn sàng nhập ngũ khi động binh.",
+          "Hệ thống Quân chủng: Quân chủng Lục quân, Quân chủng Hải quân, Quân chủng Phòng không - Không quân."
+        ]
+      },
+      {
+        sectionTitle: "2. Hệ thống Quân hàm, Sĩ quan Quân đội Nhân dân",
+        paragraphs: [
+          "Nhận diện cấp bậc dựa trên vạch và sao dệt trên thiết kế cầu vai.",
+          "Hệ thống cấp bậc được phân làm 4 cấp chính: Hạ sĩ quan/Binh sĩ, Úy, Tá, Tướng."
+        ],
+        bullets: [
+          "Cấp Úy: Chuẩn úy (nay không còn), Thiếu úy (1 sao, 1 vạch), Trung úy (2 sao, 1 vạch), Thượng úy (3 sao, 1 vạch), Đại úy (4 sao, 1 vạch).",
+          "Cấp Tá: Thiếu tá (1 sao, 2 vạch), Trung tá (2 sao, 2 vạch), Thượng tá (3 sao, 2 vạch), Đại tá (4 sao, 2 vạch).",
+          "Cấp Tướng: Thiếu tướng (1 sao, không vạch ngang), Trung tướng (2 sao), Thượng tướng (3 sao), Đại tướng (4 sao)."
+        ]
+      },
+      {
+        sectionTitle: "3. Tổ chức Công an Nhân dân Việt Nam",
+        paragraphs: [
+          "Đặt dưới sự chỉ huy trực tiếp của Bộ Công an, bao gồm hai bộ phận cốt lõi cấu thành sức mạnh liên kết bảo vệ an ninh trật tự xã hội:"
+        ],
+        bullets: [
+          "Lực lượng An ninh nhân dân: Phòng vệ thầm lặng chống gián điệp, tình báo ngoại quốc xâm hại chính trị, kinh tế xã hội.",
+          "Lực lượng Cảnh sát nhân dân: Đấu tranh phòng chống tội phạm hình sự nguy hiểm giữ ổn định giao thông trật tự đô thị nông thôn."
+        ]
+      }
+    ]
+  },
+  {
+    id: "l12-b2",
+    title: "Hiểu biết về Bản đồ quân sự",
+    grade: 12,
+    topic: "Kỹ năng Quân sự",
+    description: "Cách sử dụng tọa độ địa lý, đo đạc cự ly cản phá địa hình mục tiêu ứng dụng trong tập kích phòng ngự trận địa.",
+    importance: "Giới thiệu học sinh cách định lượng đo khoảng cách địa hình, định vị tọa độ cực kì hữu ích cho kỹ năng sinh hoạt dã ngoại.",
+    content: [
+      {
+        sectionTitle: "1. Khái niệm bản đồ địa hình quân sự",
+        paragraphs: [
+          "Bản đồ địa hình quân sự là bản đồ vẽ chuyên biệt mô tả chính xác dạng bề mặt Trái Đất cùng với các yếu tố tự nhiên, nhân tạo bằng hệ thống ký hiệu quy ước.",
+          "Tỷ lệ xích ghi trên bản đồ cho thấy mức độ thu nhỏ thực địa. Tỷ lệ càng lớn mức độ mô tả chi tiết vật thể xung quanh càng rõ nét."
+        ]
+      },
+      {
+        sectionTitle: "2. Cách xác định Tọa độ và đo khoảng cách",
+        paragraphs: [
+          "Xác định tọa độ bằng cách gióng các đường kinh tuyến thẳng nằm ngang, ngang dọc tạo thành lưới ô vuông chính xác trên bản đồ.",
+          "Sử dụng thước thẳng hoặc sợi chỉ mềm đo chiều dọc uốn lượn của sông ngòi, đường quốc lộ trên bản đồ, sau đó đối chiếu thước tỷ lệ ở chân bản đồ để biết khoảng cách thực."
+        ]
+      },
+      {
+        sectionTitle: "3. Các ký hiệu quân sự thông dụng",
+        paragraphs: [
+          "Một số ký hiệu chính yếu giúp người chỉ huy lập kế hoạch chiến đấu nhanh chóng:"
+        ],
+        bullets: [
+          "Màu Đỏ: Biểu thị trận vị, hướng tiến quân hành động của quân ta.",
+          "Màu Xanh: Biểu thị đồn trú trực tiếp, hướng rút chạy của quân địch giả định.",
+          "Ký hiệu súng, pháo, lá cờ chỉ huy, các tuyến bắn phá tầm xa của trạm thông tin liên lạc."
+        ]
+      }
+    ]
+  },
+  {
+    id: "l12-b3",
+    title: "Chiến thuật bộ binh - Các tư thế vận động chiến trường",
+    grade: 12,
+    topic: "Kỹ năng Quân sự",
+    description: "Học tập các tư thế vận động trong chiến đấu từng người để lợi dụng địa hình dập tắt hỏa lực bắn tỉa của địch.",
+    importance: "Rèn luyện sức bền thể chất cá nhân dũng cảm, thao tác linh hoạt nhịp nhàng trong điều kiện mô phỏng khói lửa chiến địa.",
+    content: [
+      {
+        sectionTitle: "1. Tư thế Đi khom - Chạy khom",
+        paragraphs: [
+          "Ứng dụng: Khi vận động qua những địa hình cỏ rậm rạp tầm thấp, hoặc trong đêm tối, cự ly gần địch nhưng hỏa lực địch chưa bắn thẳng mãnh liệt.",
+          "Động tác: Người cúi thấp hông, hai gối chùng, hạ thấp trọng tâm nhưng vẫn giữ thăng bằng mắt quan sát phía trước, tay cầm súng ở tư thế sẵn sàng chiến đấu cao nhất."
+        ]
+      },
+      {
+        sectionTitle: "2. Tư thế lê - bò - trườn chiến đấu",
+        paragraphs: [
+          "Bò cao: Ứng dụng khi cần vận động nhanh qua nơi địa hình mấp mô cao hơn tư thế người nằm nghiêng.",
+          "Trườn bằng bụng (Trườn sấp): Sát người xuống đất mặt sườn dán chặt thảm cỏ dã chiến, dùng khuỷu tay và mũi bàn chân đẩy cơ thể trườn về phía trước. Ứng dụng khi vượt qua hệ thống hàng rào kẽm gai mắt lưới thép gai của đối phương cực kì thấp hại."
+        ],
+        bullets: [
+          "Lê cao/lê thấp: Sử dụng một bên cánh mông dán đất nghiêng hông dịch chuyển cơ thể.",
+          "Trườn sấp: Trọng tâm sạt dốc bằng khít so với mặt cát bụi dưới tầm mắt ngắm cảnh giới mục tiêu."
+        ]
+      },
+      {
+        sectionTitle: "3. Quy tắc tận dụng địa hình địa vật",
+        paragraphs: [
+          "Lợi dụng địa hình che khuất (như bụi cây rậm, khói mù): Che mắt địch không nhìn thấy ta nhưng không chống được đạn xuyên hiểm hại.",
+          "Lợi dụng địa vật che đỡ (bờ tường bê tông, gò đất dày, gốc cây cổ thụ lớn): Vừa có tác dụng ẩn nấp vừa ngăn cản được mảnh lựu đạn bắn thẳng trực tiếp chống đạn phá từ đối phương hiệu quả tốt đẹp."
+        ]
+      }
+    ]
+  }
+];
+
+export const GDQP_QUIZZES: Record<number, QuizQuestion[]> = {
+  10: [
+    {
+      id: 101,
+      question: "Tiền thân của Quân đội nhân dân Việt Nam là lực lượng nào?",
+      options: [
+        "A. Đội Du kích Bắc Sơn",
+        "B. Cứu quốc quân",
+        "C. Đội Việt Nam Tuyên truyền Giải phóng quân",
+        "D. Vệ quốc đoàn"
+      ],
+      correctAnswer: 2,
+      explanation: "Tiền thân của QĐNDVN là Đội Việt Nam Tuyên truyền Giải phóng quân, thành lập ngày 22/12/1944 tại Cao Bằng gồm 34 chiến sĩ."
+    },
+    {
+      id: 102,
+      question: "Ngày truyền thống của lực lượng Công an nhân dân Việt Nam là ngày nào?",
+      options: [
+        "A. Ngày 22 tháng 12",
+        "B. Ngày 19 tháng 8",
+        "C. Ngày 02 tháng 9",
+        "D. Ngày 30 tháng 4"
+      ],
+      correctAnswer: 1,
+      explanation: "Ngày 19/8/1945 gắn liền với mốc thành công của Cách mạng tháng Tám vĩ đại là ngày chính thức thành lập Công an nhân dân Việt Nam."
+    },
+    {
+      id: 103,
+      question: "Khi thực hiện khẩu lệnh động tác 'Nghiêm', hai bàn chân học sinh đặt thế nào?",
+      options: [
+        "A. Hai bàn chân đặt song song sát nhau.",
+        "B. Hai bàn chân mở rộng bằng vai.",
+        "C. Hai gót chân sát nhau, hai mũi bàn chân mở rộng một góc 45 độ.",
+        "D. Gót chân trái sát mũi chân phải góc 90 độ."
+      ],
+      correctAnswer: 2,
+      explanation: "Tư thế nghiêm chuẩn mực là hai gót chân sát nhau, hai thân gót chân thăng bằng thẳng, hai bàn chân mở rộng góc 45 độ tự nhiên."
+    },
+    {
+      id: 104,
+      question: "Khi muốn quay đằng sau tại chỗ trong điều lệnh đội ngũ, học sinh thực hiện quay theo chiều nào?",
+      options: [
+        "A. Quay sang bên trái 180 độ.",
+        "B. Quay sang bên phải 180 độ.",
+        "C. Quay hướng nào thuận tay nhất.",
+        "D. Quay hai lần 90 độ liên tục."
+      ],
+      correctAnswer: 1,
+      explanation: "Quay đằng sau luôn quay sang bên phải hướng ra sau một góc 180 độ bằng cách lấy gót chân phải và mũi chân trái làm trụ đỡ."
+    },
+    {
+      id: 105,
+      question: "Đâu không phải là hình thức gây nghiện độc hại thường trá hình ma túy học đường hiện nay?",
+      options: [
+        "A. Nước khoáng tinh khiết đóng chai có kiểm định an toàn của Bộ Y tế",
+        "B. Bóng cười chứa khí N2O độc hại thần kinh",
+        "C. Tinh dầu thuốc lá điện tử không rõ nguồn gốc chứa bồ đà dạng lỏng",
+        "D. Chất bột ngụy trang kẹo khói bọc kín túi zipper"
+      ],
+      correctAnswer: 0,
+      explanation: "Nước khoáng đóng chai đạt chuẩn cấp phép y tế là thực phẩm sạch, còn lại các loại thuốc lá điện tử, bóng cười đầy nguy hiểm gây hại thần kinh học đường."
+    },
+    {
+      id: 106,
+      question: "Ai là người trực tiếp chỉ huy chỉ đạo thành lập quân đội nguyên sơ đầu tiên của Đội VN Tuyên truyền Giải phóng quân?",
+      options: [
+        "A. Chủ tịch Hồ Chí Minh",
+        "B. Đồng chí Trường Chinh",
+        "C. Đồng chí Võ Nguyên Giáp",
+        "D. Đồng chí Phạm Văn Đồng"
+      ],
+      correctAnswer: 2,
+      explanation: "Đại tướng Võ Nguyên Giáp (lúc bấy giờ là đồng chí Võ Nguyên Giáp) được Bác Hồ tin tưởng trực tiếp phụ trách lãnh đạo chỉ huy thành lập đội ban đầu."
+    },
+    {
+      id: 107,
+      question: "Trong điều lệnh đội ngũ từng người, khẩu lệnh quay gồm có phần gì?",
+      options: [
+        "A. Động lệnh và dự lệnh",
+        "B. Chỉ gồm độc nhất động lệnh thúc giục",
+        "C. Khẩu lệnh viết dạng văn bản hành chính",
+        "D. Gọi tên học sinh từng cá nhân"
+      ],
+      correctAnswer: 0,
+      explanation: "Khẩu lệnh thường có Dự lệnh (để chuẩn bị tư thế đứng trụ) và Động lệnh (để dứt khoát làm động tác quay). Ví dụ: 'Bên phải' (Dự lệnh) - 'Quay!' (Động lệnh)."
+    },
+    {
+      id: 108,
+      question: "Khẩu lệnh chuẩn xác cho động tác nghỉ là gì?",
+      options: [
+        "A. 'Hãy Nghỉ!'",
+        "B. 'Đứng Nghiêm và Nghỉ!'",
+        "C. 'Nghỉ!'",
+        "D. 'Tự do hoạt động!'"
+      ],
+      correctAnswer: 2,
+      explanation: "Khẩu lệnh cho động tác nghỉ chỉ gồm duy nhất từ hô dứt khoát: 'Nghỉ!'."
+    }
+  ],
+  11: [
+    {
+      id: 111,
+      question: "Độ tuổi tham gia nghĩa vụ quân sự bình thường đối với công dân nam trong điều kiện thời bình là bao nhiêu?",
+      options: [
+        "A. Từ đủ 17 tuổi đến hết 25 tuổi",
+        "B. Từ đủ 18 tuổi đến hết 25 tuổi",
+        "C. Từ đủ 18 tuổi đến hết 27 tuổi",
+        "D. Từ đủ 16 tuổi đến hết 30 tuổi"
+      ],
+      correctAnswer: 1,
+      explanation: "Luật NVQS sửa đổi bổ sung quy định độ tuổi gọi nhập ngũ bình thường là từ đủ 18 tuổi đến hết 25 tuổi."
+    },
+    {
+      id: 112,
+      question: "Học sinh đang học Đại học, Cao đẳng chính quy được kéo dài độ tuổi gọi nhập ngũ đến hết bao nhiêu tuổi?",
+      options: [
+        "A. Hết 25 tuổi",
+        "B. Hết 26 tuổi",
+        "C. Hết 27 tuổi",
+        "D. Hết 28 tuổi"
+      ],
+      correctAnswer: 2,
+      explanation: "Được gia hạn tạm hoãn để hoàn thành khoá học Đại Học/Cao đẳng chính quy đến hết tuổi 27."
+    },
+    {
+      id: 113,
+      question: "Không gian bao trùm lên vùng đất và vùng nước của quốc gia gọi là gì?",
+      options: [
+        "A. Vùng thềm lục địa ngoài rìa lãnh hải",
+        "B. Vùng an ninh biên thùy",
+        "C. Vùng trời quốc gia",
+        "D. Vùng tiếp giáp hải bờ"
+      ],
+      correctAnswer: 2,
+      explanation: "Vùng trời quốc gia là phần giới hạn không gian phía trên vùng đất liền và vùng nước thuộc chủ quyền tuyệt đối của Việt Nam."
+    },
+    {
+      id: 114,
+      question: "Súng tiểu liên AK-47 do nước nào thiết kế, chế tạo đầu tiên?",
+      options: [
+        "A. Nước Mỹ",
+        "B. Nước Cộng hòa Pháp",
+        "C. Liên bang Xô Viết (Liên Xô)",
+        "D. Cộng hòa nhân dân Trung Hoa"
+      ],
+      correctAnswer: 2,
+      explanation: "AK-47 do nhà thiết kế Mikhail Kalashnikov nổi tiếng của Liên Xô sáng tạo vào năm 1947."
+    },
+    {
+      id: 115,
+      question: "Khẩu súng AK-47 nguyên bản nặng khoảng bao nhiêu kilôgam khi không nạp đạn?",
+      options: [
+        "A. Khoảng 1,5 kg",
+        "B. Khoảng 2,8 kg",
+        "C. Khoảng 3,8 kg",
+        "D. Khoảng 5,0 kg"
+      ],
+      correctAnswer: 2,
+      explanation: "Súng AK-47 nguyên bản không lắp lê và không chứa đạn nặng khoảng 3,8 kg (với báng gỗ đặc trưng)."
+    },
+    {
+      id: 116,
+      question: "Quá trình tháo lắp súng AK gồm mấy bước tháo chính cơ bản?",
+      options: [
+        "A. Gồm 5 bước tháo",
+        "B. Gồm 7 bước tháo dỡ linh kiện rời",
+        "C. Gồm 8 bước tháo chính",
+        "D. Gồm 10 bước tháo lắp phức tạp"
+      ],
+      correctAnswer: 2,
+      explanation: "Theo sách giáo khoa Quốc phòng An ninh lớp 11 hiện hành, quy trình tháo rời súng AK-47 có đúng 8 bước chính tự liên kết tuần tự bảo đảm an toàn."
+    },
+    {
+      id: 117,
+      question: "Bước thứ nhất bắt buộc phải thực hiện trong quy trình tháo súng AK là gì?",
+      options: [
+        "A. Tháo nắp hộp khóa nòng bắn thử.",
+        "B. Tháo bộ phận lò xo của pittông đẩy về liền kề.",
+        "C. Tháo hộp tiếp đạn và thực hiện khám súng (kiểm tra an toàn buồng chứa đạn).",
+        "D. Rút thông nòng thông suốt súng ngay tức khắc."
+      ],
+      correctAnswer: 2,
+      explanation: "Nguyên tắc sống còn: Luôn tháo hộp tiếp đạn trước rồi bóp cò kiểm tra an toàn (bước khám súng) tránh tai nạn đáng tiếc do đạn sót trong súng."
+    },
+    {
+      id: 118,
+      question: "Lãnh hải của nước Cộng hòa Xã hội Chủ nghĩa Việt Nam rộng bao nhiêu hải lý tính từ đường cơ sở?",
+      options: [
+        "A. Rộng 3 hải lý",
+        "B. Rộng 12 hải lý",
+        "C. Rộng 24 hải lý",
+        "D. Rộng 200 hải lý"
+      ],
+      correctAnswer: 1,
+      explanation: "Ranh giới Lãnh hải quốc gia của Việt Nam rộng đúng 12 hải lý tính từ đường cơ sở quy định pháp lý quốc tế hoàn vũ."
+    }
+  ],
+  12: [
+    {
+      id: 121,
+      question: "Sĩ quan cấp Tá trong Quân đội nhân dân Việt Nam cao nhất là cấp hàm nào?",
+      options: [
+        "A. Trung tá",
+        "B. Thượng tá",
+        "C. Đại tá (4 sao dệt nổi trên 2 vạch vàng)",
+        "D. Thiếu tướng"
+      ],
+      correctAnswer: 2,
+      explanation: "Cấp Tá gồm 4 bậc từ thấp đến cao: Thiếu tá, Trung tá, Thượng tá, Đại tá. Cao nhất cấp Tá là Đại tá."
+    },
+    {
+      id: 122,
+      question: "Cầu vai có dệt cầu nhung đỏ, đính 2 sao vàng và có 1 vạch sọc chạy song song biểu trưng cấp hàm gì?",
+      options: [
+        "A. Thiếu úy",
+        "B. Trung úy (1 vạch dọc, 2 sao vàng viền đỏ dọc tay áo)",
+        "C. Trung tá",
+        "D. Thiếu tá"
+      ],
+      correctAnswer: 1,
+      explanation: "1 vạch dọc vàng dệt chìm biểu thị cấp Úy, kết hợp đính kèm đúng 2 ngôi sao vàng phản chiếu đại diện cho học vị sĩ quan Trung úy quân nhân."
+    },
+    {
+      id: 123,
+      question: "Khi đối phương dội súng đạn xối xả nằm phục kích bắn tỉa, tư thế tiến công bò lê nào là phù hợp an toàn nhất cho người lính?",
+      options: [
+        "A. Đi lom khom chạy nhanh vượt hào rộng",
+        "B. Trườn sấp phẳng người dưới đất sâu vạt rác cỏ ẩm",
+        "C. Nhảy lùi dốc phòng thủ dã chiến",
+        "D. Đi hiên ngang khiêu khích dụ đối thủ tốn đạn"
+      ],
+      correctAnswer: 1,
+      explanation: "Trườn sấp sát sụt hạ xuống mặt đất mấp mô sỏi đá cỏ rậm là tư thế khép thấp nhất diện tích cơ thể, hạn chế tối đa hỏa lực quét trực diện."
+    },
+    {
+      id: 124,
+      question: "Một địa vật được xem là che chở (hay che đỡ) kiên cố hoàn hảo khi thỏa mãn đặc tính kỹ thuật nào?",
+      options: [
+        "A. Giúp học sinh che giấu mắt kẻ thù nhưng đạn dễ dàng xuyên thẳng qua",
+        "B. Vừa che được mắt địch quan sát vừa ngăn chặn được mảnh vỡ thuốc súng đạn ráo thẳng",
+        "C. Là nơi hông có ánh sáng mặt trời rọi thẳng xuống",
+        "D. Chỉ che chắn được dơi muỗi rừng ẩm xung quanh"
+      ],
+      correctAnswer: 1,
+      explanation: "Địa vật che chở có giá trị bền chắc cao vừa che khuất thân thể khỏi ánh tầm bắt, vừa có khả năng phản lực hứng lực chống đạn xuyên thép vững vàng."
+    },
+    {
+      id: 125,
+      question: "Bức tranh tổng thể hệ thống Công an nhân dân Việt Nam được xây dựng bởi hai mũi nhọn trọng pháp nào?",
+      options: [
+        "A. Lực lượng Đặc công thủy và Không quân an ninh",
+        "B. Lực lượng An ninh nhân dân và Cảnh sát nhân dân",
+        "C. Cảnh vệ dinh thự và Phạt nguội công bằng",
+        "D. An ninh cơ mật mật vụ và Bộ binh dã chiến"
+      ],
+      correctAnswer: 1,
+      explanation: "Cơ cấu trụ cột của Bộ Công an chính là lực lượng An ninh nhân dân bảo vệ mật vụ quốc phòng nội vụ & Cảnh sát nhân dân giữ gìn trật tự an sinh."
+    },
+    {
+      id: 126,
+      question: "Trên bản đồ quân sự, hướng hành quân tấn công hay điểm xuất phát thực binh của quân ta dã chiến được biểu hiệu quy định bằng màu gì?",
+      options: [
+        "A. Màu lục thẫm bảo trì nguy trang",
+        "B. Màu xanh lam đậm chỉ điểm rút lui",
+        "C. Màu đỏ tươi anh dũng chí nhiệt huyết",
+        "D. Màu vàng chanh cảnh báo khói bụi hiểm họa"
+      ],
+      correctAnswer: 2,
+      explanation: "Theo đúng điều luật đồ bản vẽ quân sự chung, màu đỏ tươi biểu hiện chủ thể quân ta hành chiến dã trận, sọc màu xanh lam đại diện đối phương địch."
+    },
+    {
+      id: 127,
+      question: "Độ tuổi cao nhất được phép xin tạm hoãn thi hành nghĩa vụ quân sự để học cử nhân đại học lần đầu là hết bao nhiêu?",
+      options: [
+        "A. Hết 22 tuổi",
+        "B. Hết 25 tuổi",
+        "C. Hết 27 tuổi",
+        "D. Hết 30 tuổi"
+      ],
+      correctAnswer: 2,
+      explanation: "Theo điểm g khoản 1 Điều 41 Luật nghĩa vụ quân sự 2015, sinh viên đại học chính quy được tạm hoãn tối đa tới hết năm 27 tuổi."
+    },
+    {
+      id: 128,
+      question: "Tầm bắn thẳng đối với mục tiêu bia người nằm của súng AK-47 là khoảng bao nhiêu mét?",
+      options: [
+        "A. 100 m",
+        "B. 350 m",
+        "C. 525 m",
+        "D. 800 m"
+      ],
+      correctAnswer: 1,
+      explanation: "Tầm bắn thẳng mục tiêu bia người nằm (bia số 4) của súng tiểu liên AK-47 là 350 mét, đối với bia người chạy khom là 525 mét."
+    }
+  ]
+};
+
+export const AK_DISASSEMBLY_STEPS: AKPartDisassembly[] = [
+  {
+    id: "step1",
+    name: "magazine-safety",
+    vietnameseName: "Tháo hộp tiếp đạn & Khám súng",
+    description: "Tay trái cầm ốp lót tay, tay phải bóp khóa giữ phát hộp tiếp đạn đẩy ra. Sau đó gạt khóa an toàn xuống, kéo bệ khóa nòng hết cỡ ra sau để khám buồng đạn xem có đạn sót hay không, thả bệ khóa nòng về và bóp cò sập búa.",
+    correctStep: 1
+  },
+  {
+    id: "step2",
+    name: "accessory-kit",
+    vietnameseName: "Tháo ống phụ tùng (hộp phụ tùng)",
+    description: "Dùng ngón tay ấn vào nắp chứa phụ tùng ở báng súng để nắp mở ra, lôi ống phụ tùng ra ngoài và đóng nắp lò xo lại kín.",
+    correctStep: 2
+  },
+  {
+    id: "step3",
+    name: "cleaning-rod",
+    vietnameseName: "Tháo thông nòng (thao tác rút bệ khép)",
+    description: "Kéo thông nòng lệch khỏi khe giữ đầu súng rồi rút thẳng thông nòng theo chiều dọc đặt gọn bên cạnh thảm ráp.",
+    correctStep: 3
+  },
+  {
+    id: "step4",
+    name: "receiver-cover",
+    vietnameseName: "Tháo nắp hộp khóa nòng",
+    description: "Ấn ngón tay cái vào nút giữ bộ phận đẩy về nằm ở đuôi hộp khóa nòng, đồng thời tay kia nhấc nắp hộp khóa nòng lên trên và giật ra phía sau.",
+    correctStep: 4
+  },
+  {
+    id: "step5",
+    name: "recoil-spring",
+    vietnameseName: "Tháo bộ phận đẩy về (Lò xo đẩy về)",
+    description: "Tay phải đẩy chuôi bộ phận đẩy về về phía trước cho ra khỏi rãnh chứa, nhấc nhẹ chuôi lên rồi rút toàn bộ lò xo đẩy về ra ngoài.",
+    correctStep: 5
+  },
+  {
+    id: "step6",
+    name: "bolt-carrier",
+    vietnameseName: "Tháo bệ khóa nòng & khóa nòng",
+    description: "Tay phải kéo bệ khóa nòng hết cỡ ra sau, nhấc bệ khóa nòng lên trên nhấc khỏi rãnh trượt trong hộp khóa nòng, đưa ra ngoài.",
+    correctStep: 6
+  },
+  {
+    id: "step7",
+    name: "bolt-separation",
+    vietnameseName: "Tháo khóa nòng ra khỏi bệ",
+    description: "Xoay khóa nòng sang trái, đẩy lùi ra sau cho chốt định vị lọt khớp rãnh, nhẹ nhàng tách rời khóa nòng ra khỏi bệ khóa nòng.",
+    correctStep: 7
+  },
+  {
+    id: "step8",
+    name: "gas-tube",
+    vietnameseName: "Tháo ống dẫn gas & ốp lót tay trên",
+    description: "Tay phải nâng chốt lẫy chặn ống dẫn gas lên trên một góc 45 độ, tay trái nhấc ống dẫn gas và ốp lót tay trên ra khỏi miệng ôm bệ nòng.",
+    correctStep: 8
+  }
+];

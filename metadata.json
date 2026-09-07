@@ -1,0 +1,8 @@
+{
+  "name": "Giáo dục Quốc phòng & An ninh THPT",
+  "description": "Nền tảng học tập, mô phỏng thực hành tháo lắp súng AK, mô phỏng kỹ thuật bắn súng và trợ lý ảo GDQPAN cho học sinh lớp 10, 11, 12.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
