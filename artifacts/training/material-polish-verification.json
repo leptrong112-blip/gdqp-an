@@ -1,0 +1,1540 @@
+{
+  "passed": true,
+  "before": {
+    "file": "artifacts\\training\\training-ground-before-materials.glb",
+    "bytes": 8126460,
+    "sha256": "640ea8700869c9088256f8a1ca59434f40e040903bd4acec8ad4b2d903ef4fa2"
+  },
+  "after": {
+    "file": "public\\models\\training\\training-ground.glb",
+    "bytes": 10212560,
+    "sha256": "7080b536798feae40a93cbb50ccabbe31d662b2179c574f99815abdc2493e354"
+  },
+  "preservation": {
+    "nodeCount": 88,
+    "meshCount": 88,
+    "primitives": 88,
+    "vertices": 257688,
+    "triangles": 323564,
+    "originalBinaryBytes": 8061576,
+    "originalBinarySha256": "4a6e535f1d02c45a94414bb420fbb531f6358a7c8282283232a62fffc6781958",
+    "originalAccessors": 233,
+    "originalBufferViews": 233,
+    "unchangedAttributes": 176,
+    "nodesAndTransforms": "exact",
+    "scenesAndHierarchy": "exact",
+    "originalGeometryBytes": "exact",
+    "topologyAndBounds": "exact"
+  },
+  "materials": {
+    "restoredOrganicPrimitives": 28,
+    "coloredPrimitives": 88,
+    "finiteNormalizedColors": true,
+    "variationVerified": true,
+    "whiteOrganicMaterialUse": false,
+    "meshes": [
+      {
+        "name": "formation_boundary_posts_mesh",
+        "primitive": 0,
+        "material": "Training_chalk",
+        "vertices": 384,
+        "minimumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "formation_flag_finial_mesh",
+        "primitive": 0,
+        "material": "Training_gold",
+        "vertices": 54,
+        "minimumRgb": [
+          0.5840848401617457,
+          0.37625696192874036,
+          0.09306477454795148
+        ],
+        "maximumRgb": [
+          0.5840848401617457,
+          0.37625696192874036,
+          0.09306477454795148
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "formation_flag_plinth_mesh",
+        "primitive": 0,
+        "material": "Training_concrete",
+        "vertices": 288,
+        "minimumRgb": [
+          0.2971999694819562,
+          0.3061875333791104,
+          0.2627756160830091
+        ],
+        "maximumRgb": [
+          0.30783550774395363,
+          0.3171587701228351,
+          0.27219043259327075
+        ],
+        "maximumChannelRange": 0.010971236743724688
+      },
+      {
+        "name": "formation_flag_star_mesh",
+        "primitive": 0,
+        "material": "Training_gold",
+        "vertices": 10,
+        "minimumRgb": [
+          0.5840848401617457,
+          0.37625696192874036,
+          0.09306477454795148
+        ],
+        "maximumRgb": [
+          0.5840848401617457,
+          0.37625696192874036,
+          0.09306477454795148
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "formation_flagpole_mesh",
+        "primitive": 0,
+        "material": "Training_flagpole",
+        "vertices": 24,
+        "minimumRgb": [
+          0.3864347295338369,
+          0.4178835736629282,
+          0.37625696192874036
+        ],
+        "maximumRgb": [
+          0.3864347295338369,
+          0.4178835736629282,
+          0.37625696192874036
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "formation_label",
+        "primitive": 0,
+        "material": "Training_chalk",
+        "vertices": 2364,
+        "minimumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "formation_paving_mesh",
+        "primitive": 0,
+        "material": "Training_paving",
+        "vertices": 17280,
+        "minimumRgb": [
+          0.26259250782024873,
+          0.28284122987716487,
+          0.23942931258106356
+        ],
+        "maximumRgb": [
+          0.3084153505760281,
+          0.3322041657129778,
+          0.28122377355611505
+        ],
+        "maximumChannelRange": 0.049362935835812916
+      },
+      {
+        "name": "formation_post_caps_mesh",
+        "primitive": 0,
+        "material": "Training_red",
+        "vertices": 384,
+        "minimumRgb": [
+          0.42327000839246204,
+          0.0703593499656672,
+          0.045181963836118104
+        ],
+        "maximumRgb": [
+          0.42327000839246204,
+          0.0703593499656672,
+          0.045181963836118104
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "formation_sign_panels_mesh",
+        "primitive": 0,
+        "material": "Training_sign",
+        "vertices": 96,
+        "minimumRgb": [
+          0.022171358815899902,
+          0.0742198825055314,
+          0.04666208896009766
+        ],
+        "maximumRgb": [
+          0.022171358815899902,
+          0.0742198825055314,
+          0.04666208896009766
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "formation_sign_supports_mesh",
+        "primitive": 0,
+        "material": "Training_metal",
+        "vertices": 192,
+        "minimumRgb": [
+          0.08865491721980621,
+          0.12477302204928664,
+          0.10946822308690013
+        ],
+        "maximumRgb": [
+          0.08865491721980621,
+          0.12477302204928664,
+          0.10946822308690013
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "formation_sign_trim_mesh",
+        "primitive": 0,
+        "material": "Training_gold",
+        "vertices": 96,
+        "minimumRgb": [
+          0.5840848401617457,
+          0.37625696192874036,
+          0.09306477454795148
+        ],
+        "maximumRgb": [
+          0.5840848401617457,
+          0.37625696192874036,
+          0.09306477454795148
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "formation_subtitle",
+        "primitive": 0,
+        "material": "Training_chalk",
+        "vertices": 2256,
+        "minimumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "formation_vietnam_flag_mesh",
+        "primitive": 0,
+        "material": "Training_flag",
+        "vertices": 70,
+        "minimumRgb": [
+          0.49102006561379413,
+          0.029556725413900968,
+          0.027313649195086595
+        ],
+        "maximumRgb": [
+          0.49102006561379413,
+          0.029556725413900968,
+          0.027313649195086595
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "formation_white_markings_mesh",
+        "primitive": 0,
+        "material": "Training_chalk",
+        "vertices": 14688,
+        "minimumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "movement_compacted_lane_mesh",
+        "primitive": 0,
+        "material": "Training_movement",
+        "vertices": 355,
+        "minimumRgb": [
+          0.2785687037460899,
+          0.227695124742504,
+          0.10298313878080415
+        ],
+        "maximumRgb": [
+          0.4768902113374533,
+          0.33150225070572975,
+          0.16063172350652324
+        ],
+        "maximumChannelRange": 0.1983215075913634
+      },
+      {
+        "name": "movement_DICH",
+        "primitive": 0,
+        "material": "Training_chalk",
+        "vertices": 672,
+        "minimumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "movement_label",
+        "primitive": 0,
+        "material": "Training_chalk",
+        "vertices": 3276,
+        "minimumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "movement_lane_marking_mesh",
+        "primitive": 0,
+        "material": "Training_chalk",
+        "vertices": 432,
+        "minimumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "movement_lane_posts_mesh",
+        "primitive": 0,
+        "material": "Training_chalk",
+        "vertices": 384,
+        "minimumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "movement_low_obstacle_beams_mesh",
+        "primitive": 0,
+        "material": "Training_wood",
+        "vertices": 72,
+        "minimumRgb": [
+          0.2502479591058213,
+          0.12678721293965056,
+          0.05355916685740444
+        ],
+        "maximumRgb": [
+          0.2815594720378424,
+          0.14265659571221484,
+          0.06025787747005417
+        ],
+        "maximumChannelRange": 0.03131151293202106
+      },
+      {
+        "name": "movement_low_obstacle_posts_mesh",
+        "primitive": 0,
+        "material": "Training_wood",
+        "vertices": 576,
+        "minimumRgb": [
+          0.2515754940108339,
+          0.1274586099031052,
+          0.053849088273441675
+        ],
+        "maximumRgb": [
+          0.285648889906157,
+          0.14471656366826888,
+          0.06114290074006256
+        ],
+        "maximumChannelRange": 0.0340733958953231
+      },
+      {
+        "name": "movement_obstacle_pad_mesh",
+        "primitive": 0,
+        "material": "Training_dirt",
+        "vertices": 193,
+        "minimumRgb": [
+          0.20195315480277715,
+          0.17901884489204242,
+          0.07658503089951935
+        ],
+        "maximumRgb": [
+          0.2946822308690013,
+          0.21600671396963456,
+          0.09539940489814602
+        ],
+        "maximumChannelRange": 0.09272907606622416
+      },
+      {
+        "name": "movement_red_post_tops_mesh",
+        "primitive": 0,
+        "material": "Training_red",
+        "vertices": 384,
+        "minimumRgb": [
+          0.42327000839246204,
+          0.0703593499656672,
+          0.045181963836118104
+        ],
+        "maximumRgb": [
+          0.42327000839246204,
+          0.0703593499656672,
+          0.045181963836118104
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "movement_sign_panels_mesh",
+        "primitive": 0,
+        "material": "Training_sign",
+        "vertices": 96,
+        "minimumRgb": [
+          0.022171358815899902,
+          0.0742198825055314,
+          0.04666208896009766
+        ],
+        "maximumRgb": [
+          0.022171358815899902,
+          0.0742198825055314,
+          0.04666208896009766
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "movement_sign_supports_mesh",
+        "primitive": 0,
+        "material": "Training_metal",
+        "vertices": 192,
+        "minimumRgb": [
+          0.08865491721980621,
+          0.12477302204928664,
+          0.10946822308690013
+        ],
+        "maximumRgb": [
+          0.08865491721980621,
+          0.12477302204928664,
+          0.10946822308690013
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "movement_sign_trim_mesh",
+        "primitive": 0,
+        "material": "Training_gold",
+        "vertices": 96,
+        "minimumRgb": [
+          0.5840848401617457,
+          0.37625696192874036,
+          0.09306477454795148
+        ],
+        "maximumRgb": [
+          0.5840848401617457,
+          0.37625696192874036,
+          0.09306477454795148
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "movement_subtitle",
+        "primitive": 0,
+        "material": "Training_chalk",
+        "vertices": 3372,
+        "minimumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "movement_XUAT PHAT",
+        "primitive": 0,
+        "material": "Training_chalk",
+        "vertices": 784,
+        "minimumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "open_bare_observation_ground_mesh",
+        "primitive": 0,
+        "material": "Training_openGround",
+        "vertices": 193,
+        "minimumRgb": [
+          0.24795910582131686,
+          0.24255741206988632,
+          0.10428015564202335
+        ],
+        "maximumRgb": [
+          0.39040207522697795,
+          0.33020523384451056,
+          0.15461966887922485
+        ],
+        "maximumChannelRange": 0.1424429694056611
+      },
+      {
+        "name": "open_label",
+        "primitive": 0,
+        "material": "Training_chalk",
+        "vertices": 2320,
+        "minimumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "open_sign_panels_mesh",
+        "primitive": 0,
+        "material": "Training_sign",
+        "vertices": 96,
+        "minimumRgb": [
+          0.022171358815899902,
+          0.0742198825055314,
+          0.04666208896009766
+        ],
+        "maximumRgb": [
+          0.022171358815899902,
+          0.0742198825055314,
+          0.04666208896009766
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "open_sign_supports_mesh",
+        "primitive": 0,
+        "material": "Training_metal",
+        "vertices": 192,
+        "minimumRgb": [
+          0.08865491721980621,
+          0.12477302204928664,
+          0.10946822308690013
+        ],
+        "maximumRgb": [
+          0.08865491721980621,
+          0.12477302204928664,
+          0.10946822308690013
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "open_sign_trim_mesh",
+        "primitive": 0,
+        "material": "Training_gold",
+        "vertices": 96,
+        "minimumRgb": [
+          0.5840848401617457,
+          0.37625696192874036,
+          0.09306477454795148
+        ],
+        "maximumRgb": [
+          0.5840848401617457,
+          0.37625696192874036,
+          0.09306477454795148
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "open_subtitle",
+        "primitive": 0,
+        "material": "Training_chalk",
+        "vertices": 1876,
+        "minimumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "sandbag_compacted_pad_mesh",
+        "primitive": 0,
+        "material": "Training_dirt",
+        "vertices": 193,
+        "minimumRgb": [
+          0.20744640268558787,
+          0.1774776836804761,
+          0.07833981841763943
+        ],
+        "maximumRgb": [
+          0.30287632562752725,
+          0.20738536659800108,
+          0.0980544747081712
+        ],
+        "maximumChannelRange": 0.09542992294193939
+      },
+      {
+        "name": "sandbag_label",
+        "primitive": 0,
+        "material": "Training_chalk",
+        "vertices": 1320,
+        "minimumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "sandbag_sign_panels_mesh",
+        "primitive": 0,
+        "material": "Training_sign",
+        "vertices": 96,
+        "minimumRgb": [
+          0.022171358815899902,
+          0.0742198825055314,
+          0.04666208896009766
+        ],
+        "maximumRgb": [
+          0.022171358815899902,
+          0.0742198825055314,
+          0.04666208896009766
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "sandbag_sign_supports_mesh",
+        "primitive": 0,
+        "material": "Training_metal",
+        "vertices": 192,
+        "minimumRgb": [
+          0.08865491721980621,
+          0.12477302204928664,
+          0.10946822308690013
+        ],
+        "maximumRgb": [
+          0.08865491721980621,
+          0.12477302204928664,
+          0.10946822308690013
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "sandbag_sign_trim_mesh",
+        "primitive": 0,
+        "material": "Training_gold",
+        "vertices": 96,
+        "minimumRgb": [
+          0.5840848401617457,
+          0.37625696192874036,
+          0.09306477454795148
+        ],
+        "maximumRgb": [
+          0.5840848401617457,
+          0.37625696192874036,
+          0.09306477454795148
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "sandbag_staggered_rounded_sacks_mesh",
+        "primitive": 0,
+        "material": "Training_sandbag",
+        "vertices": 4608,
+        "minimumRgb": [
+          0.428046082246128,
+          0.3296864271000229,
+          0.1761501487754635
+        ],
+        "maximumRgb": [
+          0.49575036240177006,
+          0.38184176394293123,
+          0.20401312275883116
+        ],
+        "maximumChannelRange": 0.06770428015564206
+      },
+      {
+        "name": "sandbag_stitched_edges_mesh",
+        "primitive": 0,
+        "material": "Training_stitch",
+        "vertices": 256,
+        "minimumRgb": [
+          0.25764858472571905,
+          0.18452735179674984,
+          0.08925001907377737
+        ],
+        "maximumRgb": [
+          0.27704280155642025,
+          0.19841306172274356,
+          0.0959639887083238
+        ],
+        "maximumChannelRange": 0.019394216830701194
+      },
+      {
+        "name": "sandbag_subtitle",
+        "primitive": 0,
+        "material": "Training_chalk",
+        "vertices": 2052,
+        "minimumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "terrain_bench_frames_mesh",
+        "primitive": 0,
+        "material": "Training_metal",
+        "vertices": 1152,
+        "minimumRgb": [
+          0.08865491721980621,
+          0.12477302204928664,
+          0.10946822308690013
+        ],
+        "maximumRgb": [
+          0.08865491721980621,
+          0.12477302204928664,
+          0.10946822308690013
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "terrain_bench_timber_mesh",
+        "primitive": 0,
+        "material": "Training_wood",
+        "vertices": 1440,
+        "minimumRgb": [
+          0.23852903028915848,
+          0.12085145342183566,
+          0.051056687266346226
+        ],
+        "maximumRgb": [
+          0.2930800335698482,
+          0.14848554207675288,
+          0.06272983901731899
+        ],
+        "maximumChannelRange": 0.05455100328068971
+      },
+      {
+        "name": "terrain_earth_profile_mesh",
+        "primitive": 0,
+        "material": "Training_earth",
+        "vertices": 2000,
+        "minimumRgb": [
+          0.17149614709697109,
+          0.1087510490577554,
+          0.05857938506141756
+        ],
+        "maximumRgb": [
+          0.19726863508049133,
+          0.12507820248722057,
+          0.0673838406958114
+        ],
+        "maximumChannelRange": 0.025772487983520248
+      },
+      {
+        "name": "terrain_lower_foundation_mesh",
+        "primitive": 0,
+        "material": "Training_earth",
+        "vertices": 216,
+        "minimumRgb": [
+          0.1804074158846418,
+          0.11439688715953307,
+          0.061615930418860154
+        ],
+        "maximumRgb": [
+          0.1901121538109407,
+          0.12054627298390173,
+          0.06494239719233998
+        ],
+        "maximumChannelRange": 0.009704737926298918
+      },
+      {
+        "name": "terrain_observation_path_mesh",
+        "primitive": 0,
+        "material": "Training_path",
+        "vertices": 385,
+        "minimumRgb": [
+          0.23909361409933624,
+          0.1992217898832685,
+          0.09018081940947585
+        ],
+        "maximumRgb": [
+          0.3846799420157168,
+          0.2711680781261921,
+          0.133852140077821
+        ],
+        "maximumChannelRange": 0.14558632791638057
+      },
+      {
+        "name": "terrain_perimeter_fence_mesh",
+        "primitive": 0,
+        "material": "Training_wood",
+        "vertices": 9780,
+        "minimumRgb": [
+          0.2204470893415732,
+          0.11169604028381781,
+          0.047180895704585335
+        ],
+        "maximumRgb": [
+          0.2904097047379263,
+          0.1471427481498436,
+          0.06214999618524453
+        ],
+        "maximumChannelRange": 0.06996261539635312
+      },
+      {
+        "name": "terrain_perimeter_path_mesh",
+        "primitive": 0,
+        "material": "Training_path",
+        "vertices": 775,
+        "minimumRgb": [
+          0.2293430991073472,
+          0.20498970016021972,
+          0.08921950102998398
+        ],
+        "maximumRgb": [
+          0.3901579308766308,
+          0.275043869687953,
+          0.13575951781490805
+        ],
+        "maximumChannelRange": 0.1608148317692836
+      },
+      {
+        "name": "terrain_scattered_stones_mesh",
+        "primitive": 0,
+        "material": "Training_stone",
+        "vertices": 2730,
+        "minimumRgb": [
+          0.24751659418631267,
+          0.24370183871213855,
+          0.18728923476005188
+        ],
+        "maximumRgb": [
+          0.2838788433661402,
+          0.27949950408178836,
+          0.2148165102616922
+        ],
+        "maximumChannelRange": 0.036362249179827555
+      },
+      {
+        "name": "terrain_sculpted_surface_mesh",
+        "primitive": 0,
+        "material": "Training_grass",
+        "vertices": 62101,
+        "minimumRgb": [
+          0.12358281834134432,
+          0.10392919813839933,
+          0.055985351338979174
+        ],
+        "maximumRgb": [
+          0.21725795376516366,
+          0.2461585412375067,
+          0.09753566796368353
+        ],
+        "maximumChannelRange": 0.14222934309910734
+      },
+      {
+        "name": "terrain_trench_approach_mesh",
+        "primitive": 0,
+        "material": "Training_path",
+        "vertices": 135,
+        "minimumRgb": [
+          0.23695735103379872,
+          0.206332494087129,
+          0.0912489509422446
+        ],
+        "maximumRgb": [
+          0.3739375906004425,
+          0.2635996032654307,
+          0.1301136797131304
+        ],
+        "maximumChannelRange": 0.1369802395666438
+      },
+      {
+        "name": "trench_label",
+        "primitive": 0,
+        "material": "Training_chalk",
+        "vertices": 2024,
+        "minimumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "trench_retaining_boards_mesh",
+        "primitive": 0,
+        "material": "Training_trenchWood",
+        "vertices": 8640,
+        "minimumRgb": [
+          0.1578088044556344,
+          0.08772411688410772,
+          0.03765926604104677
+        ],
+        "maximumRgb": [
+          0.18879987792782482,
+          0.10495155260547799,
+          0.04505989166094453
+        ],
+        "maximumChannelRange": 0.030991073472190434
+      },
+      {
+        "name": "trench_sign_panels_mesh",
+        "primitive": 0,
+        "material": "Training_sign",
+        "vertices": 96,
+        "minimumRgb": [
+          0.022171358815899902,
+          0.0742198825055314,
+          0.04666208896009766
+        ],
+        "maximumRgb": [
+          0.022171358815899902,
+          0.0742198825055314,
+          0.04666208896009766
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "trench_sign_supports_mesh",
+        "primitive": 0,
+        "material": "Training_metal",
+        "vertices": 192,
+        "minimumRgb": [
+          0.08865491721980621,
+          0.12477302204928664,
+          0.10946822308690013
+        ],
+        "maximumRgb": [
+          0.08865491721980621,
+          0.12477302204928664,
+          0.10946822308690013
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "trench_sign_trim_mesh",
+        "primitive": 0,
+        "material": "Training_gold",
+        "vertices": 96,
+        "minimumRgb": [
+          0.5840848401617457,
+          0.37625696192874036,
+          0.09306477454795148
+        ],
+        "maximumRgb": [
+          0.5840848401617457,
+          0.37625696192874036,
+          0.09306477454795148
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "trench_subtitle",
+        "primitive": 0,
+        "material": "Training_chalk",
+        "vertices": 3744,
+        "minimumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "trench_timber_floor_mesh",
+        "primitive": 0,
+        "material": "Training_trenchWood",
+        "vertices": 12744,
+        "minimumRgb": [
+          0.1505455100328069,
+          0.08369573510337987,
+          0.03593499656672007
+        ],
+        "maximumRgb": [
+          0.18648050659952697,
+          0.1036697947661555,
+          0.044510566872663464
+        ],
+        "maximumChannelRange": 0.035934996566720084
+      },
+      {
+        "name": "trench_uprights_mesh",
+        "primitive": 0,
+        "material": "Training_trenchWood",
+        "vertices": 588,
+        "minimumRgb": [
+          0.1504539559014267,
+          0.08363469901579308,
+          0.03590447852292668
+        ],
+        "maximumRgb": [
+          0.19119554436560615,
+          0.10629434653238727,
+          0.0456244754711223
+        ],
+        "maximumChannelRange": 0.04074158846417944
+      },
+      {
+        "name": "vegetation_approach_mesh",
+        "primitive": 0,
+        "material": "Training_path",
+        "vertices": 180,
+        "minimumRgb": [
+          0.2388494697489891,
+          0.19942015716792555,
+          0.09018081940947585
+        ],
+        "maximumRgb": [
+          0.38994430457007706,
+          0.27489127946898606,
+          0.13568322270542457
+        ],
+        "maximumChannelRange": 0.15109483482108796
+      },
+      {
+        "name": "vegetation_Bush_Large_mesh",
+        "primitive": 0,
+        "material": "Training_bushLarge",
+        "vertices": 6160,
+        "minimumRgb": [
+          0.05424582284275578,
+          0.09823758297093156,
+          0.03048752574959945
+        ],
+        "maximumRgb": [
+          0.07156481269550621,
+          0.12962539101243611,
+          0.04022278171969177
+        ],
+        "maximumChannelRange": 0.03138780804150455
+      },
+      {
+        "name": "vegetation_Bush_Medium_mesh",
+        "primitive": 0,
+        "material": "Training_bushMedium",
+        "vertices": 7280,
+        "minimumRgb": [
+          0.10762188143739987,
+          0.15487907225146869,
+          0.049607080186160064
+        ],
+        "maximumRgb": [
+          0.13310444800488289,
+          0.1915312428473335,
+          0.06135652704661631
+        ],
+        "maximumChannelRange": 0.036652170595864814
+      },
+      {
+        "name": "vegetation_grass_clumps_mesh",
+        "primitive": 0,
+        "material": "Training_grassClump",
+        "vertices": 12078,
+        "minimumRgb": [
+          0.14224460212100404,
+          0.18056000610360876,
+          0.06076142519264515
+        ],
+        "maximumRgb": [
+          0.19563591973754482,
+          0.24832532234683757,
+          0.0835584039063096
+        ],
+        "maximumChannelRange": 0.06776531624322882
+      },
+      {
+        "name": "vegetation_label",
+        "primitive": 0,
+        "material": "Training_chalk",
+        "vertices": 1820,
+        "minimumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "vegetation_sign_panels_mesh",
+        "primitive": 0,
+        "material": "Training_sign",
+        "vertices": 96,
+        "minimumRgb": [
+          0.022171358815899902,
+          0.0742198825055314,
+          0.04666208896009766
+        ],
+        "maximumRgb": [
+          0.022171358815899902,
+          0.0742198825055314,
+          0.04666208896009766
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "vegetation_sign_supports_mesh",
+        "primitive": 0,
+        "material": "Training_metal",
+        "vertices": 192,
+        "minimumRgb": [
+          0.08865491721980621,
+          0.12477302204928664,
+          0.10946822308690013
+        ],
+        "maximumRgb": [
+          0.08865491721980621,
+          0.12477302204928664,
+          0.10946822308690013
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "vegetation_sign_trim_mesh",
+        "primitive": 0,
+        "material": "Training_gold",
+        "vertices": 96,
+        "minimumRgb": [
+          0.5840848401617457,
+          0.37625696192874036,
+          0.09306477454795148
+        ],
+        "maximumRgb": [
+          0.5840848401617457,
+          0.37625696192874036,
+          0.09306477454795148
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "vegetation_subtitle",
+        "primitive": 0,
+        "material": "Training_chalk",
+        "vertices": 2280,
+        "minimumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "vegetation_Tree_A_branching_mesh",
+        "primitive": 0,
+        "material": "Training_bark",
+        "vertices": 3160,
+        "minimumRgb": [
+          0.12654306858930342,
+          0.06942854962996872,
+          0.035706111238269625
+        ],
+        "maximumRgb": [
+          0.16813916227969788,
+          0.09225604638742657,
+          0.04744029907682917
+        ],
+        "maximumChannelRange": 0.041596093690394464
+      },
+      {
+        "name": "vegetation_Tree_A_canopies_mesh",
+        "primitive": 0,
+        "material": "Training_treeA",
+        "vertices": 9720,
+        "minimumRgb": [
+          0.0494697489890898,
+          0.10592813000686656,
+          0.038788433661402305
+        ],
+        "maximumRgb": [
+          0.06929121843289845,
+          0.1483939879453727,
+          0.05433737697413596
+        ],
+        "maximumChannelRange": 0.042465857938506144
+      },
+      {
+        "name": "vegetation_Tree_B_branching_mesh",
+        "primitive": 0,
+        "material": "Training_bark",
+        "vertices": 2844,
+        "minimumRgb": [
+          0.12738231479362172,
+          0.06988632028686961,
+          0.03593499656672007
+        ],
+        "maximumRgb": [
+          0.16775768673228045,
+          0.09204242008087282,
+          0.0473334859235523
+        ],
+        "maximumChannelRange": 0.04037537193865873
+      },
+      {
+        "name": "vegetation_Tree_B_canopies_mesh",
+        "primitive": 0,
+        "material": "Training_treeB",
+        "vertices": 8748,
+        "minimumRgb": [
+          0.0959639887083238,
+          0.1508812085145342,
+          0.04597543297474632
+        ],
+        "maximumRgb": [
+          0.12455939574273289,
+          0.19583428702220188,
+          0.05966277561608301
+        ],
+        "maximumChannelRange": 0.044953078507667665
+      },
+      {
+        "name": "vegetation_Tree_C_branching_mesh",
+        "primitive": 0,
+        "material": "Training_bark",
+        "vertices": 2844,
+        "minimumRgb": [
+          0.12774853131914243,
+          0.07009994659342336,
+          0.036041809719996945
+        ],
+        "maximumRgb": [
+          0.16696421759365224,
+          0.09161516746776531,
+          0.04710460059510185
+        ],
+        "maximumChannelRange": 0.0392156862745098
+      },
+      {
+        "name": "vegetation_Tree_C_canopies_mesh",
+        "primitive": 0,
+        "material": "Training_treeC",
+        "vertices": 8748,
+        "minimumRgb": [
+          0.07331960021362631,
+          0.11975280384527352,
+          0.04618905928130007
+        ],
+        "maximumRgb": [
+          0.09817654688334478,
+          0.16032654306858932,
+          0.0618295567254139
+        ],
+        "maximumChannelRange": 0.040573739223315794
+      },
+      {
+        "name": "wall_brick_cap_mesh",
+        "primitive": 0,
+        "material": "Training_concrete",
+        "vertices": 96,
+        "minimumRgb": [
+          0.2738536659800107,
+          0.28213931486991684,
+          0.24213015945677882
+        ],
+        "maximumRgb": [
+          0.2822156099794003,
+          0.29074540321965364,
+          0.2495307850766766
+        ],
+        "maximumChannelRange": 0.008606088349736807
+      },
+      {
+        "name": "wall_brick_footing_mesh",
+        "primitive": 0,
+        "material": "Training_concrete",
+        "vertices": 96,
+        "minimumRgb": [
+          0.27402151522087437,
+          0.2823071641107805,
+          0.24228274967574578
+        ],
+        "maximumRgb": [
+          0.29188982986190587,
+          0.30070954451819637,
+          0.2580758373388266
+        ],
+        "maximumChannelRange": 0.018402380407415875
+      },
+      {
+        "name": "wall_concrete_cap_mesh",
+        "primitive": 0,
+        "material": "Training_concrete",
+        "vertices": 288,
+        "minimumRgb": [
+          0.2922713054093233,
+          0.3011062790875105,
+          0.2584267948424506
+        ],
+        "maximumRgb": [
+          0.3074998092622263,
+          0.3167925535973144,
+          0.2718852521553368
+        ],
+        "maximumChannelRange": 0.01568627450980392
+      },
+      {
+        "name": "wall_concrete_footing_mesh",
+        "primitive": 0,
+        "material": "Training_concrete",
+        "vertices": 96,
+        "minimumRgb": [
+          0.2892957961394675,
+          0.2980544747081712,
+          0.2558022430762188
+        ],
+        "maximumRgb": [
+          0.2988632028686961,
+          0.3079118028534371,
+          0.26425574120698864
+        ],
+        "maximumChannelRange": 0.009857328145265909
+      },
+      {
+        "name": "wall_concrete_panels_mesh",
+        "primitive": 0,
+        "material": "Training_concrete",
+        "vertices": 648,
+        "minimumRgb": [
+          0.2908979934386206,
+          0.2997024490730144,
+          0.25720607309071486
+        ],
+        "maximumRgb": [
+          0.3074845502403296,
+          0.3167925535973144,
+          0.2718852521553368
+        ],
+        "maximumChannelRange": 0.017090104524299987
+      },
+      {
+        "name": "wall_individual_beveled_bricks_mesh",
+        "primitive": 0,
+        "material": "Training_brick",
+        "vertices": 12312,
+        "minimumRgb": [
+          0.3414969100480659,
+          0.13981841763942932,
+          0.07479972533760586
+        ],
+        "maximumRgb": [
+          0.39256885633630884,
+          0.16073853665980012,
+          0.08598458838788434
+        ],
+        "maximumChannelRange": 0.05107194628824291
+      },
+      {
+        "name": "wall_label",
+        "primitive": 0,
+        "material": "Training_chalk",
+        "vertices": 3420,
+        "minimumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "wall_mortar_core_mesh",
+        "primitive": 0,
+        "material": "Training_mortar",
+        "vertices": 96,
+        "minimumRgb": [
+          0.34552529182879377,
+          0.3224383916990921,
+          0.2507972838941024
+        ],
+        "maximumRgb": [
+          0.36551461051346607,
+          0.3410849164568551,
+          0.2653086137178607
+        ],
+        "maximumChannelRange": 0.019989318684672297
+      },
+      {
+        "name": "wall_reinforced_posts_mesh",
+        "primitive": 0,
+        "material": "Training_concrete",
+        "vertices": 384,
+        "minimumRgb": [
+          0.2897077897306783,
+          0.298466468299382,
+          0.2561532005798428
+        ],
+        "maximumRgb": [
+          0.3072251468680858,
+          0.31653315022507056,
+          0.2716563668268864
+        ],
+        "maximumChannelRange": 0.018066681925688555
+      },
+      {
+        "name": "wall_sign_panels_mesh",
+        "primitive": 0,
+        "material": "Training_sign",
+        "vertices": 96,
+        "minimumRgb": [
+          0.022171358815899902,
+          0.0742198825055314,
+          0.04666208896009766
+        ],
+        "maximumRgb": [
+          0.022171358815899902,
+          0.0742198825055314,
+          0.04666208896009766
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "wall_sign_supports_mesh",
+        "primitive": 0,
+        "material": "Training_metal",
+        "vertices": 192,
+        "minimumRgb": [
+          0.08865491721980621,
+          0.12477302204928664,
+          0.10946822308690013
+        ],
+        "maximumRgb": [
+          0.08865491721980621,
+          0.12477302204928664,
+          0.10946822308690013
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "wall_sign_trim_mesh",
+        "primitive": 0,
+        "material": "Training_gold",
+        "vertices": 96,
+        "minimumRgb": [
+          0.5840848401617457,
+          0.37625696192874036,
+          0.09306477454795148
+        ],
+        "maximumRgb": [
+          0.5840848401617457,
+          0.37625696192874036,
+          0.09306477454795148
+        ],
+        "maximumChannelRange": 0
+      },
+      {
+        "name": "wall_subtitle",
+        "primitive": 0,
+        "material": "Training_chalk",
+        "vertices": 2128,
+        "minimumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumRgb": [
+          0.7304646372167544,
+          0.7230487525749599,
+          0.63076218814374
+        ],
+        "maximumChannelRange": 0
+      }
+    ]
+  },
+  "runtime": {
+    "loader": "Three.js GLTFLoader",
+    "meshes": 88,
+    "vertexColorMeshes": 88,
+    "vertexColorsEnabled": true
+  }
+}

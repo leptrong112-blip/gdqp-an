@@ -31,7 +31,7 @@ function CameraRig({ targetMesh }: { targetMesh: THREE.Object3D | null }) {
 
       setLerpState({ pos: idealPos, target: center });
     } else {
-      setLerpState({ pos: new THREE.Vector3(0, 0, 4.8), target: new THREE.Vector3(0, 0, 0) });
+      setLerpState({ pos: new THREE.Vector3(0, 0, 3.8), target: new THREE.Vector3(0, 0, 0) });
     }
   }, [targetMesh, camera]);
 
@@ -301,7 +301,7 @@ export default function AK47Simulation({
       {/* 3D CANVAS CONTAINER */}
       <div className="w-full h-full flex-1 min-h-0 relative z-10">
         <Canvas
-          camera={{ position: [0, 0, 4.8], fov: 42 }}
+          camera={{ position: [0, 0, 3.8], fov: 40 }}
           shadows
           gl={{ alpha: true }}
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}

@@ -26,6 +26,7 @@ import QuizSection from "./components/QuizSection";
 import SimulationSection from "./components/SimulationSection";
 import AiBotSection from "./components/AiBotSection";
 import HomePortalSection from "./components/HomePortalSection";
+import Footer from "./components/Footer";
 import { GradeLevel } from "./types";
 import TrainingSection from "./components/TrainingSection";
 import { BADGES } from "./gamification";
@@ -582,6 +583,7 @@ export default function App() {
             )}
           </ErrorBoundary>
         </main>
+        {activeTab !== "sim" && <Footer onNavigate={setActiveTab} />}
       </div>
     </div>
   );

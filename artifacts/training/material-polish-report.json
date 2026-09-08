@@ -1,0 +1,571 @@
+{
+  "source": "D:\\GDQP-WEBSITE - Copy\\public\\models\\training\\training-ground.glb",
+  "backup": "D:\\GDQP-WEBSITE - Copy\\artifacts\\training\\training-ground-before-materials.glb",
+  "meshes": 88,
+  "originalBytes": 10212560,
+  "outputBytes": 10212560,
+  "preserved": "All nodes, transforms, indices, positions, normals and existing attributes",
+  "palette": {
+    "grass": {
+      "color": "#68794a",
+      "roughness": 1
+    },
+    "earth": {
+      "color": "#776047",
+      "roughness": 1
+    },
+    "path": {
+      "color": "#a38b64",
+      "roughness": 0.98
+    },
+    "movement": {
+      "color": "#b2976c",
+      "roughness": 0.98
+    },
+    "openGround": {
+      "color": "#a4986b",
+      "roughness": 1
+    },
+    "dirt": {
+      "color": "#927956",
+      "roughness": 1
+    },
+    "paving": {
+      "color": "#91968b",
+      "roughness": 0.92
+    },
+    "treeA": {
+      "color": "#45643d",
+      "roughness": 0.94
+    },
+    "treeB": {
+      "color": "#5c7240",
+      "roughness": 0.94
+    },
+    "treeC": {
+      "color": "#536942",
+      "roughness": 0.94
+    },
+    "bushLarge": {
+      "color": "#4b6438",
+      "roughness": 0.98
+    },
+    "bushMedium": {
+      "color": "#667946",
+      "roughness": 0.98
+    },
+    "grassClump": {
+      "color": "#788650",
+      "roughness": 1
+    },
+    "bark": {
+      "color": "#6c513a",
+      "roughness": 1
+    },
+    "wood": {
+      "color": "#8c6643",
+      "roughness": 0.9
+    },
+    "trenchWood": {
+      "color": "#735739",
+      "roughness": 1
+    },
+    "sandbag": {
+      "color": "#b4a078",
+      "roughness": 1
+    },
+    "stitch": {
+      "color": "#8c7855",
+      "roughness": 1
+    },
+    "concrete": {
+      "color": "#92948a",
+      "roughness": 0.94
+    },
+    "brick": {
+      "color": "#a36c50",
+      "roughness": 0.96
+    },
+    "mortar": {
+      "color": "#a29d8c",
+      "roughness": 1
+    },
+    "stone": {
+      "color": "#8d8c7c",
+      "roughness": 1
+    },
+    "sign": {
+      "color": "#294d3d",
+      "roughness": 0.76
+    },
+    "metal": {
+      "color": "#54635d",
+      "roughness": 0.58,
+      "metallic": 0.35
+    },
+    "flagpole": {
+      "color": "#a7ada5",
+      "roughness": 0.43,
+      "metallic": 0.65
+    },
+    "chalk": {
+      "color": "#deddd0",
+      "roughness": 0.95
+    },
+    "gold": {
+      "color": "#c9a556",
+      "roughness": 0.6,
+      "metallic": 0.15
+    },
+    "red": {
+      "color": "#ae4b3c",
+      "roughness": 0.9
+    },
+    "flag": {
+      "color": "#ba302e",
+      "roughness": 0.94
+    }
+  },
+  "assignments": [
+    {
+      "mesh": "formation_boundary_posts_mesh",
+      "material": "chalk",
+      "vertices": 384
+    },
+    {
+      "mesh": "formation_flag_finial_mesh",
+      "material": "gold",
+      "vertices": 54
+    },
+    {
+      "mesh": "formation_flag_plinth_mesh",
+      "material": "concrete",
+      "vertices": 288
+    },
+    {
+      "mesh": "formation_flag_star_mesh",
+      "material": "gold",
+      "vertices": 10
+    },
+    {
+      "mesh": "formation_flagpole_mesh",
+      "material": "flagpole",
+      "vertices": 24
+    },
+    {
+      "mesh": "formation_label",
+      "material": "chalk",
+      "vertices": 2364
+    },
+    {
+      "mesh": "formation_paving_mesh",
+      "material": "paving",
+      "vertices": 17280
+    },
+    {
+      "mesh": "formation_post_caps_mesh",
+      "material": "red",
+      "vertices": 384
+    },
+    {
+      "mesh": "formation_sign_panels_mesh",
+      "material": "sign",
+      "vertices": 96
+    },
+    {
+      "mesh": "formation_sign_supports_mesh",
+      "material": "metal",
+      "vertices": 192
+    },
+    {
+      "mesh": "formation_sign_trim_mesh",
+      "material": "gold",
+      "vertices": 96
+    },
+    {
+      "mesh": "formation_subtitle",
+      "material": "chalk",
+      "vertices": 2256
+    },
+    {
+      "mesh": "formation_vietnam_flag_mesh",
+      "material": "flag",
+      "vertices": 70
+    },
+    {
+      "mesh": "formation_white_markings_mesh",
+      "material": "chalk",
+      "vertices": 14688
+    },
+    {
+      "mesh": "movement_compacted_lane_mesh",
+      "material": "movement",
+      "vertices": 355
+    },
+    {
+      "mesh": "movement_DICH",
+      "material": "chalk",
+      "vertices": 672
+    },
+    {
+      "mesh": "movement_label",
+      "material": "chalk",
+      "vertices": 3276
+    },
+    {
+      "mesh": "movement_lane_marking_mesh",
+      "material": "chalk",
+      "vertices": 432
+    },
+    {
+      "mesh": "movement_lane_posts_mesh",
+      "material": "chalk",
+      "vertices": 384
+    },
+    {
+      "mesh": "movement_low_obstacle_beams_mesh",
+      "material": "wood",
+      "vertices": 72
+    },
+    {
+      "mesh": "movement_low_obstacle_posts_mesh",
+      "material": "wood",
+      "vertices": 576
+    },
+    {
+      "mesh": "movement_obstacle_pad_mesh",
+      "material": "dirt",
+      "vertices": 193
+    },
+    {
+      "mesh": "movement_red_post_tops_mesh",
+      "material": "red",
+      "vertices": 384
+    },
+    {
+      "mesh": "movement_sign_panels_mesh",
+      "material": "sign",
+      "vertices": 96
+    },
+    {
+      "mesh": "movement_sign_supports_mesh",
+      "material": "metal",
+      "vertices": 192
+    },
+    {
+      "mesh": "movement_sign_trim_mesh",
+      "material": "gold",
+      "vertices": 96
+    },
+    {
+      "mesh": "movement_subtitle",
+      "material": "chalk",
+      "vertices": 3372
+    },
+    {
+      "mesh": "movement_XUAT PHAT",
+      "material": "chalk",
+      "vertices": 784
+    },
+    {
+      "mesh": "open_bare_observation_ground_mesh",
+      "material": "openGround",
+      "vertices": 193
+    },
+    {
+      "mesh": "open_label",
+      "material": "chalk",
+      "vertices": 2320
+    },
+    {
+      "mesh": "open_sign_panels_mesh",
+      "material": "sign",
+      "vertices": 96
+    },
+    {
+      "mesh": "open_sign_supports_mesh",
+      "material": "metal",
+      "vertices": 192
+    },
+    {
+      "mesh": "open_sign_trim_mesh",
+      "material": "gold",
+      "vertices": 96
+    },
+    {
+      "mesh": "open_subtitle",
+      "material": "chalk",
+      "vertices": 1876
+    },
+    {
+      "mesh": "sandbag_compacted_pad_mesh",
+      "material": "dirt",
+      "vertices": 193
+    },
+    {
+      "mesh": "sandbag_label",
+      "material": "chalk",
+      "vertices": 1320
+    },
+    {
+      "mesh": "sandbag_sign_panels_mesh",
+      "material": "sign",
+      "vertices": 96
+    },
+    {
+      "mesh": "sandbag_sign_supports_mesh",
+      "material": "metal",
+      "vertices": 192
+    },
+    {
+      "mesh": "sandbag_sign_trim_mesh",
+      "material": "gold",
+      "vertices": 96
+    },
+    {
+      "mesh": "sandbag_staggered_rounded_sacks_mesh",
+      "material": "sandbag",
+      "vertices": 4608
+    },
+    {
+      "mesh": "sandbag_stitched_edges_mesh",
+      "material": "stitch",
+      "vertices": 256
+    },
+    {
+      "mesh": "sandbag_subtitle",
+      "material": "chalk",
+      "vertices": 2052
+    },
+    {
+      "mesh": "terrain_bench_frames_mesh",
+      "material": "metal",
+      "vertices": 1152
+    },
+    {
+      "mesh": "terrain_bench_timber_mesh",
+      "material": "wood",
+      "vertices": 1440
+    },
+    {
+      "mesh": "terrain_earth_profile_mesh",
+      "material": "earth",
+      "vertices": 2000
+    },
+    {
+      "mesh": "terrain_lower_foundation_mesh",
+      "material": "earth",
+      "vertices": 216
+    },
+    {
+      "mesh": "terrain_observation_path_mesh",
+      "material": "path",
+      "vertices": 385
+    },
+    {
+      "mesh": "terrain_perimeter_fence_mesh",
+      "material": "wood",
+      "vertices": 9780
+    },
+    {
+      "mesh": "terrain_perimeter_path_mesh",
+      "material": "path",
+      "vertices": 775
+    },
+    {
+      "mesh": "terrain_scattered_stones_mesh",
+      "material": "stone",
+      "vertices": 2730
+    },
+    {
+      "mesh": "terrain_sculpted_surface_mesh",
+      "material": "grass",
+      "vertices": 62101
+    },
+    {
+      "mesh": "terrain_trench_approach_mesh",
+      "material": "path",
+      "vertices": 135
+    },
+    {
+      "mesh": "trench_label",
+      "material": "chalk",
+      "vertices": 2024
+    },
+    {
+      "mesh": "trench_retaining_boards_mesh",
+      "material": "trenchWood",
+      "vertices": 8640
+    },
+    {
+      "mesh": "trench_sign_panels_mesh",
+      "material": "sign",
+      "vertices": 96
+    },
+    {
+      "mesh": "trench_sign_supports_mesh",
+      "material": "metal",
+      "vertices": 192
+    },
+    {
+      "mesh": "trench_sign_trim_mesh",
+      "material": "gold",
+      "vertices": 96
+    },
+    {
+      "mesh": "trench_subtitle",
+      "material": "chalk",
+      "vertices": 3744
+    },
+    {
+      "mesh": "trench_timber_floor_mesh",
+      "material": "trenchWood",
+      "vertices": 12744
+    },
+    {
+      "mesh": "trench_uprights_mesh",
+      "material": "trenchWood",
+      "vertices": 588
+    },
+    {
+      "mesh": "vegetation_approach_mesh",
+      "material": "path",
+      "vertices": 180
+    },
+    {
+      "mesh": "vegetation_Bush_Large_mesh",
+      "material": "bushLarge",
+      "vertices": 6160
+    },
+    {
+      "mesh": "vegetation_Bush_Medium_mesh",
+      "material": "bushMedium",
+      "vertices": 7280
+    },
+    {
+      "mesh": "vegetation_grass_clumps_mesh",
+      "material": "grassClump",
+      "vertices": 12078
+    },
+    {
+      "mesh": "vegetation_label",
+      "material": "chalk",
+      "vertices": 1820
+    },
+    {
+      "mesh": "vegetation_sign_panels_mesh",
+      "material": "sign",
+      "vertices": 96
+    },
+    {
+      "mesh": "vegetation_sign_supports_mesh",
+      "material": "metal",
+      "vertices": 192
+    },
+    {
+      "mesh": "vegetation_sign_trim_mesh",
+      "material": "gold",
+      "vertices": 96
+    },
+    {
+      "mesh": "vegetation_subtitle",
+      "material": "chalk",
+      "vertices": 2280
+    },
+    {
+      "mesh": "vegetation_Tree_A_branching_mesh",
+      "material": "bark",
+      "vertices": 3160
+    },
+    {
+      "mesh": "vegetation_Tree_A_canopies_mesh",
+      "material": "treeA",
+      "vertices": 9720
+    },
+    {
+      "mesh": "vegetation_Tree_B_branching_mesh",
+      "material": "bark",
+      "vertices": 2844
+    },
+    {
+      "mesh": "vegetation_Tree_B_canopies_mesh",
+      "material": "treeB",
+      "vertices": 8748
+    },
+    {
+      "mesh": "vegetation_Tree_C_branching_mesh",
+      "material": "bark",
+      "vertices": 2844
+    },
+    {
+      "mesh": "vegetation_Tree_C_canopies_mesh",
+      "material": "treeC",
+      "vertices": 8748
+    },
+    {
+      "mesh": "wall_brick_cap_mesh",
+      "material": "concrete",
+      "vertices": 96
+    },
+    {
+      "mesh": "wall_brick_footing_mesh",
+      "material": "concrete",
+      "vertices": 96
+    },
+    {
+      "mesh": "wall_concrete_cap_mesh",
+      "material": "concrete",
+      "vertices": 288
+    },
+    {
+      "mesh": "wall_concrete_footing_mesh",
+      "material": "concrete",
+      "vertices": 96
+    },
+    {
+      "mesh": "wall_concrete_panels_mesh",
+      "material": "concrete",
+      "vertices": 648
+    },
+    {
+      "mesh": "wall_individual_beveled_bricks_mesh",
+      "material": "brick",
+      "vertices": 12312
+    },
+    {
+      "mesh": "wall_label",
+      "material": "chalk",
+      "vertices": 3420
+    },
+    {
+      "mesh": "wall_mortar_core_mesh",
+      "material": "mortar",
+      "vertices": 96
+    },
+    {
+      "mesh": "wall_reinforced_posts_mesh",
+      "material": "concrete",
+      "vertices": 384
+    },
+    {
+      "mesh": "wall_sign_panels_mesh",
+      "material": "sign",
+      "vertices": 96
+    },
+    {
+      "mesh": "wall_sign_supports_mesh",
+      "material": "metal",
+      "vertices": 192
+    },
+    {
+      "mesh": "wall_sign_trim_mesh",
+      "material": "gold",
+      "vertices": 96
+    },
+    {
+      "mesh": "wall_subtitle",
+      "material": "chalk",
+      "vertices": 2128
+    }
+  ]
+}

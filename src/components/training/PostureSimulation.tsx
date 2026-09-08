@@ -1,38 +1,40 @@
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, useGLTF, useAnimations } from '@react-three/drei';
+import { OrbitControls, useGLTF, useAnimations, Center } from '@react-three/drei';
 import { Suspense, useEffect, useState, useRef } from 'react';
 import * as THREE from 'three';
 
-function DynamicRifleModel({ modelPath }: { modelPath: string }) {
+function DynamicRifleModel({ animationName }: { animationName: string }) {
   const groupRef = useRef<any>(null);
-  const { scene, animations } = useGLTF(modelPath);
+  const { scene, animations } = useGLTF('/models/vietnam_people_army_advanced_animations.glb');
   const { actions, names } = useAnimations(animations, groupRef);
 
   useEffect(() => {
-    if (names.length > 0 && names[0] && actions[names[0]]) {
+    if (names.length > 0) {
+      const targetClip = names.includes(animationName) ? animationName : names[0];
       Object.values(actions).forEach((act) => act?.stop());
-      actions[names[0]]?.reset().fadeIn(0.15).play();
+      const action = actions[targetClip];
+      if (action) {
+        action.reset();
+        action.setLoop(THREE.LoopRepeat, Infinity);
+        action.fadeIn(0.15).play();
+      }
     }
-    return () => {
-      if (names.length > 0 && names[0]) actions[names[0]]?.fadeOut(0.15);
-    };
-  }, [modelPath, actions, names]);
+  }, [animationName, actions, names]);
 
   return (
-    // Trả về rotation=[0, 0, 0] để sửa dứt điểm lỗi lộn ngược đầu tiếp đất tếu táo của biệt đội bắn súng
-    <group position={[0, -0.6, 0]} rotation={[0, 0, 0]}>
-      <primitive ref={groupRef} object={scene} scale={1} />
-    </group>
+    <Center>
+      <primitive ref={groupRef} object={scene} scale={0.9} />
+    </Center>
   );
 }
 
 export default function PostureSimulation() {
   const [posture, setPosture] = useState<"stand" | "kneel" | "prone">("stand");
 
-  const modelMap = {
-    stand: "/models/rifle_stand.glb",
-    kneel: "/models/rifle_kneel.glb",
-    prone: "/models/rifle_prone.glb",
+  const animMap = {
+    stand: "CanhGioiCoDong",
+    kneel: "QuyBan",
+    prone: "NamBan",
   };
 
   return (
@@ -44,7 +46,7 @@ export default function PostureSimulation() {
             posture === "stand" ? "bg-emerald-600 text-white" : "bg-slate-800/80 text-slate-300 hover:bg-slate-700"
           }`}
         >
-          🧍 Tư thế Đứng Bắn
+          🧍 Tư thế Đứng Bắn (Cảnh giới)
         </button>
         <button 
           onClick={() => setPosture("kneel")} 
@@ -71,7 +73,7 @@ export default function PostureSimulation() {
           <directionalLight position={[-10, 10, -10]} intensity={0.5} />
           
           <Suspense fallback={null}>
-            <DynamicRifleModel key={posture} modelPath={modelMap[posture]} />
+            <DynamicRifleModel key={posture} animationName={animMap[posture]} />
           </Suspense>
 
           <OrbitControls enablePan={true} enableZoom={true} minDistance={1} maxDistance={8} />
@@ -81,6 +83,4 @@ export default function PostureSimulation() {
   );
 }
 
-useGLTF.preload("/models/rifle_stand.glb");
-useGLTF.preload("/models/rifle_kneel.glb");
-useGLTF.preload("/models/rifle_prone.glb");
+useGLTF.preload("/models/vietnam_people_army_advanced_animations.glb");

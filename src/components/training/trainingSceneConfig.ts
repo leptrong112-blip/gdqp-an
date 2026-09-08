@@ -1,14 +1,14 @@
 export type Vec3 = [number, number, number];
 export const CAMERA_PRESETS = {
-  overview: { position: [40, 32, 49], target: [0, 0, -2] },
-  formationArea: { position: [-10, 3.8, 11], target: [-15, 0.9, 4] },
-  movementArea: { position: [9, 10, 24], target: [1, 0.7, 10] },
-  vegetationArea: { position: [-9, 6, -2], target: [-18, 1.4, -13] },
-  wallArea: { position: [16, 5.5, 3], target: [8, 0.8, -6] },
-  sandbagArea: { position: [25, 4.6, 4], target: [18, 0.7, -4] },
-  trenchArea: { position: [25, 10, -6], target: [15, -0.3, -16] },
-  openArea: { position: [30, 7, 24], target: [22, 0.6, 12] },
-  compass: { position: [0, 2.4, 3.2], target: [0, 0.25, 0] },
+  overview: { position: [26, 20, 32], target: [0, 0, -2] },
+  formationArea: { position: [-12.2, 1.8, 7.6], target: [-15, 0.9, 4] },
+  movementArea: { position: [7, 6.5, 18], target: [1, 0.7, 10] },
+  vegetationArea: { position: [-12, 4, -7], target: [-18, 1.4, -13] },
+  wallArea: { position: [13, 3.8, -1], target: [8, 0.8, -6] },
+  sandbagArea: { position: [22.5, 3.2, 1], target: [18, 0.7, -4] },
+  trenchArea: { position: [21, 6.5, -9.5], target: [15, -0.3, -16] },
+  openArea: { position: [27, 4.5, 18], target: [22, 0.6, 12] },
+  compass: { position: [0, 2.2, 3.0], target: [0, 0.25, 0] },
 } satisfies Record<string, { position: Vec3; target: Vec3 }>;
 export type CameraPreset = keyof typeof CAMERA_PRESETS;
 export type GroundZone = 'formation' | 'movement' | 'vegetation' | 'wall' | 'sandbag' | 'trench' | 'open';

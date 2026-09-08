@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useMemo, Suspense, useCallback } fr
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, useGLTF, useAnimations, Grid, ContactShadows, Center, Html, useProgress } from "@react-three/drei";
 import * as THREE from "three";
+import F1ClassroomModel, { F1_PARTS } from "./F1ClassroomModel";
 import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 import {
   Camera,
@@ -45,6 +46,10 @@ export interface ARModelItem {
   subtitle: string;
   description: string;
   modelPath: string;
+  animationName?: string;
+  alternativeAnimations?: { label: string; animationName: string; baseHeightOffset?: number }[];
+  baseHeightOffset?: number;
+  initialPoseTime?: number;
   defaultScale: number;
   realScale: number;
   miniScale: number;
@@ -114,41 +119,24 @@ const WEBAR_CATALOG: ARModelItem[] = [
   },
   {
     id: "grenade",
-    name: "Lựu Đạn Huấn Luyện F-1",
+    name: "Mô Hình Trơ F-1 · Khám Phá 3D",
     category: "weapon",
-    subtitle: "Vũ khí đánh gần sát thương bằng mảnh gang vụn",
-    description:
-      "Lựu đạn F-1 là loại vũ khí dùng để tiêu diệt sinh lực địch trong hầm hào, công sự hoặc địa hình che khuất. Khi nổ tạo ra hàng trăm mảnh gang sát thương trong bán kính nguy hiểm 20 mét.",
-    modelPath: "/models/grenade.glb",
-    defaultScale: 0.5,
-    realScale: 0.7,
-    miniScale: 0.35,
+    subtitle: "Quan sát hình dáng và các chi tiết bên ngoài",
+    description: "Mô hình minh họa trơ dùng trong lớp học. Nhấp vào mô hình để tách các nhóm chi tiết bên ngoài; chọn một phần để camera phóng gần và đọc mô tả. Chuyển động chỉ phục vụ quan sát, không thể hiện quy trình tháo lắp thực tế.",
+    modelPath: "/models/f1-classroom.glb",
+    animationName: "ExploreExterior",
+    defaultScale: 1,
+    realScale: 1,
+    miniScale: .65,
     recommendedPlacement: "table",
-    placementGuidance: "Đặt thẳng đứng trên mặt bàn để quan sát chốt an toàn và cần bẩy mỏ vịt.",
-    historicalEra: "Kháng chiến chống Pháp, chống Mỹ & Huấn luyện hiện đại",
+    placementGuidance: "Xoay để quan sát, nhấp để khám phá các phần bên ngoài.",
+    historicalEra: "Mô hình minh họa dành cho lớp học",
     specs: [
-      { label: "Bán kính sát thương", value: "20 mét" },
-      { label: "Thời gian cháy chậm ngòi nổ", value: "3,2 - 4,2 giây" },
-      { label: "Khối lượng toàn bộ", value: "600 gam" },
-      { label: "Khối lượng thuốc nổ TNT", value: "60 gam" },
+      { label: "Nội dung", value: "4 nhóm chi tiết bên ngoài" },
+      { label: "Tương tác", value: "Tách / thu gọn, chọn và phóng gần" },
+      { label: "Tỉ lệ", value: "Quy ước để quan sát" },
     ],
-    parts: [
-      {
-        id: "ngoinom",
-        name: "1. Ngòi nổ & Cần bẩy (Mỏ vịt)",
-        detail: "Đòn bẩy giữ búa đập. Khi rút chốt an toàn và ném đi, đòn bẩy bung ra, giải phóng búa đập chọc vào hạt lửa kích hoạt ngòi cháy chậm.",
-      },
-      {
-        id: "chotan",
-        name: "2. Chốt an toàn & Vòng kéo",
-        detail: "Giữ chặt đòn bẩy vào thân ngòi nổ, ngăn ngừa lựu đạn phát hỏa ngoài ý muốn khi vận chuyển và mang đeo.",
-      },
-      {
-        id: "thangan",
-        name: "3. Vỏ gang có khía quả dứa",
-        detail: "Vỏ ngoài làm bằng gang đúc có các đường khía rãnh. Khi khối thuốc nổ phát nổ, vỏ gang vỡ vụn thành các mảnh nhỏ văng ra bốn phía sát thương mục tiêu.",
-      },
-    ],
+    parts: F1_PARTS,
   },
 
   // ── NHÓM 2: CHIẾN THUẬT VẬN ĐỘNG (ĐẶT TRÊN SÀN NHÀ) ──────────────────────
@@ -158,15 +146,23 @@ const WEBAR_CATALOG: ARModelItem[] = [
     category: "soldier",
     subtitle: "Vận động áp sát mặt đất vượt qua hỏa lực địch",
     description:
-      "Đặt mô hình người chiến sĩ đang thực hiện động tác bò hoặc trườn ngay trên sàn nhà của bạn. Học sinh có thể đứng ở góc nghiêng nhìn xuống hoặc cúi sát mặt sàn để quan sát góc áp sát mặt đất, động tác giữ súng và cử động chân tay.",
-    modelPath: "/models/soldier_crawl.glb",
-    defaultScale: 0.55,
-    realScale: 0.85,
-    miniScale: 0.35,
+      "Đặt mô hình người chiến sĩ đang thực hiện động tác bò hoặc trườn ngay trên sàn nhà của bạn. Mô hình người lính QĐND Việt Nam trang bị quân phục dã chiến K20 và súng tiểu liên AK-47, cho phép học sinh quan sát góc áp sát mặt đất, động tác giữ súng và cử động chân tay nhịp nhàng.",
+    modelPath: "/models/vietnam_people_army_advanced_animations.glb",
+    animationName: "Truon",
+    alternativeAnimations: [
+      { label: "🐍 Động tác Trườn", animationName: "Truon", baseHeightOffset: 0.12 },
+      { label: "🪖 Động tác Bò Cao", animationName: "BoCao", baseHeightOffset: 0.14 },
+    ],
+    baseHeightOffset: 0.14,
+    initialPoseTime: 0,
+    defaultScale: 0.85,
+    realScale: 1.0,
+    miniScale: 0.45,
     recommendedPlacement: "floor",
     placementGuidance: "Đặt ngay trên sàn nhà lớp học hoặc phòng khách để kiểm tra cự ly áp sát mặt sàn.",
     historicalEra: "Kỹ thuật chiến đấu bộ binh cơ bản",
     specs: [
+      { label: "Trang bị", value: "Quân phục K20, Mũ dã chiến, Súng AK-47" },
       { label: "Độ cao thân người so với sàn", value: "Dưới 20 - 30 cm" },
       { label: "Vị trí đặt súng", value: "Đặt trên cánh tay thuận, nòng súng hướng trước" },
       { label: "Địa hình áp dụng", value: "Nơi có vật che khuất, che đỡ cao từ 30cm - 40cm" },
@@ -196,18 +192,39 @@ const WEBAR_CATALOG: ARModelItem[] = [
     category: "soldier",
     subtitle: "Tư thế bắn vững chãi sau vật che đỡ",
     description:
-      "Mô hình chiến sĩ quỳ bắn với báng súng tỳ chắc vào hõm vai, mắt ngắm thẳng mục tiêu. Đặt mô hình trên sàn nhà giúp học sinh đối chiếu góc gập đầu gối và thế ngồi vững vàng.",
-    modelPath: "/models/rifle_kneel.glb",
-    defaultScale: 0.55,
-    realScale: 0.85,
-    miniScale: 0.35,
+      "Mô hình chiến sĩ QĐND Việt Nam quỳ bắn với súng tiểu liên AK-47, báng súng tỳ chắc vào hõm vai, cùi chỏ trái tỳ trên đầu gối trái, mắt ngắm thẳng mục tiêu. Đặt mô hình trên sàn nhà giúp học sinh đối chiếu góc gập đầu gối và thế ngồi vững vàng theo SGK.",
+    modelPath: "/models/vietnam_people_army_advanced_animations.glb",
+    animationName: "QuyBan",
+    baseHeightOffset: 0.08,
+    initialPoseTime: 1.2,
+    defaultScale: 0.85,
+    realScale: 1.0,
+    miniScale: 0.45,
     recommendedPlacement: "floor",
     placementGuidance: "Đặt trên sàn nhà để quan sát góc ngắm và điểm tỳ báng súng.",
     historicalEra: "Kỹ thuật bắn súng tiểu liên AK",
     specs: [
+      { label: "Trang bị", value: "Quân phục K20, Mũ dã chiến, Súng AK-47" },
       { label: "Góc quỳ chân thuận", value: "Gối gập khoảng 90° so với hướng bắn" },
       { label: "Điểm tỳ khuỷu tay", value: "Tỳ trên đầu gối chân trước" },
       { label: "Độ vững kết cấu", value: "Tạo thành thế kiềng ba chân ổn định" },
+    ],
+    parts: [
+      {
+        id: "diemtyvai",
+        name: "1. Điểm tỳ báng súng vào hõm vai",
+        detail: "Đế báng súng ép chặt vào hõm vai phải, cằm áp nhẹ vào báng súng để cố định đường ngắm.",
+      },
+      {
+        id: "khuyutay",
+        name: "2. Khuỷu tay trái tỳ đầu gối",
+        detail: "Khuỷu tay trái tỳ vững trên đỉnh đầu gối trái, tay ngửa đỡ ốp lót tay dưới thân súng.",
+      },
+      {
+        id: "chantraiphair",
+        name: "3. Thế kiềng chân quỳ",
+        detail: "Mông phải ngồi lên gót chân phải, chân trái vuông góc tạo thành thế chân vạc kiên cố.",
+      },
     ],
   },
   {
@@ -216,17 +233,39 @@ const WEBAR_CATALOG: ARModelItem[] = [
     category: "soldier",
     subtitle: "Tư thế bắn chuẩn mực áp sát mặt đất",
     description:
-      "Tư thế nằm bắn là tư thế vững vàng nhất, thân người mở góc khoảng 30° so với hướng bắn, ngực tỳ xuống đất, hai khuỷu tay mở rộng tỳ chắc chắn để lấy đường ngắm chính xác.",
-    modelPath: "/models/rifle_prone.glb",
-    defaultScale: 0.55,
-    realScale: 0.85,
-    miniScale: 0.35,
+      "Tư thế nằm bắn là tư thế vững vàng nhất của bài bắn súng tiểu liên AK. Thân người mở góc khoảng 30° so với hướng bắn, ngực tỳ nhẹ xuống đất, hai khuỷu tay mở rộng tỳ chắc chắn để lấy đường ngắm chính xác.",
+    modelPath: "/models/vietnam_people_army_advanced_animations.glb",
+    animationName: "NamBan",
+    baseHeightOffset: 0.12,
+    initialPoseTime: 1.2,
+    defaultScale: 0.85,
+    realScale: 1.0,
+    miniScale: 0.45,
     recommendedPlacement: "floor",
     placementGuidance: "Đặt áp sát mặt sàn để quan sát góc nằm và cẳng tay.",
     historicalEra: "Bài 1 bắn súng tiểu liên AK",
     specs: [
+      { label: "Trang bị", value: "Quân phục K20, Mũ dã chiến, Súng AK-47" },
       { label: "Góc mở thân người", value: "Khoảng 30° so với hướng bắn" },
       { label: "Độ chụm hai gót chân", value: "Hai chân mở rộng bằng vai, gót chân ép sát đất" },
+      { label: "Điểm tỳ khuỷu tay", value: "Hai khuỷu tay chống đất tạo góc kiên cố" },
+    ],
+    parts: [
+      {
+        id: "gocchienthuat",
+        name: "1. Góc mở thân người 30°",
+        detail: "Người chếch 30 độ so với hướng bắn giúp giảm tác động lực giật trực diện của súng.",
+      },
+      {
+        id: "apgottot",
+        name: "2. Hai gót chân ép sát đất",
+        detail: "Mũi chân mở sang hai bên, hai gót ép sát mặt đất để hạ thấp tối đa tiết diện trúng đạn.",
+      },
+      {
+        id: "ngamchuan",
+        name: "3. Hai khuỷu tay chống vững",
+        detail: "Hai khuỷu tay mở rộng tự nhiên bằng vai, tạo chân kiềng cố định súng cho đường ngắm ổn định.",
+      },
     ],
   },
   {
@@ -235,17 +274,39 @@ const WEBAR_CATALOG: ARModelItem[] = [
     category: "soldier",
     subtitle: "Tư thế sẵn sàng chiến đấu đa hướng",
     description:
-      "Tư thế đứng cảnh giới với súng giương sẵn, cơ động linh hoạt trong địa hình rừng núi hoặc đô thị. Đặt trên sàn để quan sát vóc dáng và độ mở hai bàn chân.",
-    modelPath: "/models/rifle_stand.glb",
-    defaultScale: 0.55,
-    realScale: 0.85,
-    miniScale: 0.35,
+      "Tư thế đứng cảnh giới với súng AK-47 giương sẵn, cơ động linh hoạt trong tuần tra, tác chiến địa hình rừng núi hoặc đô thị. Đặt trên sàn để quan sát vóc dáng và độ mở hai bàn chân.",
+    modelPath: "/models/vietnam_people_army_advanced_animations.glb",
+    animationName: "CanhGioiCoDong",
+    alternativeAnimations: [
+      { label: "🛡️ Cảnh giới cơ động", animationName: "CanhGioiCoDong" },
+      { label: "🚶 Đi đều điều lệnh", animationName: "DiDeu" },
+      { label: "🧍 Đứng nghiêm", animationName: "Nghiem" },
+    ],
+    baseHeightOffset: 0.04,
+    initialPoseTime: 0,
+    defaultScale: 0.85,
+    realScale: 1.0,
+    miniScale: 0.45,
     recommendedPlacement: "floor",
     placementGuidance: "Đặt trên sàn nhà để quan sát toàn diện dáng đứng và góc súng.",
     historicalEra: "Điều lệnh & Tác chiến đô thị",
     specs: [
+      { label: "Trang bị", value: "Quân phục K20, Mũ dã chiến, Súng AK-47" },
       { label: "Trọng tâm cơ thể", value: "Phân bố đều trên hai chân, chân trái hơi bước tới" },
       { label: "Tầm quan sát", value: "Góc quét 180° - 360°" },
+      { label: "Tư thế súng", value: "Low Ready / Sẵn sàng tác chiến phản xạ nhanh" },
+    ],
+    parts: [
+      {
+        id: "dangsansang",
+        name: "1. Thế đứng sẵn sàng phản ứng nhanh",
+        detail: "Chân trước chân sau, gối hơi chùng linh hoạt để di chuyển đổi hướng tức thì.",
+      },
+      {
+        id: "quansatrong",
+        name: "2. Bao quát trận địa",
+        detail: "Mắt quan sát cảnh giới mọi hướng, cảnh giác cao độ trong địa bàn tác chiến phức tạp.",
+      },
     ],
   },
   {
@@ -254,17 +315,34 @@ const WEBAR_CATALOG: ARModelItem[] = [
     category: "soldier",
     subtitle: "Kỹ thuật ném xa đúng hướng mục tiêu",
     description:
-      "Tư thế vung tay ném lựu đạn với độ rướn toàn thân, tận dụng lực đẩy của chân, sức vặn của hông và độ mở cánh tay đưa lựu đạn bay tới mục tiêu theo góc 45°.",
-    modelPath: "/models/soldier_throw.glb",
-    defaultScale: 0.55,
-    realScale: 0.85,
-    miniScale: 0.35,
+      "Tư thế vung tay ném quả lựu đạn F-1 với độ rướn toàn thân, tận dụng lực đẩy của chân, sức vặn của hông và độ mở cánh tay đưa lựu đạn bay tới mục tiêu theo góc 45°.",
+    modelPath: "/models/vietnam_people_army_advanced_animations.glb",
+    animationName: "NemLuuDan",
+    baseHeightOffset: 0.04,
+    initialPoseTime: 0.75,
+    defaultScale: 0.85,
+    realScale: 1.0,
+    miniScale: 0.45,
     recommendedPlacement: "floor",
     placementGuidance: "Đặt trên sàn để quan sát góc mở vai và tư thế rướn người.",
     historicalEra: "Kỹ thuật ném lựu đạn ném trúng đích",
     specs: [
+      { label: "Trang bị", value: "Quân phục K20, Mũ dã chiến, Lựu đạn F-1" },
       { label: "Góc bay tối ưu", value: "45 độ so với mặt đất" },
       { label: "Cự ly ném đạt chuẩn", value: "Nam THPT: 35m - 40m" },
+      { label: "Quy tắc an toàn", value: "Rút chốt dứt khoát, ném đúng hướng, ẩn nấp ngay" },
+    ],
+    parts: [
+      {
+        id: "ruonnguoi",
+        name: "1. Tư thế rướn vặn hông lấy đà",
+        detail: "Chân phải chùng gối, ngả người ra sau lấy đà, cánh tay phải mở rộng hình cánh cung.",
+      },
+      {
+        id: "vungnem",
+        name: "2. Vung tay ném góc 45°",
+        detail: "Đạp mạnh chân sau xoay hông, đưa cánh tay vút qua mang tai phóng lựu đạn bay cao xa.",
+      },
     ],
   },
 ];
@@ -278,6 +356,8 @@ interface ModelGLBProps {
   isPaused: boolean;
   scale: number;
   rotationY: number;
+  animationName?: string;
+  initialPoseTime?: number;
   onModelClick?: () => void;
   resetTrigger?: number;
 }
@@ -305,7 +385,16 @@ function Model3DLoader() {
   );
 }
 
-function ModelGLBViewer({ modelPath, isPaused, scale, rotationY, onModelClick, resetTrigger }: ModelGLBProps) {
+function ModelGLBViewer({
+  modelPath,
+  isPaused,
+  scale,
+  rotationY,
+  animationName,
+  initialPoseTime = 0,
+  onModelClick,
+  resetTrigger,
+}: ModelGLBProps) {
   const rootRef = useRef<THREE.Group>(null);
   const animRef = useRef<THREE.Group>(null);
   const { scene, animations } = useGLTF(modelPath);
@@ -322,49 +411,62 @@ function ModelGLBViewer({ modelPath, isPaused, scale, rotationY, onModelClick, r
     return clone;
   }, [scene]);
 
-  const { actions, names } = useAnimations(animations, animRef);
+  const { actions, names, mixer } = useAnimations(animations, animRef);
 
   useEffect(() => {
     if (!actions || names.length === 0) return;
-    const clipName = names[0];
-    const action = actions[clipName];
-    if (action) {
+    const clipName = animationName && names.includes(animationName) ? animationName : names[0];
+    const targetAction = actions[clipName];
+
+    // Dừng các action khác để tránh xung đột xương hoặc đè vũ khí
+    names.forEach((n) => {
+      if (n !== clipName && actions[n]) {
+        actions[n]?.stop();
+      }
+    });
+
+    if (targetAction) {
       if (isPaused) {
-        // Trạng thái tĩnh (3D tĩnh): dừng ở frame ban đầu
-        if (!action.isRunning()) {
-          action.reset();
-          action.setLoop(THREE.LoopRepeat, Infinity);
-          action.play();
+        // Trạng thái tĩnh (3D tĩnh): pose tại initialPoseTime (ví dụ đang quỳ hoặc nằm chuẩn mực)
+        targetAction.reset();
+        targetAction.setLoop(THREE.LoopRepeat, Infinity);
+        targetAction.play();
+        targetAction.time = initialPoseTime;
+        targetAction.paused = true;
+        if (mixer) {
+          mixer.update(0);
         }
-        action.paused = true;
       } else {
         // Trạng thái chuyển động: tiếp tục chạy hoạt ảnh
-        action.paused = false;
-        action.timeScale = 1;
-        if (!action.isRunning()) {
-          action.reset();
-          action.setLoop(THREE.LoopRepeat, Infinity);
-          action.fadeIn(0.15).play();
+        targetAction.paused = false;
+        targetAction.timeScale = 1;
+        if (!targetAction.isRunning()) {
+          targetAction.reset();
+          targetAction.setLoop(THREE.LoopRepeat, Infinity);
+          targetAction.fadeIn(0.15).play();
         }
       }
     }
-  }, [actions, names, isPaused, modelPath]);
+  }, [actions, names, mixer, isPaused, modelPath, animationName, initialPoseTime]);
 
-  // Xem lại từ đầu (quay về frame 0)
+  // Xem lại từ đầu (quay về frame 0 hoặc pose ban đầu)
   useEffect(() => {
     if (resetTrigger !== undefined && resetTrigger > 0) {
       if (!actions || names.length === 0) return;
-      const clipName = names[0];
-      const action = actions[clipName];
-      if (action) {
-        action.reset();
-        action.time = 0;
+      const clipName = animationName && names.includes(animationName) ? animationName : names[0];
+      const targetAction = actions[clipName];
+      if (targetAction) {
+        targetAction.reset();
+        targetAction.time = isPaused ? initialPoseTime : 0;
         if (isPaused) {
-          action.paused = true;
+          targetAction.paused = true;
+        }
+        if (mixer) {
+          mixer.update(0);
         }
       }
     }
-  }, [resetTrigger]);
+  }, [resetTrigger, animationName, actions, names, isPaused, initialPoseTime, mixer]);
 
   return (
     <group ref={rootRef} scale={scale} rotation={[0, rotationY, 0]}>
@@ -400,6 +502,9 @@ export default function WebARSection() {
   // MẶC ĐỊNH LÀ 3D TĨNH (isPaused = true) - người dùng bấm vào thì mới bắt đầu chạy chuyển động/quy trình
   const [isPaused, setIsPaused] = useState<boolean>(true);
   const [resetAnimTrigger, setResetAnimTrigger] = useState<number>(0);
+
+  // Biến thể hoạt ảnh con (Trườn / Bò cao / Đi đều / Cảnh giới)
+  const [selectedSubAnimation, setSelectedSubAnimation] = useState<string | null>(null);
 
   // Transformations
   const [scaleMultiplier, setScaleMultiplier] = useState<number>(1.0);
@@ -493,6 +598,7 @@ export default function WebARSection() {
     setRotationAngle(0);
     setHeightOffset(0);
     setSelectedPartId(null);
+    setSelectedSubAnimation(null);
     setIsPaused(true); // Luôn bắt đầu ở dạng 3D tĩnh khi chuyển mô hình
   };
 
@@ -513,6 +619,7 @@ export default function WebARSection() {
     setScaleMultiplier(1.0);
     setRotationAngle(0);
     setHeightOffset(0);
+    setSelectedSubAnimation(null);
   };
 
   // Snapshot photo capture
@@ -563,9 +670,16 @@ export default function WebARSection() {
     }
   };
 
-  // Active model path & scale
+  // Active model path & scale & animation
   const activeModelPath = activeCategory === "custom" && customModelUrl ? customModelUrl : currentItem.modelPath;
   const computedScale = (activeCategory === "custom" ? 1.0 : currentItem.defaultScale) * scaleMultiplier;
+  const activeAnimation = selectedSubAnimation || currentItem.animationName;
+  const activeInitialPoseTime = currentItem.initialPoseTime || 0;
+  const activeBaseHeightOffset = activeCategory === "custom" ? 0 : (
+    (currentItem.alternativeAnimations?.find((a) => a.animationName === activeAnimation)?.baseHeightOffset ??
+    currentItem.baseHeightOffset ??
+    0) * scaleMultiplier
+  );
 
   // Selected part object
   const activePartObj = useMemo(() => {
@@ -715,8 +829,8 @@ export default function WebARSection() {
             )}
 
             {/* 2. Top Controls Bar Overlay */}
-            <div className="relative z-20 p-4 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
+            <div className="relative z-20 p-4 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <div className="px-3 py-1.5 rounded-xl bg-slate-950/85 backdrop-blur-md text-white text-xs font-bold border border-white/10 flex items-center gap-1.5 shadow-md">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                   <span>{isCameraActive ? "Chế độ: Thực tế tăng cường (AR)" : "Chế độ: Thao trường 3D Studio"}</span>
@@ -728,6 +842,31 @@ export default function WebARSection() {
                     <span>
                       {currentItem.recommendedPlacement === "table" ? "Phù hợp: Mặt bàn học" : "Phù hợp: Sàn nhà"}
                     </span>
+                  </div>
+                )}
+
+                {/* Chuyển đổi các biến thể động tác nếu mô hình hỗ trợ (Trườn / Bò cao / Cảnh giới / Đi đều...) */}
+                {currentItem.alternativeAnimations && currentItem.alternativeAnimations.length > 0 && (
+                  <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-950/85 backdrop-blur-md border border-red-500/30 shadow-md">
+                    {currentItem.alternativeAnimations.map((alt) => {
+                      const isSelected = (selectedSubAnimation || currentItem.animationName) === alt.animationName;
+                      return (
+                        <button
+                          key={alt.animationName}
+                          onClick={() => {
+                            setSelectedSubAnimation(alt.animationName);
+                            setIsPaused(false);
+                          }}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            isSelected
+                              ? "bg-red-600 text-white shadow-xs"
+                              : "text-slate-300 hover:text-white hover:bg-slate-800/80"
+                          }`}
+                        >
+                          {alt.label}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -746,22 +885,23 @@ export default function WebARSection() {
 
                 {/* Play / Pause button */}
                 <button
-                  onClick={() => setIsPaused((prev) => !prev)}
+                  onClick={() => { setIsPaused((prev) => !prev); if (currentItem.id === "grenade") setSelectedPartId(null); }}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl backdrop-blur-md text-xs font-bold border transition-all cursor-pointer shadow-md ${
                     isPaused
                       ? "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-400/40 shadow-emerald-900/30 animate-pulse"
                       : "bg-slate-950/85 hover:bg-slate-800 text-amber-300 border-white/10"
                   }`}
-                  title={isPaused ? "Bắt đầu chạy mô phỏng quy trình" : "Tạm dừng mô phỏng"}
+                  title={currentItem.id === "grenade" ? "Tách hoặc thu gọn mô hình minh họa" : isPaused ? "Bắt đầu chạy mô phỏng quy trình" : "Tạm dừng mô phỏng"}
                 >
                   {isPaused ? <Play className="w-3.5 h-3.5 fill-current text-white" /> : <Pause className="w-3.5 h-3.5 fill-current text-white" />}
-                  <span>{isPaused ? "Bắt đầu quy trình" : "Tạm dừng"}</span>
+                  <span>{currentItem.id === "grenade" ? (isPaused ? "Tách mô hình" : "Thu gọn") : (isPaused ? "Bắt đầu quy trình" : "Tạm dừng")}</span>
                 </button>
 
                 {/* Reset to frame 0 button */}
                 <button
                   onClick={() => {
                     setResetAnimTrigger((k) => k + 1);
+                    if (currentItem.id === "grenade") { setSelectedPartId(null); setIsPaused(true); }
                     setIsPaused(true);
                   }}
                   className="p-2 rounded-xl bg-slate-950/85 backdrop-blur-md text-slate-300 border border-white/10 hover:bg-slate-800 hover:text-white transition-all cursor-pointer shadow-md"
@@ -820,26 +960,32 @@ export default function WebARSection() {
 
                 {/* 3D GLB Model Rendering */}
                 <Suspense fallback={<Model3DLoader />}>
-                  <group position={[0, heightOffset, 0]}>
-                    <ModelGLBViewer
-                      key={activeModelPath}
+                  <group position={[0, (currentItem.id === "grenade" && activeCategory !== "custom" ? 0 : heightOffset) + activeBaseHeightOffset, 0]}>
+                    {currentItem.id === "grenade" && activeCategory !== "custom" ? <F1ClassroomModel
+                      expanded={!isPaused} selected={selectedPartId} reset={resetAnimTrigger}
+                      scale={computedScale} rotation={rotationAngle} height={.98 * computedScale + heightOffset}
+                      onExpand={() => setIsPaused(false)} onSelect={setSelectedPartId}
+                    /> : <ModelGLBViewer
+                      key={`${activeModelPath}-${activeAnimation}`}
                       modelPath={activeModelPath}
+                      animationName={activeAnimation}
+                      initialPoseTime={activeInitialPoseTime}
                       isPaused={isPaused}
                       scale={computedScale}
                       rotationY={rotationAngle}
                       resetTrigger={resetAnimTrigger}
                       onModelClick={() => setIsPaused(false)}
-                    />
+                    />}
                   </group>
                 </Suspense>
 
-                <OrbitControls
+                {(currentItem.id !== "grenade" || activeCategory === "custom") && <OrbitControls
                   enablePan={true}
                   enableZoom={true}
                   minDistance={0.4}
                   maxDistance={7.0}
                   maxPolarAngle={Math.PI / 2 + 0.05}
-                />
+                />}
               </Canvas>
             </div>
 
@@ -854,6 +1000,7 @@ export default function WebARSection() {
                 <button
                   onClick={() => {
                     setRotationAngle(0);
+                    if (currentItem.id === "grenade") { setSelectedPartId(null); setResetAnimTrigger(k => k + 1); }
                     setScaleMultiplier(1.0);
                     setHeightOffset(0);
                   }}
@@ -897,7 +1044,7 @@ export default function WebARSection() {
                     : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
                 }`}
               >
-                Chuẩn 1:1
+                {currentItem.id === "grenade" ? "Toàn cảnh" : "Chuẩn 1:1"}
               </button>
               <button
                 onClick={() => setScaleMultiplier(0.6)}
@@ -1028,7 +1175,7 @@ export default function WebARSection() {
                   return (
                     <button
                       key={part.id}
-                      onClick={() => setSelectedPartId(isPartSelected ? null : part.id)}
+                      onClick={() => { setSelectedPartId(isPartSelected ? null : part.id); if (currentItem.id === "grenade") setIsPaused(false); }}
                       className={`w-full p-2.5 rounded-xl border text-left text-xs font-bold transition-all cursor-pointer flex items-center justify-between ${
                         isPartSelected
                           ? "bg-red-600 text-white border-red-600 shadow-xs"
@@ -1173,9 +1320,5 @@ export default function WebARSection() {
 
 // Preload tất cả các mô hình GLB chuẩn chất lượng cao để chuyển đổi tức thì
 useGLTF.preload("/models/ak47.glb");
-useGLTF.preload("/models/grenade.glb");
-useGLTF.preload("/models/soldier_crawl.glb");
-useGLTF.preload("/models/rifle_kneel.glb");
-useGLTF.preload("/models/rifle_prone.glb");
-useGLTF.preload("/models/rifle_stand.glb");
-useGLTF.preload("/models/soldier_throw.glb");
+useGLTF.preload("/models/f1-classroom.glb");
+useGLTF.preload("/models/vietnam_people_army_advanced_animations.glb");

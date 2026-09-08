@@ -132,7 +132,7 @@ export default function Tactical3DSimulation() {
   const [actionId, setActionId] = useState('attention');
   const [paused, setPaused] = useState(false), [squad, setSquad] = useState(false);
   const [replay, setReplay] = useState(0), [cameraReset, setCameraReset] = useState(0);
-  const [preset, setPreset] = useState<CameraPreset>('overview');
+  const [preset, setPreset] = useState<CameraPreset>('formationArea');
   const [debugAnimation, setDebugAnimation] = useState<SoldierAnimationName | ''>('');
   const [stats, setStats] = useState('');
   const current = CATEGORIES.find((item) => item.id === category)!;
@@ -164,20 +164,20 @@ export default function Tactical3DSimulation() {
 
     <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-12">
       <div data-testid="training-viewport" data-animation={animation} data-camera={preset} data-paused={paused}
-        className="relative h-[430px] min-w-0 overflow-hidden rounded-3xl border border-slate-700 bg-[#b5c7ce] shadow-lg sm:h-[540px] lg:col-span-8 lg:h-[620px]">
+        className="relative h-[480px] min-w-0 overflow-hidden rounded-3xl border border-slate-700 bg-[#b5c7ce] shadow-lg sm:h-[580px] lg:col-span-8 lg:h-[680px] xl:h-[720px]">
         <div className="absolute left-3 right-3 top-3 z-10 flex flex-wrap items-center justify-between gap-2">
           {!isCompass ? <div className="flex gap-0.5 rounded-xl border border-white/15 bg-slate-950/85 p-1 text-[11px] font-bold text-white backdrop-blur-md">
             <button aria-pressed={!squad} onClick={() => setSquad(false)} className={`rounded-lg px-2.5 py-1.5 ${!squad ? 'bg-red-600' : 'text-slate-300'}`}>1 chiến sĩ</button>
             <button aria-pressed={squad} onClick={() => setSquad(true)} className={`rounded-lg px-2.5 py-1.5 ${squad ? 'bg-red-600' : 'text-slate-300'}`}>Đội hình 3</button>
           </div> : <div className="rounded-xl bg-slate-950/85 px-3 py-2 text-xs font-bold text-amber-300">La bàn 3D</div>}
           <div className="flex gap-1.5">
-            <button aria-label="Đặt lại góc nhìn" onClick={() => focusCamera(isCompass ? 'compass' : 'overview')} className="rounded-xl border border-white/15 bg-slate-950/85 p-2.5 text-white" title="Toàn cảnh sân tập"><RotateCcw className="h-3.5 w-3.5" /></button>
+            <button aria-label="Đặt lại góc nhìn" onClick={() => focusCamera(isCompass ? 'compass' : 'formationArea')} className="rounded-xl border border-white/15 bg-slate-950/85 p-2.5 text-white" title="Góc nhìn điều lệnh cận cảnh"><RotateCcw className="h-3.5 w-3.5" /></button>
             <button onClick={() => setPaused((value) => !value)} className="flex items-center gap-1.5 rounded-xl border border-white/15 bg-slate-950/85 px-3 py-2 text-[11px] font-bold text-white">
               {paused ? <Play className="h-3.5 w-3.5 text-emerald-400" /> : <Pause className="h-3.5 w-3.5 text-amber-300" />}{paused ? 'Tiếp tục' : 'Tạm dừng'}</button>
           </div>
         </div>
 
-        <SceneBoundary><Canvas shadows dpr={[1, 1.5]} camera={{ position: [40, 32, 49], fov: 46, near: 0.1, far: 180 }} gl={{ antialias: true, powerPreference: 'high-performance' }}>
+        <SceneBoundary><Canvas shadows dpr={[1, 1.5]} camera={{ position: [-12.2, 1.8, 7.6], fov: 44, near: 0.1, far: 180 }} gl={{ antialias: true, powerPreference: 'high-performance' }}>
           <color attach="background" args={['#b5c7ce']} /><fog attach="fog" args={['#b5c7ce', 65, 145]} />
           <hemisphereLight args={['#e1efff', '#717457', 2]} />
           <directionalLight position={[-24, 38, 22]} intensity={2.6} castShadow shadow-mapSize={[2048, 2048]}

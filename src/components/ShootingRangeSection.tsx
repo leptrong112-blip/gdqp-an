@@ -32,12 +32,18 @@ import {
 } from "../data/akShootingData";
 import { useGamification } from "../context/GamificationContext";
 
+import ShootingRange3D, { RangeImpact } from "./ShootingRange3D";
+import ArcadeRangeSection from './ArcadeRangeSection';
+
 interface ShotRecord {
   shotNumber: number;
-  x: number; // Tọa độ trên bia từ -1 đến 1
-  y: number; // Tọa độ trên bia từ -1 đến 1
+  x: number; // Millimetres on the target (+X right, origin at centre)
+  y: number; // Millimetres on the target (+Y up, origin at centre)
   score: number;
-  clockPosition: string; // "12 giờ", "3 giờ", "chính tâm"...
+  isHit: boolean; // Trúng bia hay bắn trượt
+  screenX: number; // Tọa độ pixel X trên toàn viewport
+  screenY: number; // Tọa độ pixel Y trên toàn viewport
+  clockPosition: string; // "12 giờ", "3 giờ", "chính tâm 10"...
   time: number;
 }
 
@@ -45,7 +51,7 @@ export default function ShootingRangeSection() {
   const { fireXPToast, recordSkillCompletion } = useGamification();
 
   // Tab điều hướng chính
-  const [activeTab, setActiveTab] = useState<"simulator" | "handbook" | "sightLab">("simulator");
+  const [activeTab, setActiveTab] = useState<"simulator" | "handbook" | "sightLab" | "arcade">("simulator");
 
   // State chọn bài bắn & bia
   const [selectedExerciseId, setSelectedExerciseId] = useState<ExerciseId>("tap_dong_tien");
@@ -71,12 +77,13 @@ export default function ShootingRangeSection() {
 
   // ═════════════════════ SIMULATOR STATES ═════════════════════
   // Tọa độ ngắm súng (tương đối từ -1 đến 1, 0 là chính tâm)
-  const [aimPos, setAimPos] = useState({ x: 0, y: 0.1 });
+  const [aimPos, setAimPos] = useState({ x: 0, y: 0 });
+  const fire3DRef = useRef<(() => RangeImpact | null) | null>(null);
+  const [adsHeld, setAdsHeld] = useState(false);
   const [isHoldingBreath, setIsHoldingBreath] = useState(false);
   const [breathSecondsLeft, setBreathSecondsLeft] = useState(4);
-  const [rearSightSetting, setRearSightSetting] = useState<"3" | "1" | "P">("3");
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [isAimingDownSights, setIsAimingDownSights] = useState(true);
+  const [isAimingDownSights, setIsAimingDownSights] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
 
   // Trạng thái đạn & kết quả
@@ -89,6 +96,10 @@ export default function ShootingRangeSection() {
   // Sway (dao động thở)
   const swayRef = useRef({ phase: 0 });
   const [swayOffset, setSwayOffset] = useState({ x: 0, y: 0 });
+
+  // Tham chiếu khung nhìn thao trường để tính pixel thực tế
+  const rangeRef = useRef<HTMLDivElement>(null);
+  const lastValidAimRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   // Âm thanh Web Audio API Synthesizer (AK Gunshot + Casing Ping)
   const playGunshotSound = useCallback(() => {
@@ -232,107 +243,48 @@ export default function ShootingRangeSection() {
     return () => clearInterval(timer);
   }, [isHoldingBreath]);
 
-  // Tính điểm viên đạn dựa theo khoảng cách từ tâm và quy chuẩn bài bắn
-  const calculateScore = (
-    dx: number,
-    dy: number,
-    target: TargetInfo,
-    sight: "3" | "1" | "P",
-    isAds: boolean
-  ): { score: number; clock: string; hitX: number; hitY: number } => {
-    // Nếu không ngắm bắn (Hipfire / bắn từ hông): độ tản mát đạn tăng ngẫu nhiên
-    let spreadX = 0;
-    let spreadY = 0;
-    if (!isAds) {
-      spreadX = (Math.random() - 0.5) * 0.35;
-      spreadY = (Math.random() - 0.5) * 0.35;
-    }
-
-    let bulletX = dx + spreadX;
-    let bulletY = dy + spreadY;
-
-    // Với thước ngắm 3 bắn ở 100m bia 4: ngắm mép dưới (y = -0.42) thì đạn bay vọt lên đúng tâm (y = 0)!
-    if (target.id === "bia_4" && sight === "3") {
-      bulletY = bulletY + 0.42; // Bù đường đạn bay cao 28cm
-    } else if (target.id === "bia_6" && sight === "3") {
-      bulletY = bulletY + 0.35;
-    } else if (target.id === "bia_8" && sight === "3") {
-      bulletY = bulletY + 0.25;
-    }
-
-    const dist = Math.sqrt(bulletX * bulletX + bulletY * bulletY);
-
-    // Xác định hướng giờ (clock position)
-    let clock = "Chính tâm 10";
-    if (dist > 0.08) {
-      const angle = Math.atan2(bulletX, -bulletY) * (180 / Math.PI); // 0 độ là 12h, 90 độ là 3h
-      let normalizedAngle = (angle + 360) % 360;
-      const hour = Math.round(normalizedAngle / 30) || 12;
-      clock = `hướng ${hour} giờ`;
-    }
-
-    // Tính điểm theo bán kính bia
-    let score = 0;
-    if (target.id === "dong_tien") {
-      if (dist < 0.12) score = 10;
-      else if (dist < 0.25) score = 9;
-      else if (dist < 0.40) score = 8;
-      else if (dist < 0.60) score = 7;
-      else if (dist < 0.85) score = 6;
-      else score = 0;
-    } else if (target.id === "bia_4") {
-      if (dist < 0.15) score = 10;
-      else if (dist < 0.30) score = 9;
-      else if (dist < 0.45) score = 8;
-      else if (dist < 0.65) score = 7;
-      else if (dist < 0.85) score = 6;
-      else if (dist < 1.1) score = 5;
-      else score = 0;
-    } else {
-      if (dist < 0.20) score = 10;
-      else if (dist < 0.40) score = 9;
-      else if (dist < 0.60) score = 8;
-      else if (dist < 0.85) score = 7;
-      else if (dist < 1.1) score = 6;
-      else score = 0;
-    }
-
-    return { score, clock, hitX: bulletX, hitY: bulletY };
-  };
-
-  // Thao tác bóp cò bắn
+  // Bắn theo đường ngắm trong cảnh 3D.
   const handleFire = useCallback(
-    (customX?: number, customY?: number) => {
+    () => {
       if (!hasStarted || isShooting || isCompleted) return;
       if (shots.length >= selectedExercise.ammoCount) return;
 
+      const impact = fire3DRef.current?.();
+      if (!impact) return;
       setIsShooting(true);
       playGunshotSound();
 
       // Hiệu ứng giật nảy súng lên trên (Recoil kick)
-      const kickY = -0.15 + (Math.random() - 0.5) * 0.05;
-      const kickX = (Math.random() - 0.5) * 0.08;
+      const kickY = -0.12 + (Math.random() - 0.5) * 0.04;
+      const kickX = (Math.random() - 0.5) * 0.06;
       setRecoilOffset({ x: kickX, y: kickY });
 
-      // Tọa độ thực của đầu ngắm khi bóp cò (kết hợp tọa độ người ngắm + sway)
-      const baseX = customX !== undefined ? customX : aimPos.x;
-      const baseY = customY !== undefined ? customY : aimPos.y;
-      const currentAimX = baseX + swayOffset.x;
-      const currentAimY = baseY + swayOffset.y;
+      // Score and marks share the visible 3D ray, in target-local millimetres.
+      const { x: hitLocalX, y: hitLocalY, score, isHit, screenX: screenImpactX, screenY: screenImpactY } = impact;
+      const rect = rangeRef.current?.getBoundingClientRect();
+      const viewportW = rect?.width || 900, viewportH = rect?.height || 600;
+      const center10X = 0, center10Y = 0;
+      const distFrom10 = Math.hypot(hitLocalX, hitLocalY);
 
-      const { score, clock, hitX, hitY } = calculateScore(
-        currentAimX,
-        currentAimY,
-        currentTarget,
-        rearSightSetting,
-        isAimingDownSights
-      );
+      // 4. Xác định hướng giờ lệch (Clock Position)
+      let clock = "Chính tâm 10";
+      if (distFrom10 > 4) {
+        const dx = hitLocalX - center10X;
+        const dy = hitLocalY - center10Y;
+        const angle = Math.atan2(dx, dy) * (180 / Math.PI); // 0 độ = 12h, 90 độ = 3h, 180 = 6h, 270 = 9h
+        const normalized = (angle + 360) % 360;
+        const hour = Math.round(normalized / 30) || 12;
+        clock = `hướng ${hour} giờ`;
+      }
 
       const newShot: ShotRecord = {
         shotNumber: shots.length + 1,
-        x: hitX,
-        y: hitY,
+        x: hitLocalX,
+        y: hitLocalY,
         score,
+        isHit,
+        screenX: Math.max(12, Math.min(viewportW - 12, screenImpactX)),
+        screenY: Math.max(12, Math.min(viewportH - 12, screenImpactY)),
         clockPosition: clock,
         time: Date.now(),
       };
@@ -341,11 +293,10 @@ export default function ShootingRangeSection() {
       setShots(nextShots);
 
       // Thông báo đài báo bia
-      const modeText = isAimingDownSights ? "" : " (Bắn từ hông)";
-      const reportText =
-        score > 0
-          ? `Viên ${newShot.shotNumber}: ${score} Điểm (${clock})${modeText}!`
-          : `Viên ${newShot.shotNumber}: Trượt ra ngoài bia${modeText}!`;
+      const modeText = (isAimingDownSights || adsHeld) ? "" : " (Bắn từ hông)";
+      const reportText = isHit
+        ? `Viên ${newShot.shotNumber}: ${score} Điểm (${clock})${modeText}!`
+        : `Viên ${newShot.shotNumber}: 0 Điểm - Bắn trượt ra ngoài bia (${clock})${modeText}!`;
       setLastShotReport(reportText);
 
       // Hồi phục sau giật (recoil settle)
@@ -371,13 +322,12 @@ export default function ShootingRangeSection() {
       shots,
       selectedExercise,
       playGunshotSound,
-      aimPos.x,
-      aimPos.y,
       swayOffset.x,
       swayOffset.y,
       currentTarget,
-      rearSightSetting,
+      adsHeld,
       isAimingDownSights,
+      isHoldingBreath,
       fireXPToast,
       recordSkillCompletion,
     ]
@@ -388,8 +338,10 @@ export default function ShootingRangeSection() {
     setShots([]);
     setLastShotReport(null);
     setIsCompleted(false);
-    setAimPos({ x: 0, y: currentTarget.id === "bia_4" && rearSightSetting === "3" ? -0.42 : 0 });
-  }, [currentTarget.id, rearSightSetting]);
+    const initialY = 0;
+    setAimPos({ x: 0, y: initialY });
+    lastValidAimRef.current = { x: 0, y: initialY };
+  }, [currentTarget.id]);
 
   // Thay đổi bài bắn (chuyển sang bài mới sẽ hiện màn hình Bắt đầu)
   const handleChangeExercise = (exId: ExerciseId) => {
@@ -399,7 +351,9 @@ export default function ShootingRangeSection() {
     setIsCompleted(false);
     setHasStarted(false);
     const target = getTargetForExercise(exId);
-    setAimPos({ x: 0, y: target.id === "bia_4" ? -0.42 : 0 });
+    const initialY = 0;
+    setAimPos({ x: 0, y: initialY });
+    lastValidAimRef.current = { x: 0, y: initialY };
   };
 
   // Xử lý di chuột trên thao trường ngắm
@@ -407,21 +361,21 @@ export default function ShootingRangeSection() {
     if (!hasStarted || isShooting || isCompleted) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const nx = ((e.clientX - rect.left) / rect.width - 0.5) * 2; // -1 .. 1
-    const ny = -(((e.clientY - rect.top) / rect.height - 0.38) * 2.2); // căn giữa tâm bia
-    setAimPos({
-      x: Math.max(-1.2, Math.min(1.2, nx)),
-      y: Math.max(-1.2, Math.min(1.2, ny)),
-    });
+    const ny = -(((e.clientY - rect.top) / rect.height - 0.5) * 2.2); // căn giữa tâm bia
+    const clampedX = Math.max(-1.1, Math.min(1.1, nx));
+    const clampedY = Math.max(-1.1, Math.min(1.1, ny));
+    setAimPos({ x: clampedX, y: clampedY });
+    lastValidAimRef.current = { x: clampedX, y: clampedY };
   };
 
-  // Xử lý nhấp chuột trên khung ngắm: Giữ chuột phải để nín thở, chuột trái bóp cò bắn ngay cả khi giữ chuột phải
+  // Xử lý nhấp chuột trên khung ngắm: Giữ chuột phải để ADS, chuột trái bóp cò bắn ngay cả khi giữ chuột phải
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!hasStarted || isShooting || isCompleted) return;
     e.preventDefault();
 
-    // Chuột phải (button === 2) -> Giữ để nín thở
+    // Chuột phải (button === 2) -> Giữ để ADS
     if (e.button === 2) {
-      setIsHoldingBreath(true);
+      setAdsHeld(true);
       return;
     }
 
@@ -433,20 +387,14 @@ export default function ShootingRangeSection() {
 
     // Chuột trái (button === 0 HOẶC có cờ bitmask buttons & 1, kể cả khi buttons = 3 tức đang giữ chuột phải)
     if (e.button === 0 || (e.buttons & 1)) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const nx = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
-      const ny = -(((e.clientY - rect.top) / rect.height - 0.38) * 2.2);
-      const targetX = Math.max(-1.2, Math.min(1.2, nx));
-      const targetY = Math.max(-1.2, Math.min(1.2, ny));
-      setAimPos({ x: targetX, y: targetY });
-      handleFire(targetX, targetY);
+      handleFire();
     }
   };
 
-  // Xử lý nhả chuột (nhả chuột phải -> thôi nín thở)
+  // Xử lý nhả chuột (nhả chuột phải -> thoát ADS tạm thời)
   const handleMouseUp = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.button === 2 || !(e.buttons & 2)) {
-      setIsHoldingBreath(false);
+      setAdsHeld(false);
     }
   };
 
@@ -454,17 +402,19 @@ export default function ShootingRangeSection() {
   useEffect(() => {
     const handleGlobalMouseUp = (e: MouseEvent) => {
       if (e.button === 2 || !(e.buttons & 2)) {
-        setIsHoldingBreath(false);
+        setAdsHeld(false);
       }
     };
+    const release = () => { setAdsHeld(false); setIsHoldingBreath(false); };
     window.addEventListener("mouseup", handleGlobalMouseUp);
-    return () => window.removeEventListener("mouseup", handleGlobalMouseUp);
+    window.addEventListener("blur", release);
+    return () => { window.removeEventListener("mouseup", handleGlobalMouseUp); window.removeEventListener("blur", release); };
   }, []);
 
   // Phím tắt bàn phím: Space / Enter để Bắt đầu hoặc Bắn, Q để đổi Ngắm bắn, Shift để Nín thở, R để Bắn lại
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (activeTab !== "simulator") return;
+      if (activeTab !== "simulator" || e.repeat) return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
       if (!hasStarted) {
@@ -530,7 +480,8 @@ export default function ShootingRangeSection() {
           </div>
 
           {/* Cụm 3 Tabs chuyển đổi */}
-          <div className="flex items-center gap-1.5 p-1.5 bg-slate-100 dark:bg-slate-800/80 rounded-2xl shrink-0 border border-slate-200 dark:border-slate-700/60">
+          <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700/60">
+            <button onClick={() => setActiveTab('arcade')} className={`px-4 py-2.5 rounded-xl text-xs font-extrabold cursor-pointer ${activeTab === 'arcade' ? 'bg-cyan-600 text-white' : 'text-cyan-600 dark:text-cyan-300'}`}>Game · Băng đạn &amp; bia động</button>
             <button
               onClick={() => setActiveTab("simulator")}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
@@ -571,6 +522,7 @@ export default function ShootingRangeSection() {
       </div>
 
       {/* ═══════════════════ TAB 1: BẮN TẬP TƯƠNG TÁC (SIMULATOR) ═══════════════════ */}
+      {activeTab === 'arcade' && <ArcadeRangeSection />}
       {activeTab === "simulator" && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
@@ -598,36 +550,7 @@ export default function ShootingRangeSection() {
 
               {/* Tùy chỉnh Thước ngắm & Âm thanh */}
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-bold">
-                  <span className="text-[10px] text-slate-400 px-1">Thước:</span>
-                  <button
-                    onClick={() => setRearSightSetting("3")}
-                    className={`px-2 py-0.5 rounded-lg cursor-pointer ${
-                      rearSightSetting === "3" ? "bg-red-600 text-white" : "text-slate-600 dark:text-slate-300"
-                    }`}
-                    title="Thước 3: Cự ly 100m ngắm chính giữa mép dưới bia số 4"
-                  >
-                    3
-                  </button>
-                  <button
-                    onClick={() => setRearSightSetting("1")}
-                    className={`px-2 py-0.5 rounded-lg cursor-pointer ${
-                      rearSightSetting === "1" ? "bg-red-600 text-white" : "text-slate-600 dark:text-slate-300"
-                    }`}
-                    title="Thước 1: Ngắm chính giữa tâm bia"
-                  >
-                    1
-                  </button>
-                  <button
-                    onClick={() => setRearSightSetting("P")}
-                    className={`px-2 py-0.5 rounded-lg cursor-pointer ${
-                      rearSightSetting === "P" ? "bg-red-600 text-white" : "text-slate-600 dark:text-slate-300"
-                    }`}
-                    title="Thước П: Thước bắn thẳng"
-                  >
-                    П
-                  </button>
-                </div>
+                <span className="text-xs font-bold text-slate-500">AKM · Ngắm cơ khí 3D</span>
 
                 <button
                   onClick={() => setSoundEnabled(!soundEnabled)}
@@ -645,328 +568,20 @@ export default function ShootingRangeSection() {
 
             {/* ══════════ KHUNG NHÌN SÚNG & THAO TRƯỜNG (VIEWPORT CHÍNH) ══════════ */}
             <div
+              ref={rangeRef}
               onMouseMove={handleMouseMove}
               onMouseDown={handleMouseDown}
               onMouseUp={handleMouseUp}
-              onMouseLeave={() => setIsHoldingBreath(false)}
+              onMouseLeave={() => { setAdsHeld(false); setIsHoldingBreath(false); }}
               onContextMenu={(e) => e.preventDefault()}
-              className="relative w-full h-[460px] sm:h-[520px] rounded-3xl overflow-hidden border-2 border-slate-300 dark:border-slate-700 shadow-2xl select-none cursor-crosshair group touch-none bg-gradient-to-b from-sky-400 via-sky-200 to-emerald-800"
+              className="relative w-full h-[520px] sm:h-[600px] lg:h-[660px] rounded-3xl overflow-hidden border-2 border-slate-300 dark:border-slate-700 shadow-2xl select-none cursor-crosshair group touch-none bg-gradient-to-b from-sky-400 via-sky-200 to-emerald-800"
             >
-              {/* BẦU TRỜI & DÃY NÚI QUÂN SỰ XA XA (THAO TRƯỜNG THẬT) */}
-              <div className="absolute inset-0 pointer-events-none">
-                {/* Mặt trời */}
-                <div className="absolute top-8 right-16 w-16 h-16 rounded-full bg-yellow-200/80 blur-md pointer-events-none" />
-                {/* Dãy núi xa xôi */}
-                <svg className="absolute bottom-40 w-full h-32 opacity-35" preserveAspectRatio="none" viewBox="0 0 1000 300">
-                  <path d="M0,300 L120,160 L280,240 L450,110 L620,220 L800,140 L950,230 L1000,300 Z" fill="#2d5a27" />
-                </svg>
-                {/* Ụ đất bảo an chắn đạn phía sau mục tiêu */}
-                <div className="absolute bottom-32 w-full h-24 bg-gradient-to-t from-[#5a3e1b] via-[#6e4c22] to-[#805a29] border-t-4 border-[#3e2c14]" />
-                {/* Thảm cỏ thao trường có vệt đất dẫn hướng */}
-                <div className="absolute bottom-0 w-full h-36 bg-gradient-to-t from-emerald-950 via-emerald-900 to-emerald-800">
-                  <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-yellow-300 via-transparent to-transparent" />
-                </div>
-
-                {/* Các cọc mốc cự ly tiêu chuẩn thao trường quân sự ở 2 bên mép */}
-                <div className="absolute bottom-36 left-4 sm:left-8 flex items-center gap-1 opacity-70">
-                  <div className="w-1 h-6 bg-white border border-red-600" />
-                  <span className="text-[9px] font-mono font-bold text-amber-200 bg-black/50 px-1 rounded">200M</span>
-                </div>
-                <div className="absolute bottom-28 left-8 sm:left-14 flex items-center gap-1 opacity-70">
-                  <div className="w-1 h-8 bg-white border border-red-600" />
-                  <span className="text-[9px] font-mono font-bold text-amber-200 bg-black/50 px-1 rounded">150M</span>
-                </div>
-                <div className="absolute bottom-16 left-12 sm:left-20 flex items-center gap-1 opacity-80">
-                  <div className="w-1.5 h-10 bg-white border border-red-600" />
-                  <span className="text-[10px] font-mono font-extrabold text-amber-200 bg-black/60 px-1.5 py-0.5 rounded">100M</span>
-                </div>
-              </div>
-
-              {/* TẤM BIA CỐ ĐỊNH Ở GIỮA THAO TRƯỜNG (KÍCH THƯỚC CHUẨN CỰ LY QUÂN SỰ) */}
-              <div
-                className={`absolute left-1/2 top-[38%] transform -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-all duration-300 flex flex-col items-center ${
-                  isAimingDownSights ? "scale-125" : "scale-100"
-                }`}
-              >
-                {/* 1. BIA ĐỒNG TIỀN (10M - TẬP NGẮM BAN ĐẦU - CỰ LY GẦN) */}
-                {currentTarget.id === "dong_tien" && (
-                  <div className="flex flex-col items-center">
-                    <div className="w-36 h-36 bg-amber-50 rounded-xl border-4 border-slate-700 shadow-2xl flex items-center justify-center relative">
-                      {/* Các vòng tròn tính điểm đồng xu */}
-                      <div className="w-32 h-32 rounded-full border border-slate-400 flex items-center justify-center">
-                        <div className="w-24 h-24 rounded-full border border-slate-400 flex items-center justify-center">
-                          <div className="w-18 h-18 rounded-full border border-slate-500 flex items-center justify-center">
-                            <div className="w-12 h-12 rounded-full border border-slate-600 flex items-center justify-center bg-slate-200/60">
-                              {/* Vòng 10 đồng xu vàng */}
-                              <div className="w-6 h-6 rounded-full bg-amber-400 border-2 border-amber-600 flex items-center justify-center text-[9px] font-black text-amber-950 shadow-inner">
-                                10
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      {/* Chữ chú thích trên bia */}
-                      <span className="absolute top-1 text-[8px] font-bold text-slate-500 font-mono">BIA ĐỒNG TIỀN (10M)</span>
-
-                      {/* Vết đạn trên bia đồng tiền */}
-                      {shots.map((s) => (
-                        <div
-                          key={s.shotNumber}
-                          className="absolute w-2.5 h-2.5 rounded-full bg-slate-900 border border-amber-400 shadow-md transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center text-[7px] font-bold text-white z-10"
-                          style={{
-                            left: `calc(50% + ${s.x * 45}px)`,
-                            top: `calc(50% - ${s.y * 45}px)`,
-                          }}
-                        >
-                          {s.shotNumber}
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Cọc chân gỗ đỡ bia cắm đất */}
-                    <div className="flex items-center gap-4">
-                      <div className="w-1 h-8 bg-amber-950/90 shadow-sm" />
-                      <div className="w-1 h-8 bg-amber-950/90 shadow-sm" />
-                    </div>
-                  </div>
-                )}
-
-                {/* 2. BIA SỐ 4 (100M - NẰM BẮN CÓ BỆ TỲ - NHỎ GỌN CHUẨN 100M) */}
-                {currentTarget.id === "bia_4" && (
-                  <div className="flex flex-col items-center">
-                    <div className="w-22 h-22 sm:w-24 sm:h-24 relative flex items-center justify-center filter drop-shadow-md">
-                      {/* Bia bán thân số 4 quân đội hình ngực người xanh lục */}
-                      <svg className="w-full h-full" viewBox="0 0 200 200">
-                        {/* Thân bia hình đầu vai người */}
-                        <path
-                          d="M 60 190 L 60 140 C 60 130 50 110 30 110 L 20 180 C 20 195 40 195 60 195 Z"
-                          fill="#1b4332"
-                        />
-                        <path
-                          d="M 140 190 L 140 140 C 140 130 150 110 170 110 L 180 180 C 180 195 160 195 140 195 Z"
-                          fill="#1b4332"
-                        />
-                        {/* Đầu và ngực */}
-                        <path
-                          d="M 30,195 L 30,110 C 30,80 65,70 65,40 C 65,15 135,15 135,40 C 135,70 170,80 170,110 L 170,195 Z"
-                          fill="#2d6a4f"
-                          stroke="#1b4332"
-                          strokeWidth="3"
-                        />
-                        {/* Vòng tròn tính điểm 6, 7, 8, 9, 10 nét trắng */}
-                        <circle cx="100" cy="115" r="75" fill="none" stroke="#e8f5e9" strokeWidth="1.2" strokeDasharray="3 3" />
-                        <circle cx="100" cy="115" r="58" fill="none" stroke="#e8f5e9" strokeWidth="1.5" />
-                        <circle cx="100" cy="115" r="42" fill="none" stroke="#e8f5e9" strokeWidth="1.8" />
-                        <circle cx="100" cy="115" r="26" fill="none" stroke="#e8f5e9" strokeWidth="2.2" />
-                        <circle cx="100" cy="115" r="12" fill="#1b4332" stroke="#e8f5e9" strokeWidth="2.5" />
-                        <text x="100" y="119" fill="#ffffff" fontSize="11" fontWeight="bold" textAnchor="middle">10</text>
-                        <text x="100" y="93" fill="#ffffff" fontSize="10" textAnchor="middle">9</text>
-                        <text x="100" y="77" fill="#ffffff" fontSize="10" textAnchor="middle">8</text>
-                        <text x="100" y="61" fill="#ffffff" fontSize="9" textAnchor="middle">7</text>
-                      </svg>
-
-                      {/* Vết đạn trên bia số 4 */}
-                      {shots.map((s) => (
-                        <div
-                          key={s.shotNumber}
-                          className="absolute w-2 h-2 rounded-full bg-slate-900 border border-red-500 shadow-md transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center text-[6px] font-bold text-white z-10"
-                          style={{
-                            left: `calc(50% + ${s.x * 26}px)`,
-                            top: `calc(57% - ${s.y * 26}px)`,
-                          }}
-                        >
-                          {s.shotNumber}
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Chân cọc cắm bia 100m trên bệ đất */}
-                    <div className="w-1.5 h-6 bg-amber-950 shadow-sm" />
-                    <div className="w-8 h-2 bg-amber-900/60 rounded-full blur-[1px]" />
-                  </div>
-                )}
-
-                {/* 3. BIA SỐ 6 (150M - QUỲ BẮN - XA VÀ NHỎ HƠN BIA 4) */}
-                {currentTarget.id === "bia_6" && (
-                  <div className="flex flex-col items-center">
-                    <div className="w-15 h-20 sm:w-16 sm:h-22 relative flex items-center justify-center filter drop-shadow-sm opacity-95">
-                      {/* Bia số 6: Người quỳ bắn */}
-                      <svg className="w-full h-full" viewBox="0 0 160 220">
-                        <path
-                          d="M 40,210 L 40,150 C 40,120 50,90 70,60 C 70,40 65,20 85,20 C 105,20 100,40 100,60 C 120,90 135,130 135,210 Z"
-                          fill="#1e3a8a"
-                          stroke="#172554"
-                          strokeWidth="3.5"
-                        />
-                        <circle cx="85" cy="100" r="55" fill="none" stroke="#bfdbfe" strokeWidth="1.5" strokeDasharray="3 3" />
-                        <circle cx="85" cy="100" r="35" fill="none" stroke="#bfdbfe" strokeWidth="2" />
-                        <circle cx="85" cy="100" r="16" fill="#172554" stroke="#bfdbfe" strokeWidth="2.5" />
-                        <text x="85" y="105" fill="#ffffff" fontSize="13" fontWeight="bold" textAnchor="middle">10</text>
-                      </svg>
-
-                      {/* Lỗ đạn bia số 6 */}
-                      {shots.map((s) => (
-                        <div
-                          key={s.shotNumber}
-                          className="absolute w-1.5 h-1.5 rounded-full bg-slate-900 border border-blue-400 shadow-xs transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center text-[5px] font-bold text-white z-10"
-                          style={{
-                            left: `calc(50% + ${s.x * 18}px)`,
-                            top: `calc(45% - ${s.y * 18}px)`,
-                          }}
-                        >
-                          {s.shotNumber}
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Chân cọc cắm bia 150m */}
-                    <div className="w-1 h-5 bg-amber-950/80" />
-                    <div className="w-6 h-1.5 bg-amber-900/50 rounded-full blur-[1px]" />
-                  </div>
-                )}
-
-                {/* 4. BIA SỐ 8 (200M - ĐỨNG BẮN - Ở XA TÍT TẮP, THON NHỎ CHUẨN 200M) */}
-                {currentTarget.id === "bia_8" && (
-                  <div className="flex flex-col items-center">
-                    <div className="w-10 h-24 sm:w-11 sm:h-28 relative flex items-center justify-center filter drop-shadow-sm opacity-90">
-                      {/* Bia số 8: Người đứng / người chạy ở cự ly xa 200m */}
-                      <svg className="w-full h-full" viewBox="0 0 120 280">
-                        <path
-                          d="M 30,270 L 45,190 L 35,120 C 35,90 40,50 60,50 C 60,30 55,10 65,10 C 75,10 70,30 70,50 C 90,50 95,90 95,120 L 85,190 L 100,270 Z"
-                          fill="#991b1b"
-                          stroke="#7f1d1d"
-                          strokeWidth="4"
-                        />
-                        <circle cx="65" cy="110" r="40" fill="none" stroke="#fecaca" strokeWidth="2" strokeDasharray="3 3" />
-                        <circle cx="65" cy="110" r="22" fill="none" stroke="#fecaca" strokeWidth="2.5" />
-                        <circle cx="65" cy="110" r="10" fill="#7f1d1d" stroke="#fecaca" strokeWidth="3" />
-                        <text x="65" y="114" fill="#ffffff" fontSize="12" fontWeight="bold" textAnchor="middle">10</text>
-                      </svg>
-
-                      {/* Lỗ đạn bia số 8 */}
-                      {shots.map((s) => (
-                        <div
-                          key={s.shotNumber}
-                          className="absolute w-1.5 h-1.5 rounded-full bg-slate-900 border border-red-400 shadow-xs transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center text-[5px] font-bold text-white z-10"
-                          style={{
-                            left: `calc(50% + ${s.x * 12}px)`,
-                            top: `calc(40% - ${s.y * 12}px)`,
-                          }}
-                        >
-                          {s.shotNumber}
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Chân cọc cắm bia 200m */}
-                    <div className="w-1 h-4 bg-amber-950/70" />
-                    <div className="w-5 h-1.5 bg-amber-900/40 rounded-full blur-[1px]" />
-                  </div>
-                )}
-              </div>
-
-              {/* HIỆU ỨNG LỬA ĐẦU NÒNG (MUZZLE FLASH) KHI BẮN */}
-              {isShooting && (
-                <div className="absolute inset-0 bg-amber-400/20 pointer-events-none flex items-center justify-center z-30 animate-ping">
-                  <div className="w-36 h-36 rounded-full bg-yellow-300/60 blur-xl" />
-                </div>
-              )}
-
-              {/* ══════════ 1. CHẾ ĐỘ NGẮM BẮN (ADS): THƯỚC NGẮM & ĐẦU NGẮM SÚNG AK DI CHUYỂN THEO CHUỘT ══════════ */}
-              {isAimingDownSights && (
-                <div
-                  className="absolute pointer-events-none z-20 transition-transform duration-75 ease-out"
-                  style={{
-                    left: `calc(50% + ${(aimPos.x + swayOffset.x) * 50}% + ${recoilOffset.x * 60}px)`,
-                    top: `calc(38% - ${((aimPos.y + swayOffset.y) / 2.2) * 100}% + ${recoilOffset.y * 80}px)`,
-                    transform: "translate(-50%, -18px)",
-                  }}
-                >
-                  {/* CỤM ĐẦU NGẮM & THƯỚC NGẮM SÚNG TIỂU LIÊN AK */}
-                  <div className="relative flex flex-col items-center">
-                    {/* Vành bảo vệ đầu ngắm hình tròn khuyết & Cọc đầu ngắm (ở xa) */}
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-slate-900 border-b-transparent relative flex items-end justify-center mb-[-10px] sm:mb-[-12px] shadow-sm">
-                      {/* Cọc đầu ngắm hình trụ thẳng đứng */}
-                      <div className="w-2 sm:w-2.5 h-7 sm:h-9 bg-slate-950 rounded-t-xs shadow-md relative">
-                        {/* Vạch dạ quang trên đỉnh đầu ngắm để lấy đường ngắm */}
-                        <div className="w-full h-1.5 sm:h-2 bg-emerald-400 rounded-t-xs shadow-[0_0_8px_#34d399]" />
-                      </div>
-                    </div>
-
-                    {/* Khe thước ngắm chữ U (ở gần mắt người bắn) */}
-                    <div className="w-64 sm:w-72 h-32 sm:h-36 bg-gradient-to-t from-slate-950 via-slate-900 to-slate-800 rounded-t-3xl border-t-2 border-slate-600 shadow-2xl relative flex justify-center">
-                      {/* Khe chữ U chính giữa mép trên thước ngắm */}
-                      <div className="absolute top-0 w-7 sm:w-8 h-5 sm:h-6 bg-transparent border-x-4 border-b-4 border-slate-950 rounded-b-xs" />
-                      {/* Thân nắp hộp khóa nòng súng AK kéo dài xuống dưới */}
-                      <div className="absolute top-10 sm:top-12 w-52 sm:w-60 h-28 bg-gradient-to-b from-slate-900 to-slate-950 rounded-t-xl border-t border-slate-700/60" />
-                      {/* Chữ số khắc trên thước ngắm */}
-                      <span className="absolute bottom-3 sm:bottom-4 text-[11px] sm:text-xs font-mono font-black text-slate-400 tracking-widest z-10">
-                        AK-47 • THƯỚC [{rearSightSetting}]
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ══════════ 2. CHẾ ĐỘ KHÔNG NGẮM (HIPFIRE): TÂM NGẮM CROSSHAIR + SÚNG HẠ XUỐNG GÓC PHẢI ══════════ */}
-              {!isAimingDownSights && (
-                <>
-                  {/* Tâm ngắm chữ thập (Crosshair) di chuyển theo chuột */}
-                  <div
-                    className="absolute pointer-events-none z-20 flex items-center justify-center -translate-x-1/2 -translate-y-1/2"
-                    style={{
-                      left: `calc(50% + ${(aimPos.x + swayOffset.x) * 50}% + ${recoilOffset.x * 30}px)`,
-                      top: `calc(38% - ${((aimPos.y + swayOffset.y) / 2.2) * 100}% + ${recoilOffset.y * 40}px)`,
-                    }}
-                  >
-                    {/* Chấm tròn tâm màu đỏ */}
-                    <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]" />
-                    {/* 4 vạch ngắm chữ thập chiến thuật */}
-                    <div className="absolute -left-6 w-3.5 h-0.5 bg-white/90 rounded-full shadow-sm" />
-                    <div className="absolute -right-6 w-3.5 h-0.5 bg-white/90 rounded-full shadow-sm" />
-                    <div className="absolute -top-6 w-0.5 h-3.5 bg-white/90 rounded-full shadow-sm" />
-                    <div className="absolute -bottom-6 w-0.5 h-3.5 bg-white/90 rounded-full shadow-sm" />
-                    {/* Vòng tròn tản mát đạn */}
-                    <div className="w-14 h-14 rounded-full border border-red-400/30 animate-pulse pointer-events-none" />
-                  </div>
-
-                  {/* Súng AK-47 ở góc nhìn từ hông (bottom-right) */}
-                  <div
-                    className="absolute -bottom-8 right-2 sm:right-8 pointer-events-none z-20 transition-transform duration-75 origin-bottom-right"
-                    style={{
-                      transform: `translate(${aimPos.x * 14 + recoilOffset.x * 40}px, ${-aimPos.y * 8 + recoilOffset.y * 70}px) rotate(-6deg)`,
-                    }}
-                  >
-                    <svg className="w-56 h-40 sm:w-72 sm:h-52 drop-shadow-2xl" viewBox="0 0 320 200" fill="none">
-                      {/* Nòng súng thép */}
-                      <rect x="25" y="65" width="135" height="10" rx="3" fill="#1e293b" stroke="#0f172a" strokeWidth="2" />
-                      <rect x="65" y="54" width="85" height="9" rx="2" fill="#334155" stroke="#1e293b" strokeWidth="1.5" />
-                      {/* Đầu vát nòng súng AK */}
-                      <polygon points="12,63 26,63 26,77 12,74" fill="#0f172a" />
-                      {/* Cọc đầu ngắm và vành */}
-                      <circle cx="40" cy="53" r="9" stroke="#0f172a" strokeWidth="2.5" fill="none" />
-                      <rect x="39" y="49" width="2" height="6" fill="#34d399" />
-                      {/* Ốp lót tay trên và dưới bằng gỗ */}
-                      <rect x="80" y="51" width="65" height="12" rx="3" fill="#9a3412" stroke="#7c2d12" strokeWidth="1.5" />
-                      <rect x="75" y="67" width="75" height="18" rx="4" fill="#b45309" stroke="#78350f" strokeWidth="2" />
-                      {/* Hộp khóa nòng thép đen */}
-                      <rect x="150" y="58" width="105" height="38" rx="4" fill="#1e293b" stroke="#0f172a" strokeWidth="2.5" />
-                      {/* Hộp tiếp đạn cong 30 viên súng AK */}
-                      <path d="M 175,96 Q 190,145 215,175 L 188,184 Q 163,150 152,96 Z" fill="#334155" stroke="#0f172a" strokeWidth="2" />
-                      {/* Vành cò & Cò súng */}
-                      <path d="M 220,96 C 220,112 238,112 238,96" stroke="#0f172a" strokeWidth="2.5" fill="none" />
-                      <path d="M 228,96 L 226,105" stroke="#e2e8f0" strokeWidth="2" strokeLinecap="round" />
-                      {/* Tay cầm (Pistol Grip) bằng gỗ */}
-                      <path d="M 242,96 L 268,155 L 246,163 L 228,96 Z" fill="#9a3412" stroke="#7c2d12" strokeWidth="2" />
-                      {/* Báng súng */}
-                      <path d="M 250,65 L 320,78 L 320,122 L 250,90 Z" fill="#78350f" stroke="#451a03" strokeWidth="2" />
-                    </svg>
-                  </div>
-                </>
-              )}
+              <ShootingRange3D ads={isAimingDownSights || adsHeld} aim={aimPos} sway={swayOffset}
+                recoil={recoilOffset} targetId={currentTarget.id} shots={shots} fireRef={fire3DRef} />
 
               {/* ══════════ HUD GÓC TRÊN TRÁI: CỰ LY & CHẾ ĐỘ NGẮM (LUÔN RÕ RÀNG, KHÔNG BỊ SÚNG CHE) ══════════ */}
-              <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-20 flex flex-col gap-1.5 pointer-events-auto">
+              <div onMouseDown={(e) => e.stopPropagation()} onMouseMove={(e) => e.stopPropagation()}
+                className="absolute top-3 left-3 sm:top-4 sm:left-4 z-20 flex flex-col gap-1.5 pointer-events-auto">
                 <div className="flex items-center gap-2">
                   {/* Nút đổi nhanh Ngắm Bắn / Bắn từ hông */}
                   <button
@@ -982,7 +597,7 @@ export default function ShootingRangeSection() {
                     title="Nhấn phím Q hoặc nhấp vào đây để đổi chế độ ngắm"
                   >
                     <Eye className="w-3.5 h-3.5" />
-                    <span>{isAimingDownSights ? "🎯 Ngắm Bắn (ADS)" : "👀 Bắn Từ Hông"}</span>
+                    <span>{(isAimingDownSights || adsHeld) ? "🎯 Ngắm Bắn (ADS)" : "👀 Bắn Từ Hông"}</span>
                     <span className="text-[10px] opacity-75 font-mono ml-0.5">[Q]</span>
                   </button>
 
@@ -1010,7 +625,7 @@ export default function ShootingRangeSection() {
                 <div className="bg-black/55 backdrop-blur-sm px-2.5 py-1 rounded-lg border border-white/10 text-[10px] text-slate-300 flex items-center gap-2 pointer-events-none w-fit">
                   <span>🖱️ Chuột trái: Bắn</span>
                   <span>•</span>
-                  <span>🫁 Giữ chuột phải: Nín thở</span>
+                  <span>Giữ chuột phải: ADS · Shift: Nín thở</span>
                 </div>
               </div>
 
@@ -1032,6 +647,7 @@ export default function ShootingRangeSection() {
                 onPointerDown={(e) => e.stopPropagation()}
                 onPointerMove={(e) => e.stopPropagation()}
                 onMouseDown={(e) => e.stopPropagation()}
+                onMouseMove={(e) => e.stopPropagation()}
                 className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 z-30 flex items-center justify-between pointer-events-auto gap-2"
               >
                 <div className="flex items-center gap-2">
@@ -1049,8 +665,8 @@ export default function ShootingRangeSection() {
                     title="Nhấn phím Q hoặc bấm vào đây để chuyển chế độ ngắm"
                   >
                     <Eye className="w-4 h-4" />
-                    <span className="hidden sm:inline">{isAimingDownSights ? "Chế độ: Ngắm Bắn" : "Chế độ: Bắn Từ Hông"}</span>
-                    <span className="sm:hidden">{isAimingDownSights ? "Ngắm Bắn" : "Bắn Hông"}</span>
+                    <span className="hidden sm:inline">{(isAimingDownSights || adsHeld) ? "Chế độ: Ngắm Bắn" : "Chế độ: Bắn Từ Hông"}</span>
+                    <span className="sm:hidden">{(isAimingDownSights || adsHeld) ? "Ngắm Bắn" : "Bắn Hông"}</span>
                     <span className="text-[10px] font-mono px-1 py-0.5 rounded bg-black/20">Q</span>
                   </button>
 
@@ -1065,11 +681,11 @@ export default function ShootingRangeSection() {
                         ? "bg-blue-600 text-white border-blue-400 scale-105"
                         : "bg-black/60 text-slate-200 border-white/20 hover:bg-black/80"
                     }`}
-                    title="Giữ chuột phải hoặc bấm phím Shift để nín thở"
+                    title="Bấm phím Shift để bật/tắt nín thở"
                   >
                     <span>🫁</span>
                     <span>{isHoldingBreath ? `Nín Thở (${breathSecondsLeft}s)` : "Nín Thở"}</span>
-                    <span className="text-[10px] font-mono px-1 py-0.5 rounded bg-black/20 hidden sm:inline">Chuột Phải / Shift</span>
+                    <span className="text-[10px] font-mono px-1 py-0.5 rounded bg-black/20 hidden sm:inline">Shift</span>
                   </button>
                 </div>
 
@@ -1152,7 +768,7 @@ export default function ShootingRangeSection() {
                   <div className="mt-4 flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-[11px] text-slate-400">
                     <span>🖱️ <strong>Chuột trái:</strong> Bóp cò</span>
                     <span>•</span>
-                    <span>🫁 <strong>Giữ chuột phải:</strong> Nín thở</span>
+                    <span><strong>Giữ chuột phải:</strong> ADS · Shift: Nín thở</span>
                     <span>•</span>
                     <span>🎯 <strong>Phím Q:</strong> Ngắm / Không ngắm</span>
                     <span className="hidden sm:inline">•</span>
@@ -1169,7 +785,7 @@ export default function ShootingRangeSection() {
                   🖱️ Chuột trái: BẮN NGAY
                 </span>
                 <span className="hidden sm:inline text-slate-300 dark:text-slate-600">•</span>
-                <span>🫁 <strong>Giữ Chuột phải / Shift:</strong> Nín thở</span>
+                <span><strong>Chuột phải:</strong> ADS · <strong>Shift:</strong> Nín thở</span>
                 <span className="hidden sm:inline text-slate-300 dark:text-slate-600">•</span>
                 <span>🎯 <strong>Phím Q:</strong> Đổi Ngắm bắn / Bắn từ hông</span>
                 <span className="hidden sm:inline text-slate-300 dark:text-slate-600">•</span>
@@ -1244,7 +860,13 @@ export default function ShootingRangeSection() {
                           <span className="font-semibold text-slate-700 dark:text-slate-300">Viên {s.shotNumber}</span>
                         </div>
                         <div className="text-slate-500 font-mono text-[11px]">{s.clockPosition}</div>
-                        <div className="font-black text-red-600 dark:text-red-400 font-mono">+{s.score}đ</div>
+                        <div
+                          className={`font-black font-mono ${
+                            s.isHit ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"
+                          }`}
+                        >
+                          {s.isHit ? `+${s.score}đ` : "Trượt (0đ)"}
+                        </div>
                       </div>
                     ))
                   )}
@@ -1272,7 +894,11 @@ export default function ShootingRangeSection() {
                 </div>
                 <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-sans">
                   <strong>Nhận xét:</strong> {currentGrade.description}.
-                  {totalScore >= 25 ? " Kỹ thuật ngắm bắn rất vững vàng, độ chụm đạn tốt!" : " Cần chú ý giữ mặt súng thăng bằng và hạ đúng tầm đỉnh đầu ngắm."}
+                  {shots.some((s) => !s.isHit)
+                    ? ` (Có ${shots.filter((s) => !s.isHit).length} viên bắn trượt ra ngoài bia - cần giữ bình tĩnh, nín thở và lấy đường ngắm chuẩn).`
+                    : totalScore >= 25
+                    ? " Kỹ thuật ngắm bắn rất vững vàng, độ chụm đạn tốt!"
+                    : " Cần chú ý giữ mặt súng thăng bằng và hạ đúng tầm đỉnh đầu ngắm."}
                 </p>
                 <div className="flex items-center justify-between pt-2 border-t border-amber-300/40 text-xs font-bold text-amber-700 dark:text-amber-400">
                   <span>Thưởng kinh nghiệm:</span>

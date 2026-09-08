@@ -10,7 +10,9 @@
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
     "assets:build": "node scripts/build-training-assets.mjs",
-    "assets:inspect": "node scripts/inspect-soldier.mjs"
+    "assets:inspect": "node scripts/inspect-soldier.mjs",
+    "assets:polish": "node scripts/polish-training-materials.mjs",
+    "assets:verify-materials": "node scripts/verify-training-materials.mjs"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",

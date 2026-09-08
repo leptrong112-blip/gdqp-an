@@ -3,7 +3,7 @@ import { Html, useGLTF } from '@react-three/drei';
 import { Color, Mesh, MeshStandardMaterial } from 'three';
 import { GroundZone, ZONE_CENTERS, ZONE_LABELS } from './trainingSceneConfig';
 
-const MODEL = '/models/training/training-ground.glb';
+const MODEL = '/models/training/training-ground.glb?finish=earth-01';
 
 export default function TrainingGroundModel({ highlightedZone, showLabel = true }: {
   highlightedZone?: GroundZone; showLabel?: boolean;
@@ -16,9 +16,18 @@ export default function TrainingGroundModel({ highlightedZone, showLabel = true 
       if (!(object instanceof Mesh)) return;
       const zone = object.name.split('_')[0].toLowerCase();
       object.receiveShadow = true;
-      object.castShadow = !/grass|pebble|terrain|marking|path/i.test(object.name);
+      const groundOverlay = /paving|compacted_lane|path|approach|_pad|bare_observation_ground/i.test(object.name);
+      const groundMarking = /white_markings|lane_marking|movement_(DICH|XUAT)/i.test(object.name);
+      object.castShadow = !/grass|pebble|terrain|marking|path/i.test(object.name) && !groundOverlay && !groundMarking;
       const cloneMaterial = (source: MeshStandardMaterial) => {
         const material = source.clone();
+        // Separate coplanar surface finishes in the depth buffer. Geometry and
+        // all object transforms remain exactly as authored in the current GLB.
+        if (groundOverlay || groundMarking) {
+          material.polygonOffset = true;
+          material.polygonOffsetFactor = groundMarking ? -3 : -1;
+          material.polygonOffsetUnits = groundMarking ? -6 : -2;
+        }
         if (material.isMeshStandardMaterial) materials.push({ material, zone, color: material.emissive.clone(), intensity: material.emissiveIntensity });
         return material;
       };

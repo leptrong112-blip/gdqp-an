@@ -130,7 +130,9 @@ class Batch:
         mesh.from_pydata([blender_point(v) for v in self.verts], [], self.faces)
         mesh.materials.append(MATERIALS[self.mat])
         mesh.update()
-        if MATERIALS[self.mat].node_tree.nodes.get("Vertex Color"):
+        # Blender 5 labels this node "Color Attribute"; inspect its type so the
+        # authored colors are retained regardless of node labels or locale.
+        if any(n.bl_idname == "ShaderNodeVertexColor" for n in MATERIALS[self.mat].node_tree.nodes):
             attr = mesh.color_attributes.new(name="Col", type="FLOAT_COLOR", domain="POINT")
             for i, c in enumerate(self.colors):
                 attr.data[i].color = c

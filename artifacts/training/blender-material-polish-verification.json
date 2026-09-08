@@ -1,0 +1,1364 @@
+{
+  "passed": true,
+  "source": "D:\\GDQP-WEBSITE - Copy\\assets\\blender\\training-ground.blend",
+  "output": "D:\\GDQP-WEBSITE - Copy\\assets\\blender\\training-ground-materials.blend",
+  "glb": "D:\\GDQP-WEBSITE - Copy\\public\\models\\training\\training-ground.glb",
+  "sourceSha256Before": "ba9772e143389f4b089baf542ba7e01aec7e738adc346e64bd6743e7cb866b44",
+  "sourceSha256After": "ba9772e143389f4b089baf542ba7e01aec7e738adc346e64bd6743e7cb866b44",
+  "glbSha256": "7080b536798feae40a93cbb50ccabbe31d662b2179c574f99815abdc2493e354",
+  "outputSha256": "edec8dd0252727a4c0bf44cf708d7cc0eb2b6add4ec616064d125c574668101e",
+  "matchedEnvironmentMeshes": 88,
+  "createdMaterials": 30,
+  "colorLayer": "TrainingFinish",
+  "unchangedObjects": 52,
+  "geometryAndTransformsBefore": {
+    "geometry_sha256": "4e0f888126a663534b849721ae728afed183a99c720ebbe015f15af32149f4c0",
+    "mesh_counts": {
+      "Chemlights.smd_chemlight_a_yellow_0": [
+        1073,
+        2049,
+        1008
+      ],
+      "Chemlights.smd_hero_alex_hydration_nozzle_a_0": [
+        180,
+        458,
+        280
+      ],
+      "Flashbangs.smd_flash_grenade_01_0": [
+        749,
+        1251,
+        586
+      ],
+      "Flashbangs.smd_milsim_ranger_1_1_flash_grenade_pouch_0": [
+        746,
+        1320,
+        648
+      ],
+      "Flashbangs.smd_mp_VPA_black_boots_a_0": [
+        188,
+        443,
+        262
+      ],
+      "Grenade_Pouch_Left.smd_usmc_grenade_pouch_brown_0": [
+        572,
+        1349,
+        792
+      ],
+      "Grenade_Pouch_Left.smd_usmc_grenade_top_0": [
+        76,
+        110,
+        48
+      ],
+      "Head.smd_head_sc_m_dunn_0": [
+        1158,
+        3303,
+        2146
+      ],
+      "Head.smd_head_sc_m_dunn_eyes_0": [
+        290,
+        840,
+        552
+      ],
+      "Head.smd_head_shared_eyelashes_0": [
+        360,
+        764,
+        424
+      ],
+      "Head.smd_milsim_VPA_1_1_balaclava_0": [
+        1672,
+        4504,
+        2838
+      ],
+      "Headphones.smd_usmc_headset_0": [
+        1196,
+        2367,
+        1241
+      ],
+      "Helmet.smd_milsim_VPA_1_1_domino_helmet_0": [
+        1266,
+        2831,
+        1604
+      ],
+      "Helmet.smd_milsim_VPA_1_1_k20_basic_helmet_0": [
+        717,
+        1896,
+        1187
+      ],
+      "Holster.smd_hero_alex_cloth_holster_a_black_0": [
+        134,
+        235,
+        112
+      ],
+      "Holster.smd_spetsnaz_holster_black_0": [
+        2039,
+        4297,
+        2306
+      ],
+      "Hook.smd_price_ar_mag_pouch_urban_0": [
+        22,
+        51,
+        30
+      ],
+      "Hook.smd_price_carabiner_black_0": [
+        268,
+        513,
+        256
+      ],
+      "Hydration_Pack.smd_buckle_master_desert_0": [
+        1112,
+        2137,
+        1124
+      ],
+      "Hydration_Pack.smd_buckle_master_urban_0": [
+        982,
+        1607,
+        748
+      ],
+      "Hydration_Pack.smd_usmc_hydration_a_0": [
+        1217,
+        2694,
+        1516
+      ],
+      "Icosphere": [
+        42,
+        120,
+        80
+      ],
+      "Kneepad.smd_usmc_lmg_kneepad_0": [
+        1130,
+        2350,
+        1264
+      ],
+      "Mag_Left.smd_ar_mag_0": [
+        148,
+        307,
+        168
+      ],
+      "Mag_Pouch_Left.smd_wyatt_ar_mag_pouch_black_0": [
+        772,
+        1762,
+        1024
+      ],
+      "Mags.smd_ar_mag_0": [
+        888,
+        1842,
+        1008
+      ],
+      "Pistol_Mags.smd_smg_pistol_mag_0": [
+        124,
+        206,
+        96
+      ],
+      "Pistol_Mags_Pouch.smd_pouch_mag_pistol_ghost_0": [
+        1957,
+        4495,
+        2572
+      ],
+      "Pouch_Left.smd_sas_urban_medical_pouch_0": [
+        312,
+        746,
+        440
+      ],
+      "Pouches_A.smd_VPA_ar_mag_pouch_0": [
+        2208,
+        5175,
+        3009
+      ],
+      "Pouches_A.smd_mp_VPA_black_boots_a_0": [
+        383,
+        937,
+        562
+      ],
+      "Pouches_B.smd_mp_yegor_ar_mag_pouch_stencil_0": [
+        372,
+        837,
+        484
+      ],
+      "Pouches_B.smd_price_ar_mag_pouch_urban_0": [
+        757,
+        1713,
+        994
+      ],
+      "Radio.smd_hero_alex_radio_pouch_a_0": [
+        1115,
+        2079,
+        1068
+      ],
+      "Radio.smd_ptt_ghost_black_0": [
+        1451,
+        2685,
+        1332
+      ],
+      "Radio.smd_radio_0": [
+        2087,
+        4733,
+        2732
+      ],
+      "Vest.smd_buckle_master_olive_0": [
+        618,
+        1125,
+        568
+      ],
+      "Vest.smd_milsim_VPA_1_1_K20_id_pouch.jpg_0": [
+        389,
+        827,
+        457
+      ],
+      "Vest.smd_milsim_VPA_1_1_K20_vest_0": [
+        2855,
+        7082,
+        4279
+      ],
+      "belt.smd_milsim_ranger_1_1_parts_belt_dual_molle_0": [
+        818,
+        1715,
+        920
+      ],
+      "body.smd_VPA_Black_Gloves_0": [
+        2602,
+        6628,
+        4052
+      ],
+      "body.smd_base_male_arm_l_skintone_01_0": [
+        600,
+        1650,
+        1052
+      ],
+      "body.smd_milsim_VPA_1_1_K20_shirt_0": [
+        2890,
+        7833,
+        4970
+      ],
+      "body.smd_milsim_VPA_K20_pants_tactical_g3_0": [
+        2775,
+        7727,
+        4956
+      ],
+      "body.smd_mp_VPA_black_boots_a_0": [
+        1412,
+        3638,
+        2247
+      ],
+      "formation_boundary_posts_mesh": [
+        384,
+        576,
+        216
+      ],
+      "formation_flag_finial_mesh": [
+        54,
+        99,
+        45
+      ],
+      "formation_flag_plinth_mesh": [
+        288,
+        432,
+        162
+      ],
+      "formation_flag_star_mesh": [
+        10,
+        10,
+        1
+      ],
+      "formation_flagpole_mesh": [
+        24,
+        36,
+        14
+      ],
+      "formation_label": [
+        2364,
+        4089,
+        1741
+      ],
+      "formation_paving_mesh": [
+        7680,
+        11520,
+        4320
+      ],
+      "formation_post_caps_mesh": [
+        384,
+        576,
+        216
+      ],
+      "formation_sign_panels_mesh": [
+        96,
+        144,
+        54
+      ],
+      "formation_sign_supports_mesh": [
+        192,
+        288,
+        108
+      ],
+      "formation_sign_trim_mesh": [
+        96,
+        144,
+        54
+      ],
+      "formation_subtitle": [
+        2256,
+        3840,
+        1620
+      ],
+      "formation_vietnam_flag_mesh": [
+        70,
+        121,
+        52
+      ],
+      "formation_white_markings_mesh": [
+        6528,
+        9792,
+        3672
+      ],
+      "movement_DICH": [
+        672,
+        1158,
+        492
+      ],
+      "movement_XUAT PHAT": [
+        784,
+        1342,
+        568
+      ],
+      "movement_compacted_lane_mesh": [
+        355,
+        634,
+        280
+      ],
+      "movement_label": [
+        3276,
+        5679,
+        2421
+      ],
+      "movement_lane_marking_mesh": [
+        192,
+        288,
+        108
+      ],
+      "movement_lane_posts_mesh": [
+        384,
+        576,
+        216
+      ],
+      "movement_low_obstacle_beams_mesh": [
+        72,
+        108,
+        42
+      ],
+      "movement_low_obstacle_posts_mesh": [
+        576,
+        864,
+        324
+      ],
+      "movement_obstacle_pad_mesh": [
+        193,
+        384,
+        192
+      ],
+      "movement_red_post_tops_mesh": [
+        384,
+        576,
+        216
+      ],
+      "movement_sign_panels_mesh": [
+        96,
+        144,
+        54
+      ],
+      "movement_sign_supports_mesh": [
+        192,
+        288,
+        108
+      ],
+      "movement_sign_trim_mesh": [
+        96,
+        144,
+        54
+      ],
+      "movement_subtitle": [
+        3372,
+        5793,
+        2457
+      ],
+      "open_bare_observation_ground_mesh": [
+        193,
+        384,
+        192
+      ],
+      "open_label": [
+        2320,
+        4014,
+        1710
+      ],
+      "open_sign_panels_mesh": [
+        96,
+        144,
+        54
+      ],
+      "open_sign_supports_mesh": [
+        192,
+        288,
+        108
+      ],
+      "open_sign_trim_mesh": [
+        96,
+        144,
+        54
+      ],
+      "open_subtitle": [
+        1876,
+        3235,
+        1375
+      ],
+      "sandbag_compacted_pad_mesh": [
+        193,
+        384,
+        192
+      ],
+      "sandbag_label": [
+        1320,
+        2304,
+        986
+      ],
+      "sandbag_sign_panels_mesh": [
+        96,
+        144,
+        54
+      ],
+      "sandbag_sign_supports_mesh": [
+        192,
+        288,
+        108
+      ],
+      "sandbag_sign_trim_mesh": [
+        96,
+        144,
+        54
+      ],
+      "sandbag_staggered_rounded_sacks_mesh": [
+        4608,
+        8640,
+        4032
+      ],
+      "sandbag_stitched_edges_mesh": [
+        256,
+        384,
+        192
+      ],
+      "sandbag_subtitle": [
+        2052,
+        3539,
+        1505
+      ],
+      "terrain_bench_frames_mesh": [
+        1152,
+        1728,
+        648
+      ],
+      "terrain_bench_timber_mesh": [
+        1440,
+        2160,
+        810
+      ],
+      "terrain_earth_profile_mesh": [
+        2000,
+        2000,
+        500
+      ],
+      "terrain_lower_foundation_mesh": [
+        96,
+        144,
+        54
+      ],
+      "terrain_observation_path_mesh": [
+        385,
+        688,
+        304
+      ],
+      "terrain_perimeter_fence_mesh": [
+        9780,
+        14670,
+        5670
+      ],
+      "terrain_perimeter_path_mesh": [
+        775,
+        1390,
+        616
+      ],
+      "terrain_scattered_stones_mesh": [
+        2730,
+        4914,
+        2184
+      ],
+      "terrain_sculpted_surface_mesh": [
+        62101,
+        123700,
+        61600
+      ],
+      "terrain_trench_approach_mesh": [
+        135,
+        238,
+        104
+      ],
+      "trench_label": [
+        2024,
+        3512,
+        1498
+      ],
+      "trench_retaining_boards_mesh": [
+        3840,
+        5760,
+        2160
+      ],
+      "trench_sign_panels_mesh": [
+        96,
+        144,
+        54
+      ],
+      "trench_sign_supports_mesh": [
+        192,
+        288,
+        108
+      ],
+      "trench_sign_trim_mesh": [
+        96,
+        144,
+        54
+      ],
+      "trench_subtitle": [
+        3744,
+        6470,
+        2754
+      ],
+      "trench_timber_floor_mesh": [
+        5664,
+        8496,
+        3186
+      ],
+      "trench_uprights_mesh": [
+        588,
+        882,
+        378
+      ],
+      "vegetation_Bush_Large_mesh": [
+        6160,
+        11440,
+        5280
+      ],
+      "vegetation_Bush_Medium_mesh": [
+        7280,
+        13520,
+        6240
+      ],
+      "vegetation_Tree_A_branching_mesh": [
+        3160,
+        4740,
+        2020
+      ],
+      "vegetation_Tree_A_canopies_mesh": [
+        9720,
+        18360,
+        8640
+      ],
+      "vegetation_Tree_B_branching_mesh": [
+        2844,
+        4266,
+        1818
+      ],
+      "vegetation_Tree_B_canopies_mesh": [
+        8748,
+        16524,
+        7776
+      ],
+      "vegetation_Tree_C_branching_mesh": [
+        2844,
+        4266,
+        1818
+      ],
+      "vegetation_Tree_C_canopies_mesh": [
+        8748,
+        16524,
+        7776
+      ],
+      "vegetation_approach_mesh": [
+        180,
+        319,
+        140
+      ],
+      "vegetation_grass_clumps_mesh": [
+        12078,
+        12078,
+        4026
+      ],
+      "vegetation_label": [
+        1820,
+        3125,
+        1325
+      ],
+      "vegetation_sign_panels_mesh": [
+        96,
+        144,
+        54
+      ],
+      "vegetation_sign_supports_mesh": [
+        192,
+        288,
+        108
+      ],
+      "vegetation_sign_trim_mesh": [
+        96,
+        144,
+        54
+      ],
+      "vegetation_subtitle": [
+        2280,
+        3914,
+        1660
+      ],
+      "wall_brick_cap_mesh": [
+        96,
+        144,
+        54
+      ],
+      "wall_brick_footing_mesh": [
+        96,
+        144,
+        54
+      ],
+      "wall_concrete_cap_mesh": [
+        288,
+        432,
+        162
+      ],
+      "wall_concrete_footing_mesh": [
+        96,
+        144,
+        54
+      ],
+      "wall_concrete_panels_mesh": [
+        288,
+        432,
+        162
+      ],
+      "wall_individual_beveled_bricks_mesh": [
+        5472,
+        8208,
+        3078
+      ],
+      "wall_label": [
+        3420,
+        5919,
+        2521
+      ],
+      "wall_mortar_core_mesh": [
+        96,
+        144,
+        54
+      ],
+      "wall_reinforced_posts_mesh": [
+        384,
+        576,
+        216
+      ],
+      "wall_sign_panels_mesh": [
+        96,
+        144,
+        54
+      ],
+      "wall_sign_supports_mesh": [
+        192,
+        288,
+        108
+      ],
+      "wall_sign_trim_mesh": [
+        96,
+        144,
+        54
+      ],
+      "wall_subtitle": [
+        2128,
+        3616,
+        1524
+      ]
+    },
+    "objects_sha256": "e83116695dc641fd32015b172aafd2e55c83cc1ff963e84bf0ed7997b129e7a6",
+    "scenes_sha256": "0019dcd561da6cb8b04ec9a187a2a8b311f0b66ce461ca73c4443bf16065c077",
+    "object_count": 140,
+    "mesh_count": 133
+  },
+  "geometryAndTransformsAfter": {
+    "geometry_sha256": "4e0f888126a663534b849721ae728afed183a99c720ebbe015f15af32149f4c0",
+    "mesh_counts": {
+      "Chemlights.smd_chemlight_a_yellow_0": [
+        1073,
+        2049,
+        1008
+      ],
+      "Chemlights.smd_hero_alex_hydration_nozzle_a_0": [
+        180,
+        458,
+        280
+      ],
+      "Flashbangs.smd_flash_grenade_01_0": [
+        749,
+        1251,
+        586
+      ],
+      "Flashbangs.smd_milsim_ranger_1_1_flash_grenade_pouch_0": [
+        746,
+        1320,
+        648
+      ],
+      "Flashbangs.smd_mp_VPA_black_boots_a_0": [
+        188,
+        443,
+        262
+      ],
+      "Grenade_Pouch_Left.smd_usmc_grenade_pouch_brown_0": [
+        572,
+        1349,
+        792
+      ],
+      "Grenade_Pouch_Left.smd_usmc_grenade_top_0": [
+        76,
+        110,
+        48
+      ],
+      "Head.smd_head_sc_m_dunn_0": [
+        1158,
+        3303,
+        2146
+      ],
+      "Head.smd_head_sc_m_dunn_eyes_0": [
+        290,
+        840,
+        552
+      ],
+      "Head.smd_head_shared_eyelashes_0": [
+        360,
+        764,
+        424
+      ],
+      "Head.smd_milsim_VPA_1_1_balaclava_0": [
+        1672,
+        4504,
+        2838
+      ],
+      "Headphones.smd_usmc_headset_0": [
+        1196,
+        2367,
+        1241
+      ],
+      "Helmet.smd_milsim_VPA_1_1_domino_helmet_0": [
+        1266,
+        2831,
+        1604
+      ],
+      "Helmet.smd_milsim_VPA_1_1_k20_basic_helmet_0": [
+        717,
+        1896,
+        1187
+      ],
+      "Holster.smd_hero_alex_cloth_holster_a_black_0": [
+        134,
+        235,
+        112
+      ],
+      "Holster.smd_spetsnaz_holster_black_0": [
+        2039,
+        4297,
+        2306
+      ],
+      "Hook.smd_price_ar_mag_pouch_urban_0": [
+        22,
+        51,
+        30
+      ],
+      "Hook.smd_price_carabiner_black_0": [
+        268,
+        513,
+        256
+      ],
+      "Hydration_Pack.smd_buckle_master_desert_0": [
+        1112,
+        2137,
+        1124
+      ],
+      "Hydration_Pack.smd_buckle_master_urban_0": [
+        982,
+        1607,
+        748
+      ],
+      "Hydration_Pack.smd_usmc_hydration_a_0": [
+        1217,
+        2694,
+        1516
+      ],
+      "Icosphere": [
+        42,
+        120,
+        80
+      ],
+      "Kneepad.smd_usmc_lmg_kneepad_0": [
+        1130,
+        2350,
+        1264
+      ],
+      "Mag_Left.smd_ar_mag_0": [
+        148,
+        307,
+        168
+      ],
+      "Mag_Pouch_Left.smd_wyatt_ar_mag_pouch_black_0": [
+        772,
+        1762,
+        1024
+      ],
+      "Mags.smd_ar_mag_0": [
+        888,
+        1842,
+        1008
+      ],
+      "Pistol_Mags.smd_smg_pistol_mag_0": [
+        124,
+        206,
+        96
+      ],
+      "Pistol_Mags_Pouch.smd_pouch_mag_pistol_ghost_0": [
+        1957,
+        4495,
+        2572
+      ],
+      "Pouch_Left.smd_sas_urban_medical_pouch_0": [
+        312,
+        746,
+        440
+      ],
+      "Pouches_A.smd_VPA_ar_mag_pouch_0": [
+        2208,
+        5175,
+        3009
+      ],
+      "Pouches_A.smd_mp_VPA_black_boots_a_0": [
+        383,
+        937,
+        562
+      ],
+      "Pouches_B.smd_mp_yegor_ar_mag_pouch_stencil_0": [
+        372,
+        837,
+        484
+      ],
+      "Pouches_B.smd_price_ar_mag_pouch_urban_0": [
+        757,
+        1713,
+        994
+      ],
+      "Radio.smd_hero_alex_radio_pouch_a_0": [
+        1115,
+        2079,
+        1068
+      ],
+      "Radio.smd_ptt_ghost_black_0": [
+        1451,
+        2685,
+        1332
+      ],
+      "Radio.smd_radio_0": [
+        2087,
+        4733,
+        2732
+      ],
+      "Vest.smd_buckle_master_olive_0": [
+        618,
+        1125,
+        568
+      ],
+      "Vest.smd_milsim_VPA_1_1_K20_id_pouch.jpg_0": [
+        389,
+        827,
+        457
+      ],
+      "Vest.smd_milsim_VPA_1_1_K20_vest_0": [
+        2855,
+        7082,
+        4279
+      ],
+      "belt.smd_milsim_ranger_1_1_parts_belt_dual_molle_0": [
+        818,
+        1715,
+        920
+      ],
+      "body.smd_VPA_Black_Gloves_0": [
+        2602,
+        6628,
+        4052
+      ],
+      "body.smd_base_male_arm_l_skintone_01_0": [
+        600,
+        1650,
+        1052
+      ],
+      "body.smd_milsim_VPA_1_1_K20_shirt_0": [
+        2890,
+        7833,
+        4970
+      ],
+      "body.smd_milsim_VPA_K20_pants_tactical_g3_0": [
+        2775,
+        7727,
+        4956
+      ],
+      "body.smd_mp_VPA_black_boots_a_0": [
+        1412,
+        3638,
+        2247
+      ],
+      "formation_boundary_posts_mesh": [
+        384,
+        576,
+        216
+      ],
+      "formation_flag_finial_mesh": [
+        54,
+        99,
+        45
+      ],
+      "formation_flag_plinth_mesh": [
+        288,
+        432,
+        162
+      ],
+      "formation_flag_star_mesh": [
+        10,
+        10,
+        1
+      ],
+      "formation_flagpole_mesh": [
+        24,
+        36,
+        14
+      ],
+      "formation_label": [
+        2364,
+        4089,
+        1741
+      ],
+      "formation_paving_mesh": [
+        7680,
+        11520,
+        4320
+      ],
+      "formation_post_caps_mesh": [
+        384,
+        576,
+        216
+      ],
+      "formation_sign_panels_mesh": [
+        96,
+        144,
+        54
+      ],
+      "formation_sign_supports_mesh": [
+        192,
+        288,
+        108
+      ],
+      "formation_sign_trim_mesh": [
+        96,
+        144,
+        54
+      ],
+      "formation_subtitle": [
+        2256,
+        3840,
+        1620
+      ],
+      "formation_vietnam_flag_mesh": [
+        70,
+        121,
+        52
+      ],
+      "formation_white_markings_mesh": [
+        6528,
+        9792,
+        3672
+      ],
+      "movement_DICH": [
+        672,
+        1158,
+        492
+      ],
+      "movement_XUAT PHAT": [
+        784,
+        1342,
+        568
+      ],
+      "movement_compacted_lane_mesh": [
+        355,
+        634,
+        280
+      ],
+      "movement_label": [
+        3276,
+        5679,
+        2421
+      ],
+      "movement_lane_marking_mesh": [
+        192,
+        288,
+        108
+      ],
+      "movement_lane_posts_mesh": [
+        384,
+        576,
+        216
+      ],
+      "movement_low_obstacle_beams_mesh": [
+        72,
+        108,
+        42
+      ],
+      "movement_low_obstacle_posts_mesh": [
+        576,
+        864,
+        324
+      ],
+      "movement_obstacle_pad_mesh": [
+        193,
+        384,
+        192
+      ],
+      "movement_red_post_tops_mesh": [
+        384,
+        576,
+        216
+      ],
+      "movement_sign_panels_mesh": [
+        96,
+        144,
+        54
+      ],
+      "movement_sign_supports_mesh": [
+        192,
+        288,
+        108
+      ],
+      "movement_sign_trim_mesh": [
+        96,
+        144,
+        54
+      ],
+      "movement_subtitle": [
+        3372,
+        5793,
+        2457
+      ],
+      "open_bare_observation_ground_mesh": [
+        193,
+        384,
+        192
+      ],
+      "open_label": [
+        2320,
+        4014,
+        1710
+      ],
+      "open_sign_panels_mesh": [
+        96,
+        144,
+        54
+      ],
+      "open_sign_supports_mesh": [
+        192,
+        288,
+        108
+      ],
+      "open_sign_trim_mesh": [
+        96,
+        144,
+        54
+      ],
+      "open_subtitle": [
+        1876,
+        3235,
+        1375
+      ],
+      "sandbag_compacted_pad_mesh": [
+        193,
+        384,
+        192
+      ],
+      "sandbag_label": [
+        1320,
+        2304,
+        986
+      ],
+      "sandbag_sign_panels_mesh": [
+        96,
+        144,
+        54
+      ],
+      "sandbag_sign_supports_mesh": [
+        192,
+        288,
+        108
+      ],
+      "sandbag_sign_trim_mesh": [
+        96,
+        144,
+        54
+      ],
+      "sandbag_staggered_rounded_sacks_mesh": [
+        4608,
+        8640,
+        4032
+      ],
+      "sandbag_stitched_edges_mesh": [
+        256,
+        384,
+        192
+      ],
+      "sandbag_subtitle": [
+        2052,
+        3539,
+        1505
+      ],
+      "terrain_bench_frames_mesh": [
+        1152,
+        1728,
+        648
+      ],
+      "terrain_bench_timber_mesh": [
+        1440,
+        2160,
+        810
+      ],
+      "terrain_earth_profile_mesh": [
+        2000,
+        2000,
+        500
+      ],
+      "terrain_lower_foundation_mesh": [
+        96,
+        144,
+        54
+      ],
+      "terrain_observation_path_mesh": [
+        385,
+        688,
+        304
+      ],
+      "terrain_perimeter_fence_mesh": [
+        9780,
+        14670,
+        5670
+      ],
+      "terrain_perimeter_path_mesh": [
+        775,
+        1390,
+        616
+      ],
+      "terrain_scattered_stones_mesh": [
+        2730,
+        4914,
+        2184
+      ],
+      "terrain_sculpted_surface_mesh": [
+        62101,
+        123700,
+        61600
+      ],
+      "terrain_trench_approach_mesh": [
+        135,
+        238,
+        104
+      ],
+      "trench_label": [
+        2024,
+        3512,
+        1498
+      ],
+      "trench_retaining_boards_mesh": [
+        3840,
+        5760,
+        2160
+      ],
+      "trench_sign_panels_mesh": [
+        96,
+        144,
+        54
+      ],
+      "trench_sign_supports_mesh": [
+        192,
+        288,
+        108
+      ],
+      "trench_sign_trim_mesh": [
+        96,
+        144,
+        54
+      ],
+      "trench_subtitle": [
+        3744,
+        6470,
+        2754
+      ],
+      "trench_timber_floor_mesh": [
+        5664,
+        8496,
+        3186
+      ],
+      "trench_uprights_mesh": [
+        588,
+        882,
+        378
+      ],
+      "vegetation_Bush_Large_mesh": [
+        6160,
+        11440,
+        5280
+      ],
+      "vegetation_Bush_Medium_mesh": [
+        7280,
+        13520,
+        6240
+      ],
+      "vegetation_Tree_A_branching_mesh": [
+        3160,
+        4740,
+        2020
+      ],
+      "vegetation_Tree_A_canopies_mesh": [
+        9720,
+        18360,
+        8640
+      ],
+      "vegetation_Tree_B_branching_mesh": [
+        2844,
+        4266,
+        1818
+      ],
+      "vegetation_Tree_B_canopies_mesh": [
+        8748,
+        16524,
+        7776
+      ],
+      "vegetation_Tree_C_branching_mesh": [
+        2844,
+        4266,
+        1818
+      ],
+      "vegetation_Tree_C_canopies_mesh": [
+        8748,
+        16524,
+        7776
+      ],
+      "vegetation_approach_mesh": [
+        180,
+        319,
+        140
+      ],
+      "vegetation_grass_clumps_mesh": [
+        12078,
+        12078,
+        4026
+      ],
+      "vegetation_label": [
+        1820,
+        3125,
+        1325
+      ],
+      "vegetation_sign_panels_mesh": [
+        96,
+        144,
+        54
+      ],
+      "vegetation_sign_supports_mesh": [
+        192,
+        288,
+        108
+      ],
+      "vegetation_sign_trim_mesh": [
+        96,
+        144,
+        54
+      ],
+      "vegetation_subtitle": [
+        2280,
+        3914,
+        1660
+      ],
+      "wall_brick_cap_mesh": [
+        96,
+        144,
+        54
+      ],
+      "wall_brick_footing_mesh": [
+        96,
+        144,
+        54
+      ],
+      "wall_concrete_cap_mesh": [
+        288,
+        432,
+        162
+      ],
+      "wall_concrete_footing_mesh": [
+        96,
+        144,
+        54
+      ],
+      "wall_concrete_panels_mesh": [
+        288,
+        432,
+        162
+      ],
+      "wall_individual_beveled_bricks_mesh": [
+        5472,
+        8208,
+        3078
+      ],
+      "wall_label": [
+        3420,
+        5919,
+        2521
+      ],
+      "wall_mortar_core_mesh": [
+        96,
+        144,
+        54
+      ],
+      "wall_reinforced_posts_mesh": [
+        384,
+        576,
+        216
+      ],
+      "wall_sign_panels_mesh": [
+        96,
+        144,
+        54
+      ],
+      "wall_sign_supports_mesh": [
+        192,
+        288,
+        108
+      ],
+      "wall_sign_trim_mesh": [
+        96,
+        144,
+        54
+      ],
+      "wall_subtitle": [
+        2128,
+        3616,
+        1524
+      ]
+    },
+    "objects_sha256": "e83116695dc641fd32015b172aafd2e55c83cc1ff963e84bf0ed7997b129e7a6",
+    "scenes_sha256": "0019dcd561da6cb8b04ec9a187a2a8b311f0b66ce461ca73c4443bf16065c077",
+    "object_count": 140,
+    "mesh_count": 133
+  },
+  "unknownObjectMaterialsPreserved": true,
+  "sourceUntouched": true
+}
