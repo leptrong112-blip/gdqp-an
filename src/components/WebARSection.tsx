@@ -24,6 +24,10 @@ import {
   Smartphone,
   Laptop,
   Crosshair,
+  Maximize2,
+  Minimize2,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -147,7 +151,7 @@ const WEBAR_CATALOG: ARModelItem[] = [
     subtitle: "Vận động áp sát mặt đất vượt qua hỏa lực địch",
     description:
       "Đặt mô hình người chiến sĩ đang thực hiện động tác bò hoặc trườn ngay trên sàn nhà của bạn. Mô hình người lính QĐND Việt Nam trang bị quân phục dã chiến K20 và súng tiểu liên AK-47, cho phép học sinh quan sát góc áp sát mặt đất, động tác giữ súng và cử động chân tay nhịp nhàng.",
-    modelPath: "/models/vietnam_people_army_advanced_animations.glb",
+    modelPath: "/models/vietnam_people_army_advanced_animations.optimized.glb",
     animationName: "Truon",
     alternativeAnimations: [
       { label: "🐍 Động tác Trườn", animationName: "Truon", baseHeightOffset: 0.12 },
@@ -193,7 +197,7 @@ const WEBAR_CATALOG: ARModelItem[] = [
     subtitle: "Tư thế bắn vững chãi sau vật che đỡ",
     description:
       "Mô hình chiến sĩ QĐND Việt Nam quỳ bắn với súng tiểu liên AK-47, báng súng tỳ chắc vào hõm vai, cùi chỏ trái tỳ trên đầu gối trái, mắt ngắm thẳng mục tiêu. Đặt mô hình trên sàn nhà giúp học sinh đối chiếu góc gập đầu gối và thế ngồi vững vàng theo SGK.",
-    modelPath: "/models/vietnam_people_army_advanced_animations.glb",
+    modelPath: "/models/vietnam_people_army_advanced_animations.optimized.glb",
     animationName: "QuyBan",
     baseHeightOffset: 0.08,
     initialPoseTime: 1.2,
@@ -234,7 +238,7 @@ const WEBAR_CATALOG: ARModelItem[] = [
     subtitle: "Tư thế bắn chuẩn mực áp sát mặt đất",
     description:
       "Tư thế nằm bắn là tư thế vững vàng nhất của bài bắn súng tiểu liên AK. Thân người mở góc khoảng 30° so với hướng bắn, ngực tỳ nhẹ xuống đất, hai khuỷu tay mở rộng tỳ chắc chắn để lấy đường ngắm chính xác.",
-    modelPath: "/models/vietnam_people_army_advanced_animations.glb",
+    modelPath: "/models/vietnam_people_army_advanced_animations.optimized.glb",
     animationName: "NamBan",
     baseHeightOffset: 0.12,
     initialPoseTime: 1.2,
@@ -275,7 +279,7 @@ const WEBAR_CATALOG: ARModelItem[] = [
     subtitle: "Tư thế sẵn sàng chiến đấu đa hướng",
     description:
       "Tư thế đứng cảnh giới với súng AK-47 giương sẵn, cơ động linh hoạt trong tuần tra, tác chiến địa hình rừng núi hoặc đô thị. Đặt trên sàn để quan sát vóc dáng và độ mở hai bàn chân.",
-    modelPath: "/models/vietnam_people_army_advanced_animations.glb",
+    modelPath: "/models/vietnam_people_army_advanced_animations.optimized.glb",
     animationName: "CanhGioiCoDong",
     alternativeAnimations: [
       { label: "🛡️ Cảnh giới cơ động", animationName: "CanhGioiCoDong" },
@@ -316,7 +320,7 @@ const WEBAR_CATALOG: ARModelItem[] = [
     subtitle: "Kỹ thuật ném xa đúng hướng mục tiêu",
     description:
       "Tư thế vung tay ném quả lựu đạn F-1 với độ rướn toàn thân, tận dụng lực đẩy của chân, sức vặn của hông và độ mở cánh tay đưa lựu đạn bay tới mục tiêu theo góc 45°.",
-    modelPath: "/models/vietnam_people_army_advanced_animations.glb",
+    modelPath: "/models/vietnam_people_army_advanced_animations.optimized.glb",
     animationName: "NemLuuDan",
     baseHeightOffset: 0.04,
     initialPoseTime: 0.75,
@@ -518,6 +522,43 @@ export default function WebARSection() {
   const [isQRModalOpen, setIsQRModalOpen] = useState<boolean>(false);
   const [snapshotToast, setSnapshotToast] = useState<string | null>(null);
 
+  // Fullscreen & Expanded Viewport States
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!canvasContainerRef.current) return;
+    if (!document.fullscreenElement) {
+      canvasContainerRef.current.requestFullscreen().then(() => {
+        setIsFullscreen(true);
+      }).catch(() => {
+        setIsFullscreen(true);
+      });
+    } else {
+      document.exitFullscreen().then(() => {
+        setIsFullscreen(false);
+      }).catch(() => {
+        setIsFullscreen(false);
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFsChange);
+    return () => document.removeEventListener("fullscreenchange", handleFsChange);
+  }, []);
+
+  const handleZoomIn = () => {
+    setScaleMultiplier((prev) => Math.min(3.0, Number((prev + 0.2).toFixed(1))));
+  };
+
+  const handleZoomOut = () => {
+    setScaleMultiplier((prev) => Math.max(0.4, Number((prev - 0.2).toFixed(1))));
+  };
+
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -700,19 +741,19 @@ export default function WebARSection() {
               WebAR &amp; 3D Studio
             </span>
           </div>
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 dark:text-white leading-tight mt-1">
+          <h1 className="text-lg sm:text-2xl lg:text-3xl font-black text-slate-900 dark:text-white leading-tight mt-1">
             Không Gian 3D Vũ Khí &amp; Động Tác Chiến Đấu
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-sans max-w-3xl">
-            Quan sát chi tiết cấu tạo súng tiểu liên AK-47, động tác bò/đi khom của chiến sĩ trên thao trường 3D. Hỗ trợ quét mã QR để mở camera điện thoại chiếu trực tiếp lên bàn học và sàn nhà ngoài đời thực!
+            <span className="hidden sm:inline">Quan sát chi tiết cấu tạo súng tiểu liên AK-47, động tác bò/đi khom của chiến sĩ trên thao trường 3D. </span>Hỗ trợ quét mã hoặc bật camera chiếu trực tiếp lên bàn học và sàn nhà!
           </p>
         </div>
 
-        {/* Action Buttons: Phone QR & Studio Mode */}
+        {/* Action Buttons: Phone QR (Chỉ hiện trên desktop) & Bật Camera AR */}
         <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
           <button
             onClick={() => setIsQRModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 text-white text-xs font-bold shadow-md shadow-red-600/25 hover:from-red-700 hover:to-rose-700 transition-all cursor-pointer border border-red-400/30"
+            className="hidden md:flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 text-white text-xs font-bold shadow-md shadow-red-600/25 hover:from-red-700 hover:to-rose-700 transition-all cursor-pointer border border-red-400/30"
             title="Dùng camera điện thoại quét để chiếu lên bàn học ngoài đời thực"
           >
             <Smartphone className="w-4 h-4 text-amber-300" />
@@ -724,18 +765,18 @@ export default function WebARSection() {
             className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
               isCameraActive
                 ? "bg-emerald-600 text-white shadow-emerald-600/20 hover:bg-emerald-700"
-                : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-200"
+                : "bg-red-600 hover:bg-red-700 text-white shadow-md shadow-red-600/20"
             }`}
-            title={isCameraActive ? "Tắt camera, trở về Thao trường 3D" : "Bật camera thiết bị"}
+            title={isCameraActive ? "Tắt camera, trở về Thao trường 3D" : "Bật camera thiết bị để chiếu AR"}
           >
-            {isCameraActive ? <Camera className="w-4 h-4" /> : <CameraOff className="w-4 h-4 text-slate-400" />}
+            {isCameraActive ? <Camera className="w-4 h-4" /> : <Camera className="w-4 h-4 text-amber-300" />}
             <span>{isCameraActive ? "Camera AR: Đang bật" : "Bật Camera AR"}</span>
           </button>
         </div>
       </div>
 
-      {/* ── LAPTOP / PC NOTIFICATION BANNER ── */}
-      <div className="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-blue-900 dark:text-blue-300">
+      {/* ── LAPTOP / PC NOTIFICATION BANNER (Chỉ hiển thị trên máy tính, ẩn hoàn toàn trên điện thoại) ── */}
+      <div className="hidden md:flex p-3.5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-blue-900 dark:text-blue-300">
         <div className="flex items-center gap-2.5">
           <Laptop className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
           <span>
@@ -752,11 +793,11 @@ export default function WebARSection() {
 
       {/* ── CATEGORY TABS SELECTOR & CUSTOM UPLOAD BUTTON ── */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none w-full sm:w-auto">
           {[
-            { id: "weapon", label: "🔫 Vũ Khí Bộ Binh (AK-47 & Lựu đạn)", count: 2 },
-            { id: "soldier", label: "🪖 Chiến Thuật Vận Động (Bò, Quỳ, Nằm, Ném)", count: 5 },
-            ...(customModelUrl ? [{ id: "custom", label: `📁 ${customModelName} (Tải lên)`, count: 1 }] : []),
+            { id: "weapon", shortLabel: "🔫 Súng AK-47", label: "🔫 Vũ Khí Bộ Binh (AK-47 & Lựu đạn)", count: 2 },
+            { id: "soldier", shortLabel: "🪖 Động Tác Chiến Thuật", label: "🪖 Chiến Thuật Vận Động (Bò, Quỳ, Nằm)", count: 5 },
+            ...(customModelUrl ? [{ id: "custom", shortLabel: `📁 ${customModelName}`, label: `📁 ${customModelName} (Tải lên)`, count: 1 }] : []),
           ].map((tab) => {
             const isActive = activeCategory === tab.id;
             return (
@@ -769,13 +810,14 @@ export default function WebARSection() {
                     if (firstItem) handleSelectItem(firstItem);
                   }
                 }}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
+                className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
                   isActive
                     ? "bg-red-600 text-white shadow-md shadow-red-600/20"
                     : "bg-white dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/80 hover:bg-slate-50 dark:hover:bg-slate-800"
                 }`}
               >
-                <span>{tab.label}</span>
+                <span className="sm:hidden">{tab.shortLabel}</span>
+                <span className="hidden sm:inline">{tab.label}</span>
               </button>
             );
           })}
@@ -804,11 +846,17 @@ export default function WebARSection() {
       {/* ── MAIN WORKSPACE: 3D AR VIEWPORT & CONTROL CONSOLE ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        {/* ── CỘT TRÁI: KHUNG VIEWPORT 3D THAO TRƯỜNG / WEBAR (COL-8) ──────── */}
-        <div className="lg:col-span-8 flex flex-col space-y-3">
+        {/* ── CỘT TRÁI: KHUNG VIEWPORT 3D THAO TRƯỜNG / WEBAR (COL-8 HOẶC COL-12 KHI MỞ RỘNG) ──────── */}
+        <div className={`${isExpanded ? "lg:col-span-12" : "lg:col-span-8"} flex flex-col space-y-3 transition-all duration-300`}>
           <div
             ref={canvasContainerRef}
-            className="w-full h-[450px] sm:h-[520px] lg:h-[580px] rounded-3xl overflow-hidden relative shadow-xl border border-slate-800 bg-[#090d16] flex flex-col justify-between"
+            className={`w-full ${
+              isFullscreen
+                ? "fixed inset-0 z-[99999] w-screen h-screen rounded-none border-none bg-black"
+                : isExpanded
+                ? "h-[640px] sm:h-[720px] lg:h-[800px] rounded-3xl"
+                : "h-[450px] sm:h-[520px] lg:h-[580px] rounded-3xl"
+            } overflow-hidden relative shadow-xl border border-slate-800 bg-[#090d16] flex flex-col justify-between transition-all duration-300`}
           >
             {/* 1. Live Camera Stream Background (chỉ hiển thị khi người dùng bật Camera) */}
             <video
@@ -872,7 +920,7 @@ export default function WebARSection() {
               </div>
 
               {/* Right Camera & Playback controls */}
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 {isCameraActive && (
                   <button
                     onClick={handleToggleFacingMode}
@@ -917,6 +965,34 @@ export default function WebARSection() {
                 >
                   <Camera className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Chụp ảnh 3D</span>
+                </button>
+
+                {/* Nút Phóng to / Thu nhỏ khung nhìn (Expand Viewport) */}
+                <button
+                  onClick={() => setIsExpanded((prev) => !prev)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl backdrop-blur-md text-xs font-bold border transition-all cursor-pointer shadow-md ${
+                    isExpanded
+                      ? "bg-amber-500 text-slate-950 border-amber-300 hover:bg-amber-400"
+                      : "bg-slate-950/85 hover:bg-slate-800 text-slate-200 border-white/10"
+                  }`}
+                  title={isExpanded ? "Thu gọn về kích thước chuẩn" : "Mở rộng 100% khung nhìn 3D"}
+                >
+                  {isExpanded ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+                  <span className="hidden sm:inline">{isExpanded ? "Thu nhỏ khung" : "Phóng to khung"}</span>
+                </button>
+
+                {/* Nút Toàn màn hình (Fullscreen) */}
+                <button
+                  onClick={toggleFullscreen}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl backdrop-blur-md text-xs font-bold border transition-all cursor-pointer shadow-md ${
+                    isFullscreen
+                      ? "bg-red-600 text-white border-red-400"
+                      : "bg-slate-950/85 hover:bg-slate-800 text-slate-200 border-white/10"
+                  }`}
+                  title={isFullscreen ? "Thoát toàn màn hình (ESC)" : "Xem toàn màn hình (Fullscreen)"}
+                >
+                  {isFullscreen ? <Minimize2 className="w-3.5 h-3.5 text-white" /> : <Maximize2 className="w-3.5 h-3.5 text-slate-300" />}
+                  <span className="hidden sm:inline">{isFullscreen ? "Thoát toàn màn hình" : "Toàn màn hình"}</span>
                 </button>
               </div>
             </div>
@@ -996,7 +1072,28 @@ export default function WebARSection() {
                 <span>Kéo chuột để xoay 360° · Cuộn chuột để phóng to / thu nhỏ</span>
               </div>
 
-              <div className="pointer-events-auto">
+              <div className="pointer-events-auto flex items-center gap-2">
+                {/* Nút Phóng to / Thu nhỏ mô hình */}
+                <div className="flex items-center bg-slate-950/85 backdrop-blur-md rounded-xl border border-white/10 p-0.5 shadow-md">
+                  <button
+                    onClick={handleZoomOut}
+                    className="p-1.5 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                    title="Thu nhỏ mô hình (-20%)"
+                  >
+                    <ZoomOut className="w-3.5 h-3.5" />
+                  </button>
+                  <span className="text-[10px] font-mono font-bold text-amber-300 px-1.5 select-none min-w-[36px] text-center">
+                    {Math.round(scaleMultiplier * 100)}%
+                  </span>
+                  <button
+                    onClick={handleZoomIn}
+                    className="p-1.5 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                    title="Phóng to mô hình (+20%)"
+                  >
+                    <ZoomIn className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
                 <button
                   onClick={() => {
                     setRotationAngle(0);
@@ -1105,8 +1202,8 @@ export default function WebARSection() {
           </div>
         </div>
 
-        {/* ── CỘT PHẢI: DANH SÁCH MÔ HÌNH & CHI TIẾT CẤU TẠO (COL-4) ──────── */}
-        <div className="lg:col-span-4 space-y-4">
+        {/* ── CỘT PHẢI: DANH SÁCH MÔ HÌNH & CHI TIẾT CẤU TẠO (COL-4 HOẶC DÀN 2 CỘT KHI MỞ RỘNG) ──────── */}
+        <div className={`${isExpanded ? "lg:col-span-12 grid grid-cols-1 md:grid-cols-2 gap-4 space-y-0" : "lg:col-span-4 space-y-4"} transition-all duration-300`}>
           
           {/* Danh Sách Lựa Chọn Mô Hình Cùng Phân Loại */}
           <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-3">
@@ -1321,4 +1418,4 @@ export default function WebARSection() {
 // Preload tất cả các mô hình GLB chuẩn chất lượng cao để chuyển đổi tức thì
 useGLTF.preload("/models/ak47.glb");
 useGLTF.preload("/models/f1-classroom.glb");
-useGLTF.preload("/models/vietnam_people_army_advanced_animations.glb");
+useGLTF.preload("/models/vietnam_people_army_advanced_animations.optimized.glb");

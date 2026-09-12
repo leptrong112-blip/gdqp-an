@@ -8,7 +8,7 @@ function SoldierCrawlModel({ actionName }: { actionName: string }) {
   const group = useRef<any>(null);
   
   // Nạp mô hình chiến sĩ QĐND Việt Nam trang phục K20 từ kho tài sản tĩnh
-  const { scene, animations } = useGLTF('/models/vietnam_people_army_advanced_animations.glb');
+  const { scene, animations } = useGLTF('/models/vietnam_people_army_advanced_animations.optimized.glb');
   const { actions, names } = useAnimations(animations, group);
 
   useEffect(() => {
@@ -81,4 +81,4 @@ export default function CrawlSimulation() {
 }
 
 // Kích hoạt nạp trước tài nguyên vào bộ nhớ đệm giúp web chạy mượt
-useGLTF.preload('/models/vietnam_people_army_advanced_animations.glb');
+useGLTF.preload('/models/vietnam_people_army_advanced_animations.optimized.glb');

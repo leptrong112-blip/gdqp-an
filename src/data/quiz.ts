@@ -1,4 +1,5 @@
 import { QuizQuestion } from "../types";
+import { BANK_MCQ_10, BANK_MCQ_11, BANK_MCQ_12 } from "./questionBank";
 
 export const GDQP_QUIZZES: Record<number, QuizQuestion[]> = {
   10: [
@@ -97,7 +98,8 @@ export const GDQP_QUIZZES: Record<number, QuizQuestion[]> = {
       ],
       correctAnswer: 2,
       explanation: "Khẩu lệnh cho động tác nghỉ chỉ gồm duy nhất từ hô dứt khoát: 'Nghỉ!'."
-    }
+    },
+    ...BANK_MCQ_10
   ],
   11: [
     {
@@ -195,7 +197,8 @@ export const GDQP_QUIZZES: Record<number, QuizQuestion[]> = {
       ],
       correctAnswer: 1,
       explanation: "Ranh giới Lãnh hải quốc gia của Việt Nam rộng đúng 12 hải lý tính từ đường cơ sở quy định pháp lý quốc tế hoàn vũ."
-    }
+    },
+    ...BANK_MCQ_11
   ],
   12: [
     {
@@ -293,6 +296,8 @@ export const GDQP_QUIZZES: Record<number, QuizQuestion[]> = {
       ],
       correctAnswer: 1,
       explanation: "Tầm bắn thẳng mục tiêu bia người nằm (bia số 4) của súng tiểu liên AK-47 là 350 mét, đối với bia người chạy khom là 525 mét."
-    }
+    },
+    ...BANK_MCQ_12
   ]
 };
+

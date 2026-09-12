@@ -17,7 +17,7 @@ export default function AiBotSection() {
       : [
           {
             role: "assistant",
-            content: "Chào em học sinh thân mến! Tôi là Trung tá Nguyễn Văn Quyết, giảng viên ảo môn Giáo dục Quốc phòng và An ninh (GDQPAN). Em có câu hỏi, thắc mắc gì về bài giảng lý thuyết quân sự, kỹ thuật tháo lắp súng AK, luật nghĩa vụ hay các kỹ năng sơ cứu sinh tồn không? Hãy đặt câu hỏi, tôi luôn ở đây để huấn luyện và chia sẻ giáo trình giúp em tự tin bắn phá điểm cao!",
+            content: "Chào em học sinh thân mến! Tôi là Trung tá Nguyễn Văn Quyết, giảng viên ảo môn Giáo dục Quốc phòng và An ninh (GDQP-AN). Em có câu hỏi, thắc mắc gì về bài giảng lý thuyết quân sự, kỹ thuật tháo lắp súng AK, luật nghĩa vụ hay các kỹ năng sơ cứu sinh tồn không? Hãy đặt câu hỏi, tôi sẽ hướng dẫn và giúp em ôn tập để nắm vững kiến thức GDQP-AN.",
             timestamp: new Date().toLocaleTimeString()
           }
         ];
@@ -58,7 +58,7 @@ export default function AiBotSection() {
       });
 
       if (!response.ok) {
-        throw new Error("Lỗi đường truyền hoặc máy chủ Gemini tạm thời gián đoạn.");
+        throw new Error("Máy chủ trợ giảng tạm thời gián đoạn.");
       }
 
       const data = await response.json();
@@ -72,7 +72,7 @@ export default function AiBotSection() {
       setMessages((prev) => [...prev, botMsg]);
     } catch (err: any) {
       console.error(err);
-      setErrorText(err.message || "Không thể kết nối vô tuyến đến tổng đài giảng huấn.");
+      setErrorText(err.message || "Không thể kết nối đến Trung tá Quyết AI.");
     } finally {
       setIsLoading(false);
     }
@@ -82,7 +82,7 @@ export default function AiBotSection() {
     setMessages([
       {
         role: "assistant",
-        content: "Đã làm sạch đường truyền vô tuyến liên lạc. Em có câu hỏi mới nào cần Trung tá Nguyễn Văn Quyết tư vấn không nào?",
+        content: "Đã làm mới cuộc trò chuyện. Em có câu hỏi mới nào cần Trung tá Quyết giải đáp không?",
         timestamp: new Date().toLocaleTimeString()
       }
     ]);
@@ -95,7 +95,7 @@ export default function AiBotSection() {
         <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 p-5 rounded-2xl space-y-4 shadow-xs transition-colors">
           <div className="pb-2 border-b border-slate-200 dark:border-slate-800 flex items-center gap-2">
             <Tv className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-            <h3 className="font-extrabold text-slate-800 dark:text-white text-sm">Giảng Viên Ảo GDQPAN</h3>
+            <h3 className="font-extrabold text-slate-800 dark:text-white text-sm">Trợ giảng AI GDQP-AN</h3>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-sans">
             Gặp gỡ <strong className="text-slate-800 dark:text-slate-200">Trung tá Nguyễn Văn Quyết</strong> để thảo luận mọi chủ đề từ chính trị an ninh học đường, luật phục vụ Tổ quốc hay kĩ thuật thực hành ngắm bắn và hành quân dã chiến dã ngoại của cấp THPT.
@@ -127,7 +127,7 @@ export default function AiBotSection() {
             <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Bản quyền giáo vụ học thuật
           </h4>
           <p className="leading-relaxed">
-            Hệ thống huấn luyện sử dụng hạt nhân kỹ thuật số thông minh <strong className="text-emerald-700 dark:text-emerald-300">Gemini</strong> biên tập thông tin tức thời theo chương trình SGK GDQPAN Việt Nam hiện hành. Hãy đặt các truy vấn lịch sự, chính xác và lành mạnh.
+            Hệ thống huấn luyện sử dụng hạt nhân kỹ thuật số thông minh <strong className="text-emerald-700 dark:text-emerald-300">Gemini</strong> biên tập thông tin tức thời theo chương trình SGK GDQP-AN Việt Nam hiện hành. Hãy đặt các truy vấn lịch sự, chính xác và lành mạnh.
           </p>
         </div>
       </div>

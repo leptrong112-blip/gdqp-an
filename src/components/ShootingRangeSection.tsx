@@ -80,6 +80,15 @@ export default function ShootingRangeSection() {
   const [aimPos, setAimPos] = useState({ x: 0, y: 0 });
   const fire3DRef = useRef<(() => RangeImpact | null) | null>(null);
   const [adsHeld, setAdsHeld] = useState(false);
+  const [touchAdsHeld, setTouchAdsHeld] = useState(false);
+  const touchAimRef = useRef<{ id: number; x: number; y: number } | null>(null);
+  const touchAdsRef = useRef<number | null>(null);
+  const touchFireRef = useRef(false);
+  const releaseTouchControls = useCallback(() => {
+    touchAimRef.current = null;
+    touchAdsRef.current = null;
+    setTouchAdsHeld(false);
+  }, []);
   const [isHoldingBreath, setIsHoldingBreath] = useState(false);
   const [breathSecondsLeft, setBreathSecondsLeft] = useState(4);
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -293,7 +302,7 @@ export default function ShootingRangeSection() {
       setShots(nextShots);
 
       // Thông báo đài báo bia
-      const modeText = (isAimingDownSights || adsHeld) ? "" : " (Bắn từ hông)";
+      const modeText = (isAimingDownSights || adsHeld || touchAdsHeld) ? "" : " (Bắn từ hông)";
       const reportText = isHit
         ? `Viên ${newShot.shotNumber}: ${score} Điểm (${clock})${modeText}!`
         : `Viên ${newShot.shotNumber}: 0 Điểm - Bắn trượt ra ngoài bia (${clock})${modeText}!`;
@@ -326,6 +335,7 @@ export default function ShootingRangeSection() {
       swayOffset.y,
       currentTarget,
       adsHeld,
+      touchAdsHeld,
       isAimingDownSights,
       isHoldingBreath,
       fireXPToast,
@@ -335,16 +345,20 @@ export default function ShootingRangeSection() {
 
   // Reset bài bắn
   const handleResetShots = useCallback(() => {
+    releaseTouchControls();
+    setIsHoldingBreath(false);
     setShots([]);
     setLastShotReport(null);
     setIsCompleted(false);
     const initialY = 0;
     setAimPos({ x: 0, y: initialY });
     lastValidAimRef.current = { x: 0, y: initialY };
-  }, [currentTarget.id]);
+  }, [currentTarget.id, releaseTouchControls]);
 
   // Thay đổi bài bắn (chuyển sang bài mới sẽ hiện màn hình Bắt đầu)
   const handleChangeExercise = (exId: ExerciseId) => {
+    releaseTouchControls();
+    setIsHoldingBreath(false);
     setSelectedExerciseId(exId);
     setShots([]);
     setLastShotReport(null);
@@ -355,6 +369,43 @@ export default function ShootingRangeSection() {
     setAimPos({ x: 0, y: initialY });
     lastValidAimRef.current = { x: 0, y: initialY };
   };
+
+  // One finger owns relative aiming; other fingers can operate ADS and fire.
+  const handleTouchAimDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === 'mouse' || !hasStarted || isCompleted || touchAimRef.current) return;
+    if ((e.target as HTMLElement).closest('button, [data-range-controls]')) return;
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    touchAimRef.current = { id: e.pointerId, x: e.clientX, y: e.clientY };
+  };
+  const handleTouchAimMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const pointer = touchAimRef.current;
+    if (!pointer || pointer.id !== e.pointerId) return;
+    e.preventDefault();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const scale = 2 / Math.max(1, Math.min(rect.width, rect.height));
+    const next = {
+      x: Math.max(-1.1, Math.min(1.1, lastValidAimRef.current.x + (e.clientX - pointer.x) * scale)),
+      y: Math.max(-1.1, Math.min(1.1, lastValidAimRef.current.y - (e.clientY - pointer.y) * scale)),
+    };
+    touchAimRef.current = { id: e.pointerId, x: e.clientX, y: e.clientY };
+    lastValidAimRef.current = next;
+    setAimPos(next);
+  };
+  const releaseTouchAim = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (touchAimRef.current?.id === e.pointerId) touchAimRef.current = null;
+  };
+  const releaseTouchAds = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (touchAdsRef.current !== e.pointerId) return;
+    touchAdsRef.current = null;
+    setTouchAdsHeld(false);
+  };
+
+  useEffect(() => {
+    releaseTouchControls();
+    setAdsHeld(false);
+    setIsHoldingBreath(false);
+  }, [activeTab, hasStarted, isCompleted, releaseTouchControls]);
 
   // Xử lý di chuột trên thao trường ngắm
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -405,11 +456,19 @@ export default function ShootingRangeSection() {
         setAdsHeld(false);
       }
     };
-    const release = () => { setAdsHeld(false); setIsHoldingBreath(false); };
+    const release = () => { setAdsHeld(false); setIsHoldingBreath(false); releaseTouchControls(); };
+    const onVisibility = () => { if (document.hidden) release(); };
     window.addEventListener("mouseup", handleGlobalMouseUp);
     window.addEventListener("blur", release);
-    return () => { window.removeEventListener("mouseup", handleGlobalMouseUp); window.removeEventListener("blur", release); };
-  }, []);
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('resize', release);
+    return () => {
+      window.removeEventListener("mouseup", handleGlobalMouseUp);
+      window.removeEventListener("blur", release);
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('resize', release);
+    };
+  }, [releaseTouchControls]);
 
   // Phím tắt bàn phím: Space / Enter để Bắt đầu hoặc Bắn, Q để đổi Ngắm bắn, Shift để Nín thở, R để Bắn lại
   useEffect(() => {
@@ -527,11 +586,11 @@ export default function ShootingRangeSection() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
           {/* CỘT TRÁI (8 COLS): KHUNG NHÌN THAO TRƯỜNG BẮN SÚNG */}
-          <div className="lg:col-span-8 space-y-4">
+          <div className="lg:col-span-8 min-w-0 space-y-4">
             
             {/* Thanh điều khiển nhanh bài bắn & thước ngắm */}
             <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 p-3 rounded-2xl">
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+              <div className="flex min-w-0 max-w-full items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
                 <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pl-1">Bài bắn:</span>
                 {AK_EXERCISES.map((ex) => (
                   <button
@@ -569,20 +628,22 @@ export default function ShootingRangeSection() {
             {/* ══════════ KHUNG NHÌN SÚNG & THAO TRƯỜNG (VIEWPORT CHÍNH) ══════════ */}
             <div
               ref={rangeRef}
-              onMouseMove={handleMouseMove}
-              onMouseDown={handleMouseDown}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={() => { setAdsHeld(false); setIsHoldingBreath(false); }}
+              onPointerDown={(e) => { if (e.pointerType === 'mouse') handleMouseDown(e); else handleTouchAimDown(e); }}
+              onPointerMove={(e) => { if (e.pointerType === 'mouse') handleMouseMove(e); else handleTouchAimMove(e); }}
+              onPointerUp={(e) => { if (e.pointerType === 'mouse') handleMouseUp(e); else releaseTouchAim(e); }}
+              onPointerCancel={releaseTouchAim}
+              onLostPointerCapture={releaseTouchAim}
+              onPointerLeave={(e) => { if (e.pointerType === 'mouse') { setAdsHeld(false); setIsHoldingBreath(false); } }}
               onContextMenu={(e) => e.preventDefault()}
               className="relative w-full h-[520px] sm:h-[600px] lg:h-[660px] rounded-3xl overflow-hidden border-2 border-slate-300 dark:border-slate-700 shadow-2xl select-none cursor-crosshair group touch-none bg-gradient-to-b from-sky-400 via-sky-200 to-emerald-800"
             >
-              <ShootingRange3D ads={isAimingDownSights || adsHeld} aim={aimPos} sway={swayOffset}
+              <ShootingRange3D ads={isAimingDownSights || adsHeld || touchAdsHeld} aim={aimPos} sway={swayOffset}
                 recoil={recoilOffset} targetId={currentTarget.id} shots={shots} fireRef={fire3DRef} />
 
               {/* ══════════ HUD GÓC TRÊN TRÁI: CỰ LY & CHẾ ĐỘ NGẮM (LUÔN RÕ RÀNG, KHÔNG BỊ SÚNG CHE) ══════════ */}
-              <div onMouseDown={(e) => e.stopPropagation()} onMouseMove={(e) => e.stopPropagation()}
+              <div data-range-controls onPointerDown={(e) => e.stopPropagation()} onPointerMove={(e) => e.stopPropagation()}
                 className="absolute top-3 left-3 sm:top-4 sm:left-4 z-20 flex flex-col gap-1.5 pointer-events-auto">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 max-w-[calc(100vw-6rem)]">
                   {/* Nút đổi nhanh Ngắm Bắn / Bắn từ hông */}
                   <button
                     onClick={(e) => {
@@ -597,7 +658,7 @@ export default function ShootingRangeSection() {
                     title="Nhấn phím Q hoặc nhấp vào đây để đổi chế độ ngắm"
                   >
                     <Eye className="w-3.5 h-3.5" />
-                    <span>{(isAimingDownSights || adsHeld) ? "🎯 Ngắm Bắn (ADS)" : "👀 Bắn Từ Hông"}</span>
+                    <span>{(isAimingDownSights || adsHeld || touchAdsHeld) ? "🎯 Ngắm Bắn (ADS)" : "👀 Bắn Từ Hông"}</span>
                     <span className="text-[10px] opacity-75 font-mono ml-0.5">[Q]</span>
                   </button>
 
@@ -622,7 +683,8 @@ export default function ShootingRangeSection() {
                 </div>
 
                 {/* Gợi ý thao tác nhanh */}
-                <div className="bg-black/55 backdrop-blur-sm px-2.5 py-1 rounded-lg border border-white/10 text-[10px] text-slate-300 flex items-center gap-2 pointer-events-none w-fit">
+                <div className="bg-black/55 backdrop-blur-sm px-2.5 py-1 rounded-lg border border-white/10 text-[10px] text-slate-300 flex flex-wrap items-center gap-2 pointer-events-none w-fit">
+                  <span className="w-full sm:hidden [@media(any-pointer:coarse)]:block">Kéo để ngắm · Giữ ADS · Chạm BẮN</span>
                   <span>🖱️ Chuột trái: Bắn</span>
                   <span>•</span>
                   <span>Giữ chuột phải: ADS · Shift: Nín thở</span>
@@ -630,7 +692,7 @@ export default function ShootingRangeSection() {
               </div>
 
               {/* ══════════ HUD GÓC TRÊN PHẢI: SỐ ĐẠN & BÁO BIA ══════════ */}
-              <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 flex flex-col items-end gap-2 pointer-events-none">
+              <div className="absolute top-28 right-3 sm:top-24 sm:right-4 lg:top-4 z-20 flex flex-col items-end gap-2 pointer-events-none max-w-[85%]">
                 <div className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/20 text-white text-xs font-mono font-bold flex items-center gap-2 shadow-md">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                   <span>ĐẠN: {shots.length} / {selectedExercise.ammoCount} VIÊN</span>
@@ -644,20 +706,40 @@ export default function ShootingRangeSection() {
 
               {/* ══════════ THANH ĐIỀU KHIỂN NÚT BẤM DƯỚI KHUNG NHÌN ══════════ */}
               <div
+                data-range-controls
                 onPointerDown={(e) => e.stopPropagation()}
                 onPointerMove={(e) => e.stopPropagation()}
                 onMouseDown={(e) => e.stopPropagation()}
                 onMouseMove={(e) => e.stopPropagation()}
-                className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 z-30 flex items-center justify-between pointer-events-auto gap-2"
+                className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 z-30 flex flex-wrap items-center justify-between pointer-events-auto gap-2"
               >
                 <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    aria-label="Giữ ADS để ngắm"
+                    aria-pressed={touchAdsHeld}
+                    disabled={!hasStarted || isCompleted}
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      if (touchAdsRef.current !== null || (e.pointerType === 'mouse' && e.button !== 0)) return;
+                      e.preventDefault();
+                      e.currentTarget.setPointerCapture(e.pointerId);
+                      touchAdsRef.current = e.pointerId;
+                      setTouchAdsHeld(true);
+                    }}
+                    onPointerUp={releaseTouchAds}
+                    onPointerCancel={releaseTouchAds}
+                    onLostPointerCapture={releaseTouchAds}
+                    onContextMenu={(e) => e.preventDefault()}
+                    className={`min-h-12 min-w-20 touch-none rounded-2xl border px-3 text-xs font-black shadow-lg sm:hidden [@media(any-pointer:coarse)]:inline-flex items-center justify-center ${touchAdsHeld ? 'bg-amber-500 text-slate-950 border-amber-300' : 'bg-slate-900/90 text-white border-white/30'}`}
+                  >Giữ ADS</button>
                   {/* Nút chuyển chế độ ngắm */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setIsAimingDownSights(!isAimingDownSights);
                     }}
-                    className={`flex items-center gap-1.5 px-3 sm:px-4 py-2.5 rounded-2xl text-xs font-black shadow-lg transition-all cursor-pointer border ${
+                    className={`hidden sm:flex [@media(any-pointer:coarse)]:hidden items-center gap-1.5 px-3 sm:px-4 py-2.5 rounded-2xl text-xs font-black shadow-lg transition-all cursor-pointer border ${
                       isAimingDownSights
                         ? "bg-amber-500 text-slate-950 border-amber-300 hover:bg-amber-400"
                         : "bg-black/60 text-slate-200 border-white/20 hover:bg-black/80"
@@ -672,11 +754,14 @@ export default function ShootingRangeSection() {
 
                   {/* Nút nín thở */}
                   <button
+                    type="button"
+                    aria-pressed={isHoldingBreath}
+                    disabled={!hasStarted || isCompleted}
                     onClick={(e) => {
                       e.stopPropagation();
                       setIsHoldingBreath(!isHoldingBreath);
                     }}
-                    className={`flex items-center gap-1.5 px-3 sm:px-4 py-2.5 rounded-2xl text-xs font-black shadow-lg transition-all cursor-pointer border ${
+                    className={`min-h-12 flex items-center gap-1.5 px-3 sm:px-4 py-2.5 rounded-2xl text-xs font-black shadow-lg transition-all cursor-pointer border ${
                       isHoldingBreath
                         ? "bg-blue-600 text-white border-blue-400 scale-105"
                         : "bg-black/60 text-slate-200 border-white/20 hover:bg-black/80"
@@ -691,11 +776,21 @@ export default function ShootingRangeSection() {
 
                 {/* Nút Bóp cò bắn */}
                 <button
+                  type="button"
+                  onPointerDown={(e) => {
+                    e.stopPropagation();
+                    touchFireRef.current = e.pointerType !== 'mouse';
+                    if (touchFireRef.current) {
+                      e.preventDefault();
+                      handleFire();
+                    }
+                  }}
                   onClick={(e) => {
                     e.stopPropagation();
+                    if (touchFireRef.current && e.detail !== 0) return;
                     handleFire();
                   }}
-                  disabled={isShooting || isCompleted}
+                  disabled={!hasStarted || isShooting || isCompleted}
                   className={`flex items-center gap-2 px-5 sm:px-7 py-3 rounded-2xl text-sm font-black shadow-xl transition-all cursor-pointer border ${
                     isCompleted
                       ? "bg-slate-700 text-slate-400 border-slate-600 cursor-not-allowed"
@@ -705,7 +800,7 @@ export default function ShootingRangeSection() {
                   }`}
                 >
                   <Crosshair className="w-5 h-5" />
-                  <span>{isCompleted ? "HẾT ĐẠN" : isShooting ? "ĐANG BẮN..." : "BÓP CÒ (BẮN)"}</span>
+                  <span>{isCompleted ? "HẾT ĐẠN" : isShooting ? "..." : "BẮN"}</span>
                 </button>
               </div>
 
@@ -766,6 +861,7 @@ export default function ShootingRangeSection() {
 
                   {/* Hướng dẫn thao tác nhanh */}
                   <div className="mt-4 flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-[11px] text-slate-400">
+                    <span className="w-full text-amber-300">Cảm ứng: Kéo để ngắm · Giữ ADS · Chạm Nín thở (4 giây) · Chạm BẮN</span>
                     <span>🖱️ <strong>Chuột trái:</strong> Bóp cò</span>
                     <span>•</span>
                     <span><strong>Giữ chuột phải:</strong> ADS · Shift: Nín thở</span>

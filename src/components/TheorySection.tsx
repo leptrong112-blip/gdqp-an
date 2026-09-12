@@ -3,13 +3,16 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   BookOpen, MapPin, Target, Shield, Clock, Brain, FileText, Target as TargetIcon, 
   Flag, Users, Zap, Award, Search, Sword, Star, AlertTriangle, Crosshair, 
-  Activity, HeartPulse, Navigation, Radio, Bomb, Flame, Tent, CheckCircle2
+  Activity, HeartPulse, Navigation, Radio, Bomb, Flame, Tent, CheckCircle2,
+  XCircle, HelpCircle, Check, Printer, Sparkles, ChevronRight, BookMarked, Eye,
+  PanelLeftClose, PanelLeftOpen, Maximize2, Minimize2
 } from 'lucide-react';
 import { GradeLevel } from '../types';
 import { useGamification } from '../context/GamificationContext';
+import { ALL_DETAILED_LESSONS, DetailedLesson, DetailedSection, QuickReviewQuestion } from '../data/lessonsDetail';
 
 // ============================================================================
-// 1. CẤU TRÚC DỮ LIỆU BÀI GIẢNG TÓM TẮT (FULL 3 NĂM HỌC - SẠCH 100%)
+// 1. CẤU TRÚC DỮ LIỆU BÀI GIẢNG TÓM TẮT DỰ PHÒNG
 // ============================================================================
 interface LessonSummary {
   id: string;
@@ -32,7 +35,7 @@ const THEORY_DATA: Record<GradeLevel, GradeModule> = {
     lessons: [
       { id: '10_1', order: 'Bài 1', title: 'Lịch sử, truyền thống của lực lượng vũ trang nhân dân Việt Nam', objective: 'Nêu được những nét chính về lịch sử, bản chất, truyền thống anh hùng của Quân đội nhân dân Việt Nam, Công an nhân dân Việt Nam và Dân quân tự vệ.', keyPoints: [ { icon: <Shield />, title: "Truyền thống Quân đội", content: "Trung thành vô hạn với Tổ Quốc; quyết chiến, quyết thắng; gắn bó máu thịt với nhân dân; kỉ luật tự giác, nghiêm minh." }, { icon: <Clock />, title: "Truyền thống Công an", content: "Tuyệt đối trung thành; vì nhân dân phục vụ, dựa vào dân để làm việc; cảnh giác, bí mật, mưu trí, dũng cảm." } ] },
       { id: '10_2', order: 'Bài 2', title: 'Nội dung cơ bản một số luật về quốc phòng và an ninh Việt Nam', objective: 'Phân tích và trình bày được những nội dung cơ bản của Luật Giáo dục QPAN, Luật Sĩ quan QĐND và Luật Công an nhân dân.', keyPoints: [ { icon: <FileText />, title: "Luật GDQP&AN", content: "Môn học chính khoá bảo đảm học sinh có hiểu biết ban đầu về nền quốc phòng toàn dân, an ninh nhân dân và kĩ năng quân sự." }, { icon: <Award />, title: "Trách nhiệm Sĩ quan, Công an", content: "Tuyệt đối trung thành với Tổ quốc, nhân dân; sẵn sàng chiến đấu, hi sinh bảo vệ độc lập, chủ quyền, toàn vẹn lãnh thổ." } ] },
-      { id: '10_3', order: 'Bài 3', title: 'Ma tuý, tác hại của ma tuý', objective: 'Nêu được quy định pháp luật về phòng chống ma tuý; phân tích tác hại và hình thức gây nghiện.', keyPoints: [ { icon: <Search />, title: "Chất ma tuý", content: "Là chất gây nghiện, chất hướng thần kích thích hoặc ức chế thần kinh, dễ gây tình trạng nghiện." }, { icon: <AlertTriangle />, title: "Trách nhiệm Học sinh", content: "Chủ động bảo vệ bản thân, tuyệt đối không dùng thử; kịp thời tố giác người vi phạm cho gia đình, nhà trường." } ] },
+      { id: '10_3', order: 'Bài 3', title: 'Ma tuý, tác hại của ma tuý và phòng chống ma túy trong học đường', objective: 'Nêu được quy định pháp luật về phòng chống ma tuý; phân tích tác hại và hình thức gây nghiện.', keyPoints: [ { icon: <Search />, title: "Chất ma tuý", content: "Là chất gây nghiện, chất hướng thần kích thích hoặc ức chế thần kinh, dễ gây tình trạng nghiện." }, { icon: <AlertTriangle />, title: "Trách nhiệm Học sinh", content: "Chủ động bảo vệ bản thân, tuyệt đối không dùng thử; kịp thời tố giác người vi phạm cho gia đình, nhà trường." } ] },
       { id: '10_4', order: 'Bài 4', title: 'Phòng, chống vi phạm pháp luật về trật tự an toàn giao thông', objective: 'Trình bày một số nội dung cơ bản pháp luật về trật tự an toàn giao thông và tự giác tuân thủ.', keyPoints: [ { icon: <MapPin />, title: "Quy tắc đường bộ", content: "Đi bên phải theo chiều đi, đi đúng làn đường, chấp hành hệ thống báo hiệu (người điều khiển, đèn, biển báo)." }, { icon: <Users />, title: "Hành động cụ thể", content: "Đủ 16 tuổi được lái xe dưới 50cm3; phải đội mũ bảo hiểm; tuyên truyền người thân cùng chấp hành." } ] },
       { id: '10_5', order: 'Bài 5', title: 'Bảo vệ an ninh quốc gia và bảo đảm trật tự, an toàn xã hội', objective: 'Nêu được tình hình, nhiệm vụ và trách nhiệm của công dân, lực lượng vũ trang trong bảo vệ an ninh quốc gia.', keyPoints: [ { icon: <Shield />, title: "An ninh quốc gia", content: "Là sự ổn định, phát triển bền vững của chế độ XHCN và sự bất khả xâm phạm độc lập, chủ quyền Tổ quốc." }, { icon: <Zap />, title: "Trách nhiệm học sinh", content: "Không thực hiện, không tụ tập bạn bè vi phạm pháp luật; kịp thời thông báo, ngăn chặn hành vi xâm phạm an ninh." } ] },
       { id: '10_6', order: 'Bài 6', title: 'Một số hiểu biết về an ninh mạng', objective: 'Nêu khái niệm về mạng, an ninh mạng, bảo mật thông tin cá nhân và nội dung cơ bản Luật An ninh mạng.', keyPoints: [ { icon: <Brain />, title: "An ninh mạng", content: "Bảo đảm hoạt động trên không gian mạng không gây phương hại đến an ninh quốc gia, trật tự, quyền hợp pháp của tổ chức, cá nhân." }, { icon: <AlertTriangle />, title: "Bảo mật thông tin", content: "Đặt mật khẩu mạnh, dùng xác thực 2 yếu tố, tránh Wifi công cộng, chia sẻ thông tin chọn lọc, cảnh giác mã độc." } ] },
@@ -77,19 +80,6 @@ const THEORY_DATA: Record<GradeLevel, GradeModule> = {
   }
 };
 
-const PATRIOTIC_THEME = { 
-  text: 'text-red-700 dark:text-red-400', 
-  bg: 'bg-red-600', 
-  borderActive: 'border-red-500 bg-red-50 dark:bg-red-950/40 dark:border-red-600',
-  badgeText: 'text-yellow-400' 
-};
-
-const GRADE_COLOR_MAP: Record<GradeLevel, typeof PATRIOTIC_THEME> = {
-  10: PATRIOTIC_THEME,
-  11: PATRIOTIC_THEME,
-  12: PATRIOTIC_THEME
-};
-
 interface TheorySectionProps {
   grade: GradeLevel;
   onGradeChange?: (grade: GradeLevel) => void;
@@ -100,18 +90,38 @@ export default function TheorySection({ grade, onGradeChange }: TheorySectionPro
   const [selectedLessonId, setSelectedLessonId] = useState<string>(activeGradeModule.lessons[0]?.id || '');
   const [mobileView, setMobileView] = useState<'list' | 'detail'>('list');
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'textbook' | 'summary' | 'quiz'>('textbook');
+
+  // Quiz state for current lesson
+  const [userAnswers, setUserAnswers] = useState<Record<number, number>>({});
+  const [answeredQuestions, setAnsweredQuestions] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     if (!activeGradeModule.lessons.some(l => l.id === selectedLessonId)) {
       setSelectedLessonId(activeGradeModule.lessons[0]?.id || '');
     }
     setMobileView('list');
-  }, [activeGradeModule, selectedLessonId]);
+    setUserAnswers({});
+    setAnsweredQuestions({});
+    setActiveTab('textbook');
+  }, [activeGradeModule, grade]);
+
+  // Reset quiz state when switching lesson
+  useEffect(() => {
+    setUserAnswers({});
+    setAnsweredQuestions({});
+  }, [selectedLessonId]);
 
   const selectedLessonSummary = useMemo(() => 
     activeGradeModule.lessons.find(l => l.id === selectedLessonId),
     [activeGradeModule, selectedLessonId]
   );
+
+  const selectedDetailedLesson = useMemo(() => {
+    const list = ALL_DETAILED_LESSONS[grade] || [];
+    return list.find(l => l.id === selectedLessonId);
+  }, [grade, selectedLessonId]);
 
   const { state, markLessonRead, fireXPToast } = useGamification();
   const lessonsRead = state.lessonsRead;
@@ -119,29 +129,51 @@ export default function TheorySection({ grade, onGradeChange }: TheorySectionPro
   const handleMarkRead = (lessonId: string) => {
     const { xpGained } = markLessonRead(lessonId);
     if (xpGained > 0) {
-      fireXPToast(xpGained, "Đọc xong lý thuyết");
+      fireXPToast(xpGained, "Hoàn thành bài học GDQP-AN");
     }
   };
 
-  const activeColor = GRADE_COLOR_MAP[grade];
+  const handleAnswerQuiz = (qId: number, optionIdx: number, correctIdx: number) => {
+    if (answeredQuestions[qId]) return;
+    setUserAnswers(prev => ({ ...prev, [qId]: optionIdx }));
+    setAnsweredQuestions(prev => ({ ...prev, [qId]: true }));
+    if (optionIdx === correctIdx) {
+      fireXPToast(15, "Đúng câu hỏi củng cố!");
+    }
+  };
+
+  const filteredLessons = useMemo(() => {
+    if (!searchQuery.trim()) return activeGradeModule.lessons;
+    const q = searchQuery.toLowerCase();
+    return activeGradeModule.lessons.filter(l => 
+      l.title.toLowerCase().includes(q) || 
+      l.order.toLowerCase().includes(q)
+    );
+  }, [activeGradeModule.lessons, searchQuery]);
+
+  const readCount = useMemo(() => {
+    return activeGradeModule.lessons.filter(l => lessonsRead.includes(l.id)).length;
+  }, [activeGradeModule.lessons, lessonsRead]);
+
+  const progressPercent = Math.round((readCount / (activeGradeModule.lessons.length || 1)) * 100);
 
   return (
-    <div className="w-full bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden flex flex-col shadow-sm selection:bg-red-200 selection:text-red-900 transition-colors">
+    <div className="w-full h-full flex-1 min-h-0 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden flex flex-col shadow-md selection:bg-red-200 selection:text-red-900 transition-colors">
       
-      {/* ── MOBILE ── */}
-      <div className="flex md:hidden flex-col h-full">
+      {/* ── MOBILE VIEW ── */}
+      <div className="flex md:hidden flex-col h-full overflow-hidden">
 
         {/* MOBILE LIST VIEW */}
         {mobileView === 'list' && (
-          <div className="flex flex-col">
+          <div className="flex flex-col h-full overflow-hidden">
             <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900 shrink-0">
               <div className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-extrabold text-xs ${activeColor.bg} ${activeColor.badgeText} shadow-sm border border-red-700`}>
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center font-extrabold text-xs bg-red-600 text-yellow-400 shadow-sm border border-red-700">
                   {grade}
                 </div>
                 <div>
-                  <h2 className={`font-extrabold text-sm ${activeColor.text}`}>Năm học Lớp {grade}</h2>
-                  <p className="text-slate-500 dark:text-slate-400 text-[10px]">Cổng bài giảng lý thuyết QPAN</p>
+                  <h2 className="font-extrabold text-sm text-red-700 dark:text-red-400">Năm học Lớp {grade}</h2>
+                  <p className="text-slate-500 dark:text-slate-400 text-[10px]">Cổng bài giảng chuẩn SGK Kết nối tri thức</p>
                 </div>
               </div>
               <div className="flex gap-1 shrink-0">
@@ -151,7 +183,7 @@ export default function TheorySection({ grade, onGradeChange }: TheorySectionPro
                     onClick={() => onGradeChange && onGradeChange(g as GradeLevel)}
                     className={`w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold transition-all ${
                       grade === g
-                        ? `${activeColor.bg} ${activeColor.badgeText} border border-red-700 shadow-sm`
+                        ? 'bg-red-600 text-yellow-400 border border-red-700 shadow-sm'
                         : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-300'
                     }`}
                   >
@@ -161,9 +193,31 @@ export default function TheorySection({ grade, onGradeChange }: TheorySectionPro
               </div>
             </div>
 
-            <div className="p-3 flex flex-col gap-2">
-              {activeGradeModule.lessons.map((lesson) => {
+            {/* Mobile Search & Progress */}
+            <div className="p-3 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 space-y-2 shrink-0">
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Tìm bài học..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-red-500"
+                />
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-slate-500">
+                <span>Tiến độ học tập:</span>
+                <span className="font-bold text-red-600">{readCount}/{activeGradeModule.lessons.length} bài ({progressPercent}%)</span>
+              </div>
+              <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                <div className="bg-red-600 h-full transition-all duration-300" style={{ width: `${progressPercent}%` }} />
+              </div>
+            </div>
+
+            <div className="p-3 flex flex-col gap-2 overflow-y-auto flex-1">
+              {filteredLessons.map((lesson) => {
                 const isActive = selectedLessonId === lesson.id;
+                const isRead = lessonsRead.includes(lesson.id);
                 return (
                   <button
                     key={lesson.id}
@@ -171,29 +225,31 @@ export default function TheorySection({ grade, onGradeChange }: TheorySectionPro
                       setSelectedLessonId(lesson.id);
                       setMobileView('detail');
                     }}
-                    className={`w-full flex items-center text-left gap-3 p-4 rounded-xl transition-all duration-200 border-2 ${
+                    className={`w-full flex items-center text-left gap-3 p-3.5 rounded-xl transition-all duration-200 border-2 ${
                       isActive
-                        ? activeColor.borderActive
+                        ? 'border-red-500 bg-red-50 dark:bg-red-950/40 dark:border-red-600'
                         : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 shadow-sm'
                     }`}
                   >
-                    <div className={`w-10 h-10 shrink-0 rounded-lg flex items-center justify-center font-bold text-xs uppercase transition-colors ${
-                      isActive ? `${activeColor.bg} ${activeColor.badgeText} shadow-sm border border-red-700` : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                    <div className={`w-9 h-9 shrink-0 rounded-lg flex items-center justify-center font-bold text-[11px] uppercase transition-colors ${
+                      isActive ? 'bg-red-600 text-yellow-400 shadow-sm border border-red-700' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
                     }`}>
                       {lesson.order}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className={`font-bold text-xs leading-snug ${isActive ? activeColor.text : 'text-slate-800 dark:text-white'}`}>
+                      <h3 className={`font-bold text-xs leading-snug ${isActive ? 'text-red-700 dark:text-red-400' : 'text-slate-800 dark:text-white'}`}>
                         {lesson.title}
                       </h3>
                       <div className="flex items-center gap-2 mt-1">
-                        <p className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-1">{activeGradeModule.textbook}</p>
-                        {lessonsRead.includes(lesson.id) && (
-                          <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
+                        <span className="text-[10px] text-slate-400">{activeGradeModule.textbook}</span>
+                        {isRead && (
+                          <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded-md">
+                            <CheckCircle2 className="w-2.5 h-2.5" /> Đã học
+                          </span>
                         )}
                       </div>
                     </div>
-                    <span className="text-slate-300 dark:text-slate-600 text-lg shrink-0">›</span>
+                    <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600 shrink-0" />
                   </button>
                 );
               })}
@@ -202,238 +258,846 @@ export default function TheorySection({ grade, onGradeChange }: TheorySectionPro
         )}
 
         {/* MOBILE DETAIL VIEW */}
-        {mobileView === 'detail' && selectedLessonSummary && (
-          <MobileLessonDetail
-            lesson={selectedLessonSummary}
-            textbook={activeGradeModule.textbook}
-            isRead={lessonsRead.includes(selectedLessonSummary.id)}
-            onBack={() => setMobileView('list')}
-            onMarkRead={() => handleMarkRead(selectedLessonSummary.id)}
-          />
+        {mobileView === 'detail' && (
+          <div className="flex-1 overflow-y-auto">
+            <MobileLessonDetail
+              lessonSummary={selectedLessonSummary}
+              detailedLesson={selectedDetailedLesson}
+              textbook={activeGradeModule.textbook}
+              isRead={lessonsRead.includes(selectedLessonId)}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              onBack={() => setMobileView('list')}
+              onMarkRead={() => handleMarkRead(selectedLessonId)}
+              userAnswers={userAnswers}
+              answeredQuestions={answeredQuestions}
+              onAnswerQuiz={handleAnswerQuiz}
+            />
+          </div>
         )}
       </div>
 
-      {/* ── DESKTOP/TABLET ── */}
-      <div className="hidden md:flex flex-row relative" style={{ minHeight: '640px', height: 'calc(100vh - 230px)' }}>
+      {/* ── DESKTOP/TABLET SPLIT-VIEW (100% CONTAINER HEIGHT, NO DOUBLE SCROLLBAR) ── */}
+      <div className="hidden md:flex flex-row relative flex-1 min-h-0 h-full overflow-hidden">
 
         {/* SIDEBAR DESKTOP */}
         <div
           className="flex flex-col border-r border-slate-200 dark:border-slate-800 h-full shrink-0 bg-slate-50 dark:bg-slate-900 transition-all duration-300 ease-in-out overflow-hidden"
-          style={{ width: isPanelCollapsed ? 0 : 340 }}
+          style={{ width: isPanelCollapsed ? 0 : 360 }}
         >
-        <div className="px-6 py-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-extrabold text-sm ${activeColor.bg} ${activeColor.badgeText} shadow-md border border-red-700`}>
-              {grade}
+          {/* Header Sidebar: Grade selector */}
+          <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0 bg-white/50 dark:bg-slate-900/50">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center font-extrabold text-sm bg-red-600 text-yellow-400 shadow-md border border-red-700">
+                {grade}
+              </div>
+              <div>
+                <h2 className="font-black text-base text-red-700 dark:text-red-400">GDQP-AN Lớp {grade}</h2>
+                <p className="text-slate-500 dark:text-slate-400 text-[11px]">Chương trình Bộ GD&ĐT 2018</p>
+              </div>
             </div>
-            <div>
-              <h2 className={`font-black text-base ${activeColor.text}`}>Năm học Lớp {grade}</h2>
-              <p className="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">Cổng bài giảng lý thuyết QPAN</p>
+            <div className="flex gap-1.5 shrink-0">
+              {[10, 11, 12].map((g) => (
+                <button 
+                  key={g}
+                  onClick={() => onGradeChange && onGradeChange(g as GradeLevel)}
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold transition-all cursor-pointer ${
+                    grade === g 
+                    ? 'bg-red-600 text-yellow-400 border border-red-700 shadow-sm' 
+                    : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-300 hover:bg-red-50 hover:border-red-300 hover:text-red-700'
+                  }`}
+                >
+                  L{g}
+                </button>
+              ))}
             </div>
           </div>
-          <div className="flex gap-1.5 shrink-0">
-            {[10, 11, 12].map((g) => (
-              <button 
-                key={g}
-                onClick={() => onGradeChange && onGradeChange(g as GradeLevel)}
-                className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold transition-all ${
-                  grade === g 
-                  ? `${activeColor.bg} ${activeColor.badgeText} border border-red-700 shadow-sm` 
-                  : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-300 hover:bg-red-50 hover:border-red-300 hover:text-red-700'
-                }`}
-              >
-                L{g}
-              </button>
-            ))}
+
+          {/* Search bar & Progress */}
+          <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 shrink-0 space-y-2.5">
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Tìm bài học..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-red-500 transition-all"
+              />
+              {searchQuery && (
+                <button 
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                <span className="flex items-center gap-1.5">
+                  <BookMarked className="w-3.5 h-3.5 text-red-600" /> Tiến độ hoàn thành:
+                </span>
+                <span className="font-bold text-red-600 dark:text-red-400">{readCount}/{activeGradeModule.lessons.length} bài ({progressPercent}%)</span>
+              </div>
+              <div className="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                <div 
+                  className="bg-gradient-to-r from-red-600 to-amber-500 h-full transition-all duration-300 rounded-full" 
+                  style={{ width: `${progressPercent}%` }} 
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* CỘT DANH SÁCH BÀI GIẢNG */}
+          <div className="flex-1 p-3 gap-2 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800 w-[360px]">
+            {filteredLessons.map((lesson) => {
+              const isActive = selectedLessonId === lesson.id;
+              const isRead = lessonsRead.includes(lesson.id);
+              return (
+                <button
+                  key={lesson.id}
+                  onClick={() => setSelectedLessonId(lesson.id)}
+                  className={`w-full flex items-center text-left gap-3.5 p-3.5 rounded-2xl transition-all duration-200 group border mb-2 cursor-pointer ${
+                    isActive 
+                      ? 'border-red-500 bg-red-50/80 dark:bg-red-950/40 dark:border-red-600 shadow-sm' 
+                      : 'bg-white dark:bg-slate-800/80 border-slate-200/80 dark:border-slate-700/80 hover:border-red-200 hover:bg-red-50/30 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 shadow-xs'
+                  }`}
+                >
+                  <div className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center font-bold text-xs uppercase transition-colors ${
+                    isActive ? 'bg-red-600 text-yellow-400 shadow-sm border border-red-700' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 group-hover:bg-red-100 group-hover:text-red-700'
+                  }`}>
+                    {lesson.order}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className={`font-bold text-[13px] leading-snug ${isActive ? 'text-red-700 dark:text-red-400 font-extrabold' : 'text-slate-800 dark:text-white group-hover:text-red-600'}`}>
+                      {lesson.title}
+                    </h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[10px] text-slate-400 dark:text-slate-400 line-clamp-1">
+                        {activeGradeModule.textbook}
+                      </span>
+                      {isRead && (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 ml-auto" />
+                      )}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* CỘT DANH SÁCH BÀI GIẢNG */}
-        <div className="flex-1 p-4 gap-2 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 w-[340px]">
-          {activeGradeModule.lessons.map((lesson) => {
-            const isActive = selectedLessonId === lesson.id;
-            return (
-              <motion.button
-                key={lesson.id}
-                onClick={() => setSelectedLessonId(lesson.id)}
-                whileHover={{ scale: 1.01 }}
-                className={`w-full flex items-center text-left gap-4 p-4 rounded-2xl transition-all duration-200 group border mb-2 ${
-                  isActive 
-                    ? `${activeColor.borderActive} shadow-sm border-red-200` 
-                    : `bg-white dark:bg-slate-800/80 border-slate-200/80 dark:border-slate-700/80 hover:border-red-200 hover:bg-red-50/30 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 shadow-sm`
-                }`}
-              >
-                <div className={`w-11 h-11 shrink-0 rounded-xl flex items-center justify-center font-bold text-xs uppercase transition-colors ${
-                  isActive ? `${activeColor.bg} ${activeColor.badgeText} shadow-sm border border-red-700` : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 group-hover:bg-red-100 group-hover:text-red-700'
-                }`}>
-                  {lesson.order}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className={`font-bold text-[13px] leading-snug ${isActive ? activeColor.text : 'text-slate-800 dark:text-white group-hover:text-red-600'}`}>
-                    {lesson.title}
-                  </h3>
-                  <div className="flex items-center gap-2 mt-1">
-                    <p className={`text-[11px] line-clamp-1 ${isActive ? 'text-red-700/70 font-medium' : 'text-slate-400 dark:text-slate-400'}`}>
-                      {activeGradeModule.textbook}
-                    </p>
-                    {lessonsRead.includes(lesson.id) && (
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+        {/* CỘT NỘI DUNG CHÍNH (TỰ ĐỘNG MỞ RỘNG TOÀN MÀN HÌNH KHI ĐÓNG SIDEBAR) */}
+        <div className="flex-1 flex flex-col h-full bg-white dark:bg-[#111827] relative transition-all duration-300 overflow-hidden min-w-0">
+          
+          {selectedLessonSummary ? (
+            <div className="flex-1 flex flex-col h-full overflow-hidden">
+              
+              {/* Header bài học Desktop - Luôn ghim trên cùng, tích hợp nút đóng/mở sidebar rõ ràng */}
+              <div className="px-6 lg:px-8 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center shrink-0 bg-white dark:bg-[#111827] gap-4 z-20">
+                <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                  
+                  {/* NÚT THU GỌN / MỞ RỘNG SIDEBAR NỔI BẬT */}
+                  <button
+                    onClick={() => setIsPanelCollapsed(!isPanelCollapsed)}
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border transition-all text-xs font-bold cursor-pointer shrink-0 shadow-xs ${
+                      isPanelCollapsed 
+                        ? 'bg-red-600 text-yellow-300 border-red-700 hover:bg-red-700 shadow-md ring-2 ring-red-300 dark:ring-red-900' 
+                        : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-700'
+                    }`}
+                    title={isPanelCollapsed ? "Mở danh sách bài học" : "Thu gọn danh sách để phóng to nội dung"}
+                  >
+                    {isPanelCollapsed ? (
+                      <>
+                        <PanelLeftOpen className="w-4 h-4 text-yellow-300" />
+                        <span className="font-extrabold">Mở danh sách bài</span>
+                      </>
+                    ) : (
+                      <>
+                        <PanelLeftClose className="w-4 h-4 text-slate-500" />
+                        <span>Thu gọn danh sách</span>
+                      </>
                     )}
+                  </button>
+
+                  <div className="space-y-1 min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-black tracking-wider uppercase text-red-600 bg-red-50 dark:bg-red-950/60 px-2.5 py-0.5 rounded-lg border border-red-200 dark:border-red-800">
+                        {selectedLessonSummary.order} • Khối {grade}
+                      </span>
+                      {selectedDetailedLesson?.estimatedTime && (
+                        <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1 bg-slate-50 dark:bg-slate-800/60 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                          <Clock className="w-3.5 h-3.5 text-amber-500" /> {selectedDetailedLesson.estimatedTime}
+                        </span>
+                      )}
+                    </div>
+                    <h1 className="text-lg lg:text-2xl font-black text-slate-900 dark:text-white leading-tight truncate">
+                      {selectedLessonSummary.title}
+                    </h1>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">
+                      {selectedDetailedLesson?.textbook || activeGradeModule.textbook}
+                    </p>
                   </div>
                 </div>
-              </motion.button>
-            );
-          })}
-        </div>
-        </div>
 
-      {/* CỘT NỘI DUNG */}
-      <div className="flex-1 flex flex-col h-full bg-white dark:bg-[#111827] relative transition-colors">
-        <button
-          onClick={() => setIsPanelCollapsed(!isPanelCollapsed)}
-          className="hidden md:flex absolute -left-3.5 top-1/2 -translate-y-1/2 z-30 w-7 h-7 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full items-center justify-center text-slate-500 dark:text-slate-300 hover:text-red-600 hover:border-red-300 shadow-md cursor-pointer transition-all"
-          title={isPanelCollapsed ? "Mở danh sách bài học" : "Thu gọn danh sách bài học"}
-        >
-          <span className={`text-xs font-bold transition-transform duration-300 ${isPanelCollapsed ? 'rotate-180' : ''}`}>‹</span>
-        </button>
-
-        {selectedLessonSummary ? (
-          <div className="flex-1 flex flex-col h-full overflow-hidden">
-            {/* Header bài học */}
-            <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start shrink-0 bg-white dark:bg-[#111827]">
-              <div>
-                <span className={`text-xs font-extrabold tracking-wider uppercase ${activeColor.text}`}>
-                  {selectedLessonSummary.order}
-                </span>
-                <h1 className="text-xl lg:text-2xl font-black text-slate-900 dark:text-white mt-1 leading-tight">
-                  {selectedLessonSummary.title}
-                </h1>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 font-medium">
-                  {activeGradeModule.textbook}
-                </p>
-              </div>
-
-              {/* Trạng thái / Đánh dấu đã học */}
-              <button
-                onClick={() => handleMarkRead(selectedLessonSummary.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer shadow-xs ${
-                  lessonsRead.includes(selectedLessonSummary.id)
-                    ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
-                    : 'bg-red-600 text-white hover:bg-red-700 shadow-md'
-                }`}
-              >
-                <CheckCircle2 className="w-4 h-4" />
-                {lessonsRead.includes(selectedLessonSummary.id) ? 'Đã hoàn thành' : 'Đánh dấu đã đọc'}
-              </button>
-            </div>
-
-            {/* Chi tiết nội dung bài học */}
-            <div className="flex-1 p-8 overflow-y-auto space-y-6 scrollbar-thin">
-              {/* Mục tiêu */}
-              <div className="p-5 rounded-2xl bg-amber-50/60 dark:bg-slate-800/60 border border-amber-200/80 dark:border-slate-700 space-y-2">
-                <h3 className="font-extrabold text-xs uppercase tracking-wider text-amber-800 dark:text-amber-400 flex items-center gap-2">
-                  <Target className="w-4 h-4 text-amber-600" /> Mục tiêu bài học
-                </h3>
-                <p className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed font-sans font-medium">
-                  {selectedLessonSummary.objective}
-                </p>
-              </div>
-
-              {/* Key points */}
-              <div className="space-y-4">
-                <h3 className="font-black text-sm text-slate-900 dark:text-white flex items-center gap-2 uppercase tracking-wide">
-                  <Star className="w-4 h-4 text-red-600 fill-current" /> Kiến thức cốt lõi
-                </h3>
-                <div className="grid grid-cols-1 gap-4">
-                  {selectedLessonSummary.keyPoints.map((point, idx) => (
-                    <div
-                      key={idx}
-                      className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 flex items-start gap-4"
-                    >
-                      <div className="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-red-600 dark:text-red-400 shrink-0 shadow-xs">
-                        {point.icon}
-                      </div>
-                      <div className="space-y-1">
-                        <h4 className="font-bold text-xs text-slate-900 dark:text-white">
-                          {point.title}
-                        </h4>
-                        <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
-                          {point.content}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                {/* Actions: In & Đánh dấu hoàn thành */}
+                <div className="flex items-center gap-2.5 shrink-0">
+                  <button
+                    onClick={() => window.print()}
+                    className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                    title="In tài liệu bài học"
+                  >
+                    <Printer className="w-4 h-4" />
+                    <span className="hidden lg:inline">In bài</span>
+                  </button>
+                  <button
+                    onClick={() => handleMarkRead(selectedLessonSummary.id)}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer shadow-xs ${
+                      lessonsRead.includes(selectedLessonSummary.id)
+                        ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                        : 'bg-red-600 text-white hover:bg-red-700 shadow-md hover:shadow-red-200'
+                    }`}
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>{lessonsRead.includes(selectedLessonSummary.id) ? 'Đã học' : 'Đánh dấu đã học (+50 XP)'}</span>
+                  </button>
                 </div>
               </div>
+
+              {/* TABS ĐIỀU HƯỚNG NỘI DUNG */}
+              <div className="px-6 lg:px-8 bg-slate-50/80 dark:bg-slate-900/60 border-b border-slate-200/80 dark:border-slate-800 flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => setActiveTab('textbook')}
+                  className={`flex items-center gap-2 px-5 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+                    activeTab === 'textbook'
+                      ? 'border-red-600 text-red-600 dark:text-red-400 bg-white dark:bg-[#111827] rounded-t-xl font-black shadow-xs'
+                      : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                  }`}
+                >
+                  <BookOpen className="w-4 h-4" /> Bài Giảng Chuẩn SGK
+                </button>
+                <button
+                  onClick={() => setActiveTab('summary')}
+                  className={`flex items-center gap-2 px-5 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+                    activeTab === 'summary'
+                      ? 'border-red-600 text-red-600 dark:text-red-400 bg-white dark:bg-[#111827] rounded-t-xl font-black shadow-xs'
+                      : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                  }`}
+                >
+                  <Sparkles className="w-4 h-4" /> Trọng Tâm & Vận Dụng
+                </button>
+                <button
+                  onClick={() => setActiveTab('quiz')}
+                  className={`flex items-center gap-2 px-5 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+                    activeTab === 'quiz'
+                      ? 'border-red-600 text-red-600 dark:text-red-400 bg-white dark:bg-[#111827] rounded-t-xl font-black shadow-xs'
+                      : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                  }`}
+                >
+                  <TargetIcon className="w-4 h-4" /> Luyện Tập Củng Cố ({selectedDetailedLesson?.reviewQuestions.length || 0})
+                </button>
+              </div>
+
+              {/* KHUNG NỘI DUNG CUỘN DUY NHẤT - TỰ ĐỘNG MỞ RỘNG RỘNG RÃI */}
+              <div className="flex-1 p-6 lg:p-10 overflow-y-auto space-y-8 scrollbar-thin">
+                
+                {/* TAB 1: BÀI GIẢNG CHUẨN SGK CHI TIẾT */}
+                {activeTab === 'textbook' && (
+                  <div className={`space-y-8 transition-all duration-300 ${isPanelCollapsed ? 'w-full max-w-7xl mx-auto' : 'w-full max-w-5xl'}`}>
+                    
+                    {/* Mục tiêu bài học 3 chiều (Kiến thức, Kỹ năng, Thái độ) - Thiết kế thoáng đãng, sang trọng */}
+                    {selectedDetailedLesson?.objectives && (
+                      <div className="p-6 lg:p-7 rounded-3xl bg-gradient-to-br from-amber-50/90 to-amber-100/40 dark:from-slate-800/90 dark:to-slate-800/40 border border-amber-200/80 dark:border-slate-700 shadow-sm space-y-4">
+                        <div className="flex items-center gap-2.5 font-black text-sm uppercase tracking-wider text-amber-900 dark:text-amber-400">
+                          <Target className="w-5 h-5 text-amber-600" /> Mục tiêu bài học chuẩn Bộ GD&ĐT
+                        </div>
+                        <div className={`grid grid-cols-1 ${isPanelCollapsed ? 'md:grid-cols-3 gap-6' : 'xl:grid-cols-3 lg:grid-cols-3 md:grid-cols-1 gap-4'} text-xs font-sans`}>
+                          {/* Kiến thức */}
+                          <div className="p-4 lg:p-5 rounded-2xl bg-white dark:bg-slate-900/90 border border-amber-200/80 dark:border-slate-700 space-y-2.5 shadow-xs">
+                            <h4 className="font-black text-xs text-amber-800 dark:text-amber-400 flex items-center gap-2 uppercase tracking-wide">
+                              🎯 Kiến thức
+                            </h4>
+                            <ul className="space-y-2 text-slate-700 dark:text-slate-300 text-xs">
+                              {selectedDetailedLesson.objectives.knowledge.map((k, i) => (
+                                <li key={i} className="flex items-start gap-2">
+                                  <span className="text-amber-600 font-bold mt-0.5">•</span>
+                                  <span className="leading-relaxed">{k}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+
+                          {/* Kỹ năng */}
+                          <div className="p-4 lg:p-5 rounded-2xl bg-white dark:bg-slate-900/90 border border-blue-200/80 dark:border-slate-700 space-y-2.5 shadow-xs">
+                            <h4 className="font-black text-xs text-blue-800 dark:text-blue-400 flex items-center gap-2 uppercase tracking-wide">
+                              🛠️ Kỹ năng
+                            </h4>
+                            <ul className="space-y-2 text-slate-700 dark:text-slate-300 text-xs">
+                              {selectedDetailedLesson.objectives.skills.map((s, i) => (
+                                <li key={i} className="flex items-start gap-2">
+                                  <span className="text-blue-600 font-bold mt-0.5">•</span>
+                                  <span className="leading-relaxed">{s}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+
+                          {/* Thái độ & Trách nhiệm */}
+                          <div className="p-4 lg:p-5 rounded-2xl bg-white dark:bg-slate-900/90 border border-red-200/80 dark:border-slate-700 space-y-2.5 shadow-xs">
+                            <h4 className="font-black text-xs text-red-800 dark:text-red-400 flex items-center gap-2 uppercase tracking-wide">
+                              🎖️ Thái độ &amp; Trách nhiệm
+                            </h4>
+                            <ul className="space-y-2 text-slate-700 dark:text-slate-300 text-xs">
+                              {selectedDetailedLesson.objectives.attitudes.map((a, i) => (
+                                <li key={i} className="flex items-start gap-2">
+                                  <span className="text-red-600 font-bold mt-0.5">•</span>
+                                  <span className="leading-relaxed">{a}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* CÁC PHẦN NỘI DUNG CHI TIẾT (SECTIONS) */}
+                    {selectedDetailedLesson?.sections && selectedDetailedLesson.sections.length > 0 ? (
+                      <div className="space-y-6">
+                        {selectedDetailedLesson.sections.map((section, sIdx) => (
+                          <div 
+                            key={sIdx}
+                            className="p-6 lg:p-8 rounded-3xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 space-y-5 shadow-xs"
+                          >
+                            <h3 className="text-base lg:text-lg font-black text-red-700 dark:text-red-400 flex items-center gap-3 pb-3 border-b border-slate-200/60 dark:border-slate-700">
+                              <span className="w-2.5 h-2.5 rounded-full bg-red-600 shrink-0" />
+                              <span>{section.title}</span>
+                            </h3>
+
+                            {/* Paragraphs */}
+                            {section.paragraphs && section.paragraphs.map((p, pIdx) => (
+                              <p key={pIdx} className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-sans">
+                                {p}
+                              </p>
+                            ))}
+
+                            {/* Bullets */}
+                            {section.bullets && section.bullets.length > 0 && (
+                              <ul className="space-y-2.5 pl-2">
+                                {section.bullets.map((b, bIdx) => (
+                                  <li key={bIdx} className="text-sm text-slate-700 dark:text-slate-300 flex items-start gap-3 font-sans">
+                                    <span className="text-red-500 font-bold mt-1 text-xs shrink-0">◆</span>
+                                    <span className="flex-1 leading-relaxed">{b}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+
+                            {/* Subsections */}
+                            {section.subsections && (
+                              <div className="space-y-4 pt-2">
+                                {section.subsections.map((sub, subIdx) => (
+                                  <div key={subIdx} className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700 space-y-3 shadow-xs">
+                                    <h4 className="font-extrabold text-xs lg:text-sm text-amber-700 dark:text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                                      <span className="w-2 h-2 rounded-full bg-amber-500" />
+                                      {sub.subtitle}
+                                    </h4>
+                                    {sub.paragraphs && sub.paragraphs.map((sp, spIdx) => (
+                                      <p key={spIdx} className="text-xs lg:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                                        {sp}
+                                      </p>
+                                    ))}
+                                    {sub.bullets && (
+                                      <ul className="space-y-2 pl-2">
+                                        {sub.bullets.map((sb, sbIdx) => (
+                                          <li key={sbIdx} className="text-xs lg:text-sm text-slate-600 dark:text-slate-300 flex items-start gap-2">
+                                            <span className="text-slate-400 font-bold">•</span>
+                                            <span className="leading-relaxed">{sb}</span>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    )}
+                                    {sub.table && (
+                                      <div className="overflow-x-auto my-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                                        <table className="w-full text-left text-xs border-collapse">
+                                          <thead>
+                                            <tr className="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200">
+                                              {sub.table.headers.map((h, hIdx) => (
+                                                <th key={hIdx} className="p-3 font-bold border-b border-slate-200 dark:border-slate-700">
+                                                  {h}
+                                                </th>
+                                              ))}
+                                            </tr>
+                                          </thead>
+                                          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                            {sub.table.rows.map((row, rIdx) => (
+                                              <tr key={rIdx} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                                {row.map((cell, cIdx) => (
+                                                  <td key={cIdx} className="p-3 text-slate-600 dark:text-slate-300 leading-relaxed">
+                                                    {cell}
+                                                  </td>
+                                                ))}
+                                              </tr>
+                                            ))}
+                                          </tbody>
+                                        </table>
+                                      </div>
+                                    )}
+                                    {sub.highlight && (
+                                      <div className="p-3 rounded-xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 text-amber-900 dark:text-amber-300 text-xs font-semibold">
+                                        💡 {sub.highlight}
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Section Table */}
+                            {section.table && (
+                              <div className="overflow-x-auto my-3 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs">
+                                <table className="w-full text-left text-xs lg:text-sm border-collapse">
+                                  <thead>
+                                    <tr className="bg-red-50 dark:bg-red-950/60 text-red-900 dark:text-red-200">
+                                      {section.table.headers.map((h, hIdx) => (
+                                        <th key={hIdx} className="p-3.5 font-extrabold border-b border-red-200 dark:border-red-900">
+                                          {h}
+                                        </th>
+                                      ))}
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                    {section.table.rows.map((row, rIdx) => (
+                                      <tr key={rIdx} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                                        {row.map((cell, cIdx) => (
+                                          <td key={cIdx} className="p-3.5 text-slate-700 dark:text-slate-300 leading-relaxed font-sans">
+                                            {cell}
+                                          </td>
+                                        ))}
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            )}
+
+                            {/* Section TipBox */}
+                            {section.tipBox && (
+                              <div className="p-4 lg:p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800 space-y-1.5">
+                                <h4 className="font-bold text-xs lg:text-sm text-amber-900 dark:text-amber-300 flex items-center gap-2">
+                                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" /> {section.tipBox.title}
+                                </h4>
+                                <p className="text-xs lg:text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-sans">
+                                  {section.tipBox.content}
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Section Highlight */}
+                            {section.highlight && (
+                              <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-xs lg:text-sm font-semibold text-red-800 dark:text-red-300 flex items-center gap-2.5">
+                                <Star className="w-4 h-4 text-red-600 fill-current shrink-0" />
+                                <span>{section.highlight}</span>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      /* Fallback view from summary */
+                      <div className="space-y-4">
+                        <div className="p-5 rounded-2xl bg-amber-50/60 dark:bg-slate-800/60 border border-amber-200/80 dark:border-slate-700 space-y-2">
+                          <h3 className="font-extrabold text-xs uppercase tracking-wider text-amber-800 dark:text-amber-400 flex items-center gap-2">
+                            <Target className="w-4 h-4 text-amber-600" /> Mục tiêu bài học
+                          </h3>
+                          <p className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed font-sans font-medium">
+                            {selectedLessonSummary.objective}
+                          </p>
+                        </div>
+                        <div className="space-y-3">
+                          {selectedLessonSummary.keyPoints.map((point, idx) => (
+                            <div key={idx} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 flex items-start gap-4">
+                              <div className="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-red-600 dark:text-red-400 shrink-0">
+                                {point.icon}
+                              </div>
+                              <div>
+                                <h4 className="font-bold text-xs text-slate-900 dark:text-white">{point.title}</h4>
+                                <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed font-sans">{point.content}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* TAB 2: TRỌNG TÂM & VẬN DỤNG THỰC TIỄN */}
+                {activeTab === 'summary' && (
+                  <div className={`space-y-6 transition-all duration-300 ${isPanelCollapsed ? 'w-full max-w-7xl mx-auto' : 'w-full max-w-5xl'}`}>
+                    {/* Ghi nhớ trọng tâm */}
+                    <div className="p-6 lg:p-8 rounded-3xl bg-gradient-to-br from-red-50 to-amber-50/60 dark:from-slate-800 dark:to-slate-800/60 border border-red-200 dark:border-slate-700 space-y-4 shadow-sm">
+                      <div className="flex items-center gap-2.5 font-black text-sm uppercase tracking-wide text-red-800 dark:text-red-400">
+                        <Star className="w-5 h-5 text-red-600 fill-current" /> Ghi nhớ trọng tâm bài học
+                      </div>
+                      <div className="space-y-3">
+                        {(selectedDetailedLesson?.keyTakeaways || []).map((t, idx) => (
+                          <div key={idx} className="p-4 rounded-2xl bg-white/90 dark:bg-slate-900/90 border border-red-100 dark:border-slate-700 flex items-start gap-3.5 shadow-xs">
+                            <span className="w-6 h-6 rounded-full bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 font-bold text-xs flex items-center justify-center shrink-0">
+                              {idx + 1}
+                            </span>
+                            <p className="text-xs lg:text-sm font-semibold text-slate-800 dark:text-slate-200 leading-relaxed font-sans">
+                              {t}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Vận dụng thực tế & Trách nhiệm học sinh */}
+                    <div className="p-6 lg:p-8 rounded-3xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-4 shadow-sm">
+                      <div className="flex items-center gap-2.5 font-black text-sm uppercase tracking-wide text-slate-900 dark:text-white">
+                        <Shield className="w-5 h-5 text-emerald-600" /> Vận dụng thực tế &amp; Trách nhiệm học sinh
+                      </div>
+                      <div className={`grid grid-cols-1 ${isPanelCollapsed ? 'md:grid-cols-2 lg:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
+                        {(selectedDetailedLesson?.practicalApplication || []).map((item, idx) => (
+                          <div key={idx} className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700 space-y-2 shadow-xs">
+                            <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest flex items-center gap-1.5">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Hành động #{idx + 1}
+                            </span>
+                            <p className="text-xs lg:text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-sans">
+                              {item}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 3: CÂU HỎI LUYỆN TẬP CỦNG CỐ (+XP) */}
+                {activeTab === 'quiz' && (
+                  <div className={`space-y-6 transition-all duration-300 ${isPanelCollapsed ? 'w-full max-w-5xl mx-auto' : 'w-full max-w-4xl'}`}>
+                    <div className="p-6 rounded-3xl bg-gradient-to-r from-red-600 to-amber-600 text-white flex items-center justify-between shadow-md">
+                      <div className="space-y-1">
+                        <h3 className="font-black text-base lg:text-lg flex items-center gap-2">
+                          <TargetIcon className="w-5 h-5" /> Trắc nghiệm củng cố năng lực
+                        </h3>
+                        <p className="text-xs text-red-100">
+                          Trả lời đúng mỗi câu hỏi để nhận ngay +15 XP vào bảng thành tích cá nhân!
+                        </p>
+                      </div>
+                      <div className="text-right shrink-0 bg-white/10 px-4 py-2 rounded-2xl">
+                        <span className="text-2xl font-black text-yellow-300">
+                          {Object.keys(answeredQuestions).length} / {selectedDetailedLesson?.reviewQuestions.length || 0}
+                        </span>
+                        <p className="text-[10px] text-red-100">Đã hoàn thành</p>
+                      </div>
+                    </div>
+
+                    {selectedDetailedLesson?.reviewQuestions && selectedDetailedLesson.reviewQuestions.length > 0 ? (
+                      <div className="space-y-6">
+                        {selectedDetailedLesson.reviewQuestions.map((q, qIdx) => {
+                          const hasAnswered = answeredQuestions[q.id];
+                          const selectedOpt = userAnswers[q.id];
+                          const isCorrect = selectedOpt === q.correctAnswer;
+
+                          return (
+                            <div 
+                              key={q.id}
+                              className="p-6 lg:p-7 rounded-3xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-4 shadow-xs"
+                            >
+                              <div className="flex items-start gap-3">
+                                <span className="w-7 h-7 rounded-xl bg-red-600 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
+                                  {qIdx + 1}
+                                </span>
+                                <h4 className="font-extrabold text-sm lg:text-base text-slate-900 dark:text-white leading-snug">
+                                  {q.question}
+                                </h4>
+                              </div>
+
+                              {/* Options */}
+                              <div className="space-y-2.5 pt-1">
+                                {q.options.map((opt, optIdx) => {
+                                  const isSelected = selectedOpt === optIdx;
+                                  const isRightAnswer = optIdx === q.correctAnswer;
+
+                                  let optionClass = 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:border-red-300 text-slate-700 dark:text-slate-300';
+                                  if (hasAnswered) {
+                                    if (isRightAnswer) {
+                                      optionClass = 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 text-emerald-800 dark:text-emerald-200 font-bold';
+                                    } else if (isSelected && !isCorrect) {
+                                      optionClass = 'bg-rose-50 dark:bg-rose-950/60 border-rose-500 text-rose-800 dark:text-rose-200';
+                                    }
+                                  }
+
+                                  return (
+                                    <button
+                                      key={optIdx}
+                                      disabled={hasAnswered}
+                                      onClick={() => handleAnswerQuiz(q.id, optIdx, q.correctAnswer)}
+                                      className={`w-full text-left p-3.5 rounded-2xl border-2 transition-all flex items-center justify-between text-xs lg:text-sm cursor-pointer disabled:cursor-default ${optionClass}`}
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <span className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold flex items-center justify-center text-xs">
+                                          {String.fromCharCode(65 + optIdx)}
+                                        </span>
+                                        <span className="font-medium font-sans">{opt}</span>
+                                      </div>
+                                      {hasAnswered && isRightAnswer && (
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                                      )}
+                                      {hasAnswered && isSelected && !isCorrect && (
+                                        <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                                      )}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+
+                              {/* Giải thích chi tiết */}
+                              {hasAnswered && (
+                                <motion.div 
+                                  initial={{ opacity: 0, y: 5 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  className={`p-4 rounded-2xl border text-xs lg:text-sm leading-relaxed font-sans ${
+                                    isCorrect 
+                                      ? 'bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-300'
+                                      : 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-300'
+                                  }`}
+                                >
+                                  <div className="font-bold flex items-center gap-1.5 mb-1">
+                                    <HelpCircle className="w-4 h-4" /> 
+                                    {isCorrect ? 'Tuyệt vời! Chính xác (+15 XP)' : 'Cần lưu ý chuẩn SGK:'}
+                                  </div>
+                                  <p>{q.explanation}</p>
+                                </motion.div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-12 text-slate-400 text-sm">
+                        Đang cập nhật thêm câu hỏi ôn tập cho bài học này.
+                      </div>
+                    )}
+                  </div>
+                )}
+
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="flex-1 flex items-center justify-center text-slate-400 text-sm">
-            Vui lòng chọn bài học từ danh sách bên trái.
-          </div>
-        )}
+          ) : (
+            <div className="flex-1 flex items-center justify-center text-slate-400 text-sm">
+              Vui lòng chọn bài học từ danh sách bên trái.
+            </div>
+          )}
+        </div>
       </div>
     </div>
-  </div>
   );
 }
 
-// Mobile Lesson Detail Sub-component
+// ============================================================================
+// MOBILE LESSON DETAIL SUB-COMPONENT
+// ============================================================================
 function MobileLessonDetail({
-  lesson,
+  lessonSummary,
+  detailedLesson,
   textbook,
   isRead,
+  activeTab,
+  onTabChange,
   onBack,
-  onMarkRead
+  onMarkRead,
+  userAnswers,
+  answeredQuestions,
+  onAnswerQuiz
 }: {
-  lesson: LessonSummary;
+  lessonSummary?: LessonSummary;
+  detailedLesson?: DetailedLesson;
   textbook: string;
   isRead: boolean;
+  activeTab: 'textbook' | 'summary' | 'quiz';
+  onTabChange: (tab: 'textbook' | 'summary' | 'quiz') => void;
   onBack: () => void;
   onMarkRead: () => void;
+  userAnswers: Record<number, number>;
+  answeredQuestions: Record<number, boolean>;
+  onAnswerQuiz: (qId: number, optionIdx: number, correctIdx: number) => void;
 }) {
+  if (!lessonSummary) return null;
+
   return (
     <div className="flex flex-col h-full bg-white dark:bg-[#111827] p-4 space-y-4">
+      {/* Top action bar */}
       <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
         <button
           onClick={onBack}
           className="text-xs font-bold text-red-600 dark:text-red-400 flex items-center gap-1 cursor-pointer"
         >
-          ‹ Quay lại danh sách
+          ‹ Danh sách bài học
         </button>
         <button
           onClick={onMarkRead}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-[11px] ${
-            isRead ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' : 'bg-red-600 text-white'
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-[11px] ${
+            isRead 
+              ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200' 
+              : 'bg-red-600 text-white shadow-xs'
           }`}
         >
           <CheckCircle2 className="w-3.5 h-3.5" />
-          {isRead ? 'Đã học' : 'Đánh dấu đọc'}
+          {isRead ? 'Đã học' : 'Đánh dấu (+50 XP)'}
         </button>
       </div>
 
-      <div className="space-y-2">
-        <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest">{lesson.order}</span>
-        <h1 className="text-lg font-black text-slate-900 dark:text-white leading-snug">{lesson.title}</h1>
-        <p className="text-[10px] text-slate-400">{textbook}</p>
+      {/* Lesson Heading */}
+      <div className="space-y-1">
+        <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest">{lessonSummary.order}</span>
+        <h1 className="text-base font-black text-slate-900 dark:text-white leading-snug">{lessonSummary.title}</h1>
+        <p className="text-[10px] text-slate-400">{detailedLesson?.textbook || textbook}</p>
       </div>
 
-      <div className="p-4 rounded-xl bg-amber-50 dark:bg-slate-800 border border-amber-200 dark:border-slate-700 space-y-1">
-        <h3 className="font-bold text-xs text-amber-800 dark:text-amber-400 flex items-center gap-1">
-          <Target className="w-3.5 h-3.5" /> Mục tiêu
-        </h3>
-        <p className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed font-sans">{lesson.objective}</p>
+      {/* Mobile Tab switch */}
+      <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl gap-1">
+        <button
+          onClick={() => onTabChange('textbook')}
+          className={`flex-1 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
+            activeTab === 'textbook' ? 'bg-white dark:bg-slate-900 text-red-600 shadow-xs' : 'text-slate-500'
+          }`}
+        >
+          Bài Giảng
+        </button>
+        <button
+          onClick={() => onTabChange('summary')}
+          className={`flex-1 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
+            activeTab === 'summary' ? 'bg-white dark:bg-slate-900 text-red-600 shadow-xs' : 'text-slate-500'
+          }`}
+        >
+          Trọng Tâm
+        </button>
+        <button
+          onClick={() => onTabChange('quiz')}
+          className={`flex-1 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
+            activeTab === 'quiz' ? 'bg-white dark:bg-slate-900 text-red-600 shadow-xs' : 'text-slate-500'
+          }`}
+        >
+          Luyện Tập
+        </button>
       </div>
 
-      <div className="space-y-3 pt-2">
-        <h3 className="font-bold text-xs text-slate-900 dark:text-white uppercase tracking-wider">Kiến thức cốt lõi</h3>
-        {lesson.keyPoints.map((point, idx) => (
-          <div key={idx} className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 space-y-1">
-            <h4 className="font-bold text-xs text-slate-900 dark:text-white">{point.title}</h4>
-            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-sans">{point.content}</p>
+      {/* Tab 1: Textbook View */}
+      {activeTab === 'textbook' && (
+        <div className="space-y-4">
+          {/* Objectives */}
+          {detailedLesson?.objectives ? (
+            <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-slate-800 border border-amber-200 dark:border-slate-700 space-y-2">
+              <h3 className="font-bold text-xs text-amber-800 dark:text-amber-400 flex items-center gap-1">
+                <Target className="w-3.5 h-3.5" /> Mục tiêu bài học
+              </h3>
+              <div className="space-y-1.5 text-[11px] text-slate-700 dark:text-slate-300">
+                {detailedLesson.objectives.knowledge.map((k, idx) => (
+                  <p key={idx}>• {k}</p>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-slate-800 border border-amber-200 dark:border-slate-700 space-y-1">
+              <h3 className="font-bold text-xs text-amber-800 dark:text-amber-400 flex items-center gap-1">
+                <Target className="w-3.5 h-3.5" /> Mục tiêu
+              </h3>
+              <p className="text-xs text-slate-700 dark:text-slate-200">{lessonSummary.objective}</p>
+            </div>
+          )}
+
+          {/* Sections */}
+          {detailedLesson?.sections && detailedLesson.sections.map((sec, sIdx) => (
+            <div key={sIdx} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 space-y-2">
+              <h4 className="font-extrabold text-xs text-red-700 dark:text-red-400">{sec.title}</h4>
+              {sec.paragraphs && sec.paragraphs.map((p, pIdx) => (
+                <p key={pIdx} className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">{p}</p>
+              ))}
+              {sec.bullets && (
+                <ul className="space-y-1 pl-1">
+                  {sec.bullets.map((b, bIdx) => (
+                    <li key={bIdx} className="text-xs text-slate-600 dark:text-slate-300 flex items-start gap-1.5">
+                      <span className="text-red-500 font-bold">•</span>
+                      <span>{b}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Tab 2: Summary View */}
+      {activeTab === 'summary' && (
+        <div className="space-y-3">
+          <div className="p-4 rounded-2xl bg-red-50 dark:bg-slate-800 border border-red-200 dark:border-slate-700 space-y-2">
+            <h4 className="font-bold text-xs text-red-800 dark:text-red-400 flex items-center gap-1.5">
+              <Star className="w-4 h-4 text-red-600 fill-current" /> Ghi nhớ cốt lõi
+            </h4>
+            <div className="space-y-2 text-xs text-slate-700 dark:text-slate-300">
+              {(detailedLesson?.keyTakeaways || []).map((kt, i) => (
+                <p key={i} className="flex items-start gap-1.5">
+                  <span className="text-red-600 font-bold">✓</span>
+                  <span>{kt}</span>
+                </p>
+              ))}
+            </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
+
+      {/* Tab 3: Mobile Quiz */}
+      {activeTab === 'quiz' && (
+        <div className="space-y-4">
+          {detailedLesson?.reviewQuestions.map((q, qIdx) => {
+            const hasAnswered = answeredQuestions[q.id];
+            const selectedOpt = userAnswers[q.id];
+            const isCorrect = selectedOpt === q.correctAnswer;
+
+            return (
+              <div key={q.id} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
+                <h4 className="font-bold text-xs text-slate-900 dark:text-white">
+                  {qIdx + 1}. {q.question}
+                </h4>
+                <div className="space-y-1.5">
+                  {q.options.map((opt, optIdx) => {
+                    let btnClass = 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300';
+                    if (hasAnswered) {
+                      if (optIdx === q.correctAnswer) {
+                        btnClass = 'bg-emerald-50 border-emerald-500 text-emerald-800 font-bold';
+                      } else if (selectedOpt === optIdx && !isCorrect) {
+                        btnClass = 'bg-rose-50 border-rose-500 text-rose-800';
+                      }
+                    }
+
+                    return (
+                      <button
+                        key={optIdx}
+                        disabled={hasAnswered}
+                        onClick={() => onAnswerQuiz(q.id, optIdx, q.correctAnswer)}
+                        className={`w-full text-left p-2.5 rounded-xl border text-[11px] transition-all ${btnClass}`}
+                      >
+                        {String.fromCharCode(65 + optIdx)}. {opt}
+                      </button>
+                    );
+                  })}
+                </div>
+                {hasAnswered && (
+                  <p className="text-[11px] text-slate-600 dark:text-slate-300 bg-amber-50 dark:bg-amber-950/40 p-2.5 rounded-xl border border-amber-200">
+                    💡 {q.explanation}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

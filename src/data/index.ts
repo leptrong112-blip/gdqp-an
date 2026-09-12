@@ -2,6 +2,7 @@ export * from "./lessons10";
 export * from "./lessons11";
 export * from "./lessons12";
 export * from "./quiz";
+export * from "./questionBank";
 export * from "./disassembly";
 export * from "./practicalSkills";
 

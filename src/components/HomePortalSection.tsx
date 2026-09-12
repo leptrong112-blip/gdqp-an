@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   BookOpen,
   Trophy,
@@ -9,17 +9,19 @@ import {
   Compass,
   Rocket,
   ChevronRight,
+  ChevronLeft,
   Flame,
   Award,
   Camera,
   Crosshair,
   Target,
+  Minus,
 } from "lucide-react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { useGamification } from "../context/GamificationContext";
 
 interface HomePortalSectionProps {
-  onNavigate: (tab: "theory" | "quiz" | "exam" | "sim" | "chat" | "training" | "map" | "gamification" | "webar" | "shooting") => void;
+  onNavigate: (tab: "theory" | "quiz" | "exam" | "sim" | "chat" | "training" | "map" | "gamification" | "webar" | "shooting" | "survey" | "pose") => void;
 }
 
 export default function HomePortalSection({ onNavigate }: HomePortalSectionProps) {
@@ -29,160 +31,147 @@ export default function HomePortalSection({ onNavigate }: HomePortalSectionProps
   const readCount = gamState.lessonsRead.length;
   const progressPercent = Math.min(100, Math.round((readCount / totalLessons) * 100));
 
+  const [isProgressCollapsed, setIsProgressCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem("gdqp_home_progress_collapsed") === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleProgressCollapse = () => {
+    setIsProgressCollapsed(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem("gdqp_home_progress_collapsed", String(next));
+      } catch {}
+      return next;
+    });
+  };
+
   return (
-    <div className="w-full space-y-8 select-none">
+    <div className="w-full space-y-5 sm:space-y-8 select-none">
+      
       {/* ═══════════════════ HERO BANNER SECTION (ĐỎ - TRẮNG - VÀNG QUÂN ĐỘI) ═══════════════════ */}
-      <div className="relative rounded-3xl bg-gradient-to-br from-red-600/10 via-amber-500/5 to-rose-600/10 dark:from-slate-900 dark:via-red-950/30 dark:to-slate-900 border border-red-200/70 dark:border-red-900/50 p-6 sm:p-8 lg:p-10 overflow-hidden shadow-xs transition-colors">
+      <div className="relative rounded-3xl bg-gradient-to-br from-red-600/10 via-amber-500/5 to-rose-600/10 dark:from-slate-900 dark:via-red-950/30 dark:to-slate-900 border border-red-200/70 dark:border-red-900/50 p-4 sm:p-8 lg:p-10 overflow-hidden shadow-xs transition-colors">
         
         {/* Background Decorative Blur Spheres */}
         <div className="absolute top-0 right-1/4 w-96 h-96 bg-red-500/15 rounded-full blur-3xl pointer-events-none -z-10" />
         <div className="absolute bottom-0 left-10 w-80 h-80 bg-amber-400/15 rounded-full blur-3xl pointer-events-none -z-10" />
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center relative z-10">
           
           {/* CỘT TRÁI: TIÊU ĐỀ & NÚT HÀNH ĐỘNG */}
-          <div className="lg:col-span-5 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-600/10 dark:bg-red-500/20 text-red-700 dark:text-red-400 text-xs font-extrabold border border-red-500/25">
-              <Sparkles className="w-4 h-4 text-amber-500 fill-amber-500/20" />
+          <div className="lg:col-span-6 space-y-4 sm:space-y-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-600/10 dark:bg-red-500/20 text-red-700 dark:text-red-400 text-[11px] sm:text-xs font-extrabold border border-red-500/25">
+              <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-500/20" />
               Nền Tảng Trải Nghiệm Số GDQP-AN THPT
             </div>
 
-            <h1 className="text-3xl sm:text-4xl lg:text-[42px] font-black text-slate-900 dark:text-white leading-[1.15] tracking-tight">
+            <h1 className="text-2xl sm:text-4xl lg:text-[42px] font-black text-slate-900 dark:text-white leading-[1.15] tracking-tight">
               Học qua trải nghiệm – <br className="hidden sm:inline" />
               <span className="bg-gradient-to-r from-red-600 via-rose-600 to-amber-500 bg-clip-text text-transparent">
                 Hiểu sâu, nhớ lâu
               </span>
             </h1>
 
-            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-sans max-w-md">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-sans max-w-lg">
               Học sinh THPT học hiệu quả hơn với mô phỏng 3D AK-47, thao trường trực quan, bài giảng SGK Kết nối tri thức, đề thi thử trắc nghiệm và Giảng viên AI luôn đồng hành.
             </p>
 
-            <div className="flex flex-wrap items-center gap-3 pt-2">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 pt-1 sm:pt-2">
               <button
                 onClick={() => onNavigate("theory")}
-                className="flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs shadow-lg shadow-red-600/25 transition-all hover:scale-105 cursor-pointer"
+                className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3.5 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs shadow-lg shadow-red-600/25 transition-all hover:scale-105 cursor-pointer"
               >
                 <Rocket className="w-4 h-4 text-amber-300" /> Bắt đầu học ngay
               </button>
 
               <button
                 onClick={() => onNavigate("sim")}
-                className="flex items-center gap-2 px-5 py-3.5 rounded-2xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-extrabold text-xs border border-slate-200 dark:border-slate-700 hover:border-red-300 dark:hover:border-red-800 shadow-xs transition-all hover:scale-105 cursor-pointer"
+                className="flex items-center gap-2 px-3.5 sm:px-5 py-2.5 sm:py-3.5 rounded-2xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-extrabold text-xs border border-slate-200 dark:border-slate-700 hover:border-red-300 dark:hover:border-red-800 shadow-xs transition-all hover:scale-105 cursor-pointer"
               >
                 <Compass className="w-4 h-4 text-red-600 dark:text-red-400" /> Mô phỏng 3D
               </button>
 
               <button
-                onClick={() => onNavigate("webar")}
-                className="flex items-center gap-2 px-5 py-3.5 rounded-2xl bg-gradient-to-r from-rose-600 via-red-600 to-amber-600 hover:brightness-110 text-white font-extrabold text-xs shadow-lg shadow-rose-600/30 transition-all hover:scale-105 cursor-pointer border border-amber-300/40"
-              >
-                <Camera className="w-4 h-4 text-amber-300" />
-                <span>WebAR Đặt Bàn &amp; Sàn</span>
-                <span className="text-[9px] px-1.5 py-0.2 bg-white/25 text-white rounded font-mono font-bold">Mới</span>
-              </button>
-
-              <button
                 onClick={() => onNavigate("shooting")}
-                className="flex items-center gap-2 px-5 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 transition-all hover:scale-105 cursor-pointer border border-amber-300"
+                className="flex items-center gap-2 px-3.5 sm:px-5 py-2.5 sm:py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 transition-all hover:scale-105 cursor-pointer border border-amber-300"
               >
                 <Crosshair className="w-4 h-4 text-slate-950" />
-                <span>Trường Bắn &amp; Hệ Thống Bia AK</span>
-                <span className="text-[9px] px-1.5 py-0.2 bg-slate-950 text-amber-300 rounded font-mono font-bold">Mới</span>
+                <span>Trường Bắn AK</span>
               </button>
             </div>
           </div>
 
-          {/* CỘT GIỮA: CỤM NHÂN VẬT 3D */}
-          <div className="lg:col-span-4 relative flex items-center justify-center min-h-[340px] sm:min-h-[380px]">
-            <div className="absolute w-72 h-72 bg-gradient-to-tr from-red-500/25 via-amber-400/20 to-red-600/25 dark:from-red-950/30 dark:to-amber-950/30 blur-3xl rounded-full pointer-events-none -z-0" />
+          {/* CỘT PHẢI: BANNER CHIẾN SĨ & CÔNG NGHỆ SỐ GDQP-AN ĐẦY ĐỦ 16:9 */}
+          <div className="lg:col-span-6 relative flex items-center justify-center">
+            <div className="absolute w-full h-full bg-gradient-to-tr from-red-500/20 via-amber-400/15 to-red-600/20 dark:from-red-950/40 dark:to-amber-950/40 blur-3xl rounded-full pointer-events-none -z-0" />
 
-            <div className="relative w-full flex items-center justify-center">
-              <motion.img
-                initial={{ opacity: 0, scale: 0.9 }}
+            <div className="relative w-full flex items-center justify-center p-1 sm:p-2">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.6 }}
-                src="/images/hero-new.png"
-                alt="Chiến Sĩ & Học Sinh GDQP 3D"
-                className="w-full h-auto max-h-[400px] object-contain select-none drop-shadow-2xl"
-              />
-            </div>
-          </div>
-
-          {/* CỘT PHẢI: BẢNG TIẾN ĐỘ HỌC TẬP ĐỨNG */}
-          <div className="lg:col-span-3 flex justify-center lg:justify-end">
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-              className="w-full max-w-[260px] bg-white dark:bg-slate-900/90 backdrop-blur-md p-6 rounded-3xl border border-red-100 dark:border-slate-800 shadow-xl shadow-red-600/5 dark:shadow-none flex flex-col items-center space-y-5"
-            >
-              <h3 className="text-sm font-extrabold text-slate-800 dark:text-slate-200 self-start flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
-                Tiến độ học tập
-              </h3>
-
-              <div className="relative w-28 h-28 flex items-center justify-center my-1">
-                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                  <path
-                    className="text-slate-100 dark:text-slate-800"
-                    strokeWidth="3.2"
-                    stroke="currentColor"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                  <path
-                    className="text-red-600 dark:text-red-500 stroke-current transition-all duration-1000 ease-out"
-                    strokeWidth="3.2"
-                    strokeDasharray={`${progressPercent}, 100`}
-                    strokeLinecap="round"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                </svg>
-                <div className="absolute flex flex-col items-center justify-center">
-                  <span className="font-black text-xl text-slate-900 dark:text-white font-mono leading-none">
-                    {progressPercent}%
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-medium mt-1">
-                    Hoàn thành
-                  </span>
-                </div>
-              </div>
-
-              <div className="w-full space-y-3 pt-2 text-xs font-semibold">
-                <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
-                  <span className="flex items-center gap-2">
-                    <BookOpen className="w-4 h-4 text-red-500" /> Bài đã học
-                  </span>
-                  <span className="font-black text-slate-900 dark:text-white">{readCount}</span>
-                </div>
-
-                <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
-                  <span className="flex items-center gap-2">
-                    <Flame className="w-4 h-4 text-amber-500" /> Tổng XP
-                  </span>
-                  <span className="font-black text-amber-600 dark:text-amber-400">+{gamState.xp}</span>
-                </div>
-
-                <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
-                  <span className="flex items-center gap-2">
-                    <Award className="w-4 h-4 text-amber-500" /> Huy hiệu
-                  </span>
-                  <span className="font-black text-slate-900 dark:text-white">{gamState.badges.length}</span>
-                </div>
-              </div>
-
-              <button
-                onClick={() => onNavigate("gamification")}
-                className="w-full pt-3 mt-1 border-t border-slate-100 dark:border-slate-800 text-xs font-bold text-red-600 dark:text-red-400 hover:text-red-700 flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                className="w-full overflow-hidden rounded-3xl border-2 border-white/80 dark:border-slate-700/80 shadow-2xl shadow-red-950/20 hover:scale-[1.01] transition-transform duration-300 bg-slate-950/10"
               >
-                Xem chi tiết <ChevronRight className="w-4 h-4" />
-              </button>
-            </motion.div>
+                <img
+                  src="/images/hero-soldier.png"
+                  alt="Chiến Sĩ Trải Nghiệm Số GDQP-AN"
+                  className="w-full h-auto object-cover rounded-3xl select-none"
+                />
+              </motion.div>
+            </div>
           </div>
 
         </div>
+      </div>
+
+      {/* ═══════════════════ TÍNH NĂNG ĐẶC BIỆT: AI POSE & KHẢO SÁT (2 CỘT GỌN GÀNG) ═══════════════════ */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        {/* Card 1: AI Pose */}
+        <button
+          onClick={() => onNavigate('pose')}
+          className="group relative rounded-2xl sm:rounded-3xl bg-gradient-to-br from-emerald-950/90 via-slate-900 to-slate-900 text-white border border-emerald-600/40 p-4 sm:p-5 flex items-center justify-between gap-3 text-left shadow-md hover:border-emerald-500 transition-all hover:scale-[1.01] cursor-pointer overflow-hidden"
+        >
+          <div className="space-y-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-[10px] sm:text-xs font-bold text-emerald-300 uppercase tracking-wider">Mới · AI Pose Analysis</span>
+            </div>
+            <h2 className="text-sm sm:text-lg font-black text-white group-hover:text-emerald-300 transition-colors truncate">
+              Chấm điểm động tác bằng camera
+            </h2>
+            <p className="text-[11px] sm:text-xs text-emerald-100/70 line-clamp-1">
+              Luyện đứng nghiêm, xem khung xương và nhận góp ý trực tiếp.
+            </p>
+          </div>
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-300 shrink-0 group-hover:scale-110 transition-transform">
+            <Camera className="w-5 h-5 sm:w-6 sm:h-6" />
+          </div>
+        </button>
+
+        {/* Card 2: Khảo sát ý kiến */}
+        <button
+          onClick={() => onNavigate('survey')}
+          className="group relative rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900/90 border border-amber-300/80 dark:border-amber-700/50 p-4 sm:p-5 flex items-center justify-between gap-3 text-left shadow-md hover:border-amber-500 transition-all hover:scale-[1.01] cursor-pointer"
+        >
+          <div className="space-y-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+              <span className="text-[10px] sm:text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Khảo sát NCKH</span>
+            </div>
+            <h2 className="text-sm sm:text-lg font-black text-slate-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-amber-400 transition-colors truncate">
+              Đóng góp ý kiến trải nghiệm
+            </h2>
+            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
+              Khảo sát trước &amp; sau trải nghiệm dành cho học sinh, giáo viên.
+            </p>
+          </div>
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0 group-hover:scale-110 transition-transform">
+            <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6" />
+          </div>
+        </button>
       </div>
 
       {/* ═══════════════════ WEBAR HIGHLIGHT BANNER (KHUYẾN NGHỊ TỪ THẦY GIÁO) ═══════════════════ */}
@@ -393,6 +382,146 @@ export default function HomePortalSection({ onNavigate }: HomePortalSectionProps
           </motion.div>
 
         </div>
+      </div>
+
+      {/* ═══════════════════ BẢNG TIẾN ĐỘ HỌC TẬP NỔI ĐI THEO (CHỈ HIỆN Ở TRANG CHỦ TRÊN DESKTOP) ═══════════════════ */}
+      <div className="hidden sm:block fixed bottom-24 right-4 sm:right-6 z-40">
+        <AnimatePresence mode="wait">
+          {isProgressCollapsed ? (
+            <motion.button
+              key="collapsed"
+              initial={{ opacity: 0, scale: 0.85, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.85, y: 15 }}
+              transition={{ duration: 0.2 }}
+              onClick={toggleProgressCollapse}
+              className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-2 border-red-500/40 dark:border-red-500/30 shadow-2xl shadow-red-950/20 text-slate-800 dark:text-white cursor-pointer hover:border-red-600 hover:scale-105 hover:shadow-red-500/20 transition-all group"
+              title="Nhấn để mở rộng Bảng tiến độ học tập"
+            >
+              <div className="relative w-8 h-8 flex items-center justify-center shrink-0">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                  <path
+                    className="text-slate-200 dark:text-slate-800"
+                    strokeWidth="4"
+                    stroke="currentColor"
+                    fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                  <path
+                    className="text-red-600 dark:text-red-500 stroke-current transition-all duration-500"
+                    strokeWidth="4"
+                    strokeDasharray={`${progressPercent}, 100`}
+                    strokeLinecap="round"
+                    fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                </svg>
+                <span className="absolute text-[10px] font-black text-slate-900 dark:text-white font-mono">
+                  {progressPercent}%
+                </span>
+              </div>
+
+              <div className="flex flex-col text-left">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
+                  <span className="text-xs font-black text-slate-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
+                    Tiến độ học tập
+                  </span>
+                </div>
+                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold font-mono">
+                  +{gamState.xp} XP · {gamState.badges.length} huy hiệu
+                </span>
+              </div>
+
+              <div className="w-6 h-6 rounded-lg bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 flex items-center justify-center group-hover:bg-red-600 group-hover:text-white transition-colors shrink-0 ml-1">
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </div>
+            </motion.button>
+          ) : (
+            <motion.div
+              key="expanded"
+              initial={{ opacity: 0, scale: 0.9, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 15 }}
+              transition={{ duration: 0.25 }}
+              className="w-[270px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-5 rounded-3xl border-2 border-red-500/30 dark:border-slate-700 shadow-2xl shadow-red-950/25 flex flex-col items-center space-y-4"
+            >
+              <div className="w-full flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800/80">
+                <h3 className="text-xs font-extrabold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
+                  Tiến độ học tập
+                </h3>
+                <button
+                  onClick={toggleProgressCollapse}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  title="Thu nhỏ bảng"
+                >
+                  <Minus className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="relative w-24 h-24 flex items-center justify-center my-0.5">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                  <path
+                    className="text-slate-100 dark:text-slate-800"
+                    strokeWidth="3.2"
+                    stroke="currentColor"
+                    fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                  <path
+                    className="text-red-600 dark:text-red-500 stroke-current transition-all duration-1000 ease-out"
+                    strokeWidth="3.2"
+                    strokeDasharray={`${progressPercent}, 100`}
+                    strokeLinecap="round"
+                    fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                </svg>
+                <div className="absolute flex flex-col items-center justify-center">
+                  <span className="font-black text-xl text-slate-900 dark:text-white font-mono leading-none">
+                    {progressPercent}%
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-medium mt-1">
+                    Hoàn thành
+                  </span>
+                </div>
+              </div>
+
+              <div className="w-full space-y-2.5 pt-1 text-xs font-semibold">
+                <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
+                  <span className="flex items-center gap-2">
+                    <BookOpen className="w-3.5 h-3.5 text-red-500" /> Bài đã học
+                  </span>
+                  <span className="font-black text-slate-900 dark:text-white">
+                    {readCount} / {totalLessons}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
+                  <span className="flex items-center gap-2">
+                    <Flame className="w-3.5 h-3.5 text-amber-500" /> Tổng XP
+                  </span>
+                  <span className="font-black text-amber-600 dark:text-amber-400">+{gamState.xp}</span>
+                </div>
+
+                <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
+                  <span className="flex items-center gap-2">
+                    <Award className="w-3.5 h-3.5 text-amber-500" /> Huy hiệu
+                  </span>
+                  <span className="font-black text-slate-900 dark:text-white">{gamState.badges.length}</span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => onNavigate("gamification")}
+                className="w-full pt-2.5 border-t border-slate-100 dark:border-slate-800 text-xs font-bold text-red-600 dark:text-red-400 hover:text-red-700 flex items-center justify-center gap-1 cursor-pointer transition-colors"
+              >
+                Xem chi tiết <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

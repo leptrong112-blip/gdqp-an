@@ -48,3 +48,43 @@ export interface ShootingAttempt {
   feedback: string;
   timestamp: string;
 }
+
+// ==========================================
+// CÁC DẠNG CÂU HỎI TRONG NGÂN HÀNG DỮ LIỆU
+// ==========================================
+
+export interface MultipleChoiceQuestion {
+  id: number;
+  grade: GradeLevel;
+  lesson: string;
+  question: string;
+  options: string[];
+  correctAnswer: number; // Index 0-3
+  explanation: string;
+}
+
+export interface TrueFalseItemSource {
+  id: "a" | "b" | "c" | "d";
+  statement: string;
+  isCorrect: boolean;
+  explanation: string;
+}
+
+export interface TrueFalseQuestionSource {
+  id: number;
+  grade: GradeLevel;
+  lesson: string;
+  context: string;
+  items: TrueFalseItemSource[];
+}
+
+export interface EssayQuestionSource {
+  id: number;
+  grade: GradeLevel;
+  lesson: string;
+  prompt: string;
+  maxScore: number;
+  rubric: { criterion: string; points: number }[];
+  suggestedAnswer: string;
+}
+

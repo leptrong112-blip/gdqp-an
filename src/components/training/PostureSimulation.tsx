@@ -5,7 +5,7 @@ import * as THREE from 'three';
 
 function DynamicRifleModel({ animationName }: { animationName: string }) {
   const groupRef = useRef<any>(null);
-  const { scene, animations } = useGLTF('/models/vietnam_people_army_advanced_animations.glb');
+  const { scene, animations } = useGLTF('/models/vietnam_people_army_advanced_animations.optimized.glb');
   const { actions, names } = useAnimations(animations, groupRef);
 
   useEffect(() => {
@@ -83,4 +83,4 @@ export default function PostureSimulation() {
   );
 }
 
-useGLTF.preload("/models/vietnam_people_army_advanced_animations.glb");
+useGLTF.preload("/models/vietnam_people_army_advanced_animations.optimized.glb");

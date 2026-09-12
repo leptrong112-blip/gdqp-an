@@ -2,7 +2,7 @@ import { Component, Suspense, useEffect, useMemo, useRef, useState, type ReactNo
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Html, useAnimations, useGLTF, useProgress } from '@react-three/drei';
 import { Group, LoopOnce, LoopRepeat, MathUtils } from 'three';
-import { Users, Move, MapPin, Pause, Play, RotateCcw, CheckCircle2, Eye, Compass, Maximize2 } from 'lucide-react';
+import { Users, Move, MapPin, Pause, Play, RotateCcw, CheckCircle2, Eye, Compass, Maximize2, Minimize2 } from 'lucide-react';
 import TrainingGroundModel from './TrainingGroundModel';
 import Soldier3D from './Soldier3D';
 import TrainingCameraController from './TrainingCameraController';
@@ -140,6 +140,33 @@ export default function Tactical3DSimulation() {
   const animation = debugAnimation || action.animation || 'Idle';
   const zone: GroundZone = action.zone ?? (category === 'vandong' ? 'movement' : 'formation');
   const isCompass = category === 'laban';
+  const viewportContainerRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const toggleFullscreen = () => {
+    if (!viewportContainerRef.current) return;
+    if (!document.fullscreenElement) {
+      viewportContainerRef.current.requestFullscreen().then(() => {
+        setIsFullscreen(true);
+      }).catch(() => {
+        setIsFullscreen(true);
+      });
+    } else {
+      document.exitFullscreen().then(() => {
+        setIsFullscreen(false);
+      }).catch(() => {
+        setIsFullscreen(false);
+      });
+    }
+  };
+
+  useEffect(() => {
+    const handleFs = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handleFs);
+    return () => document.removeEventListener('fullscreenchange', handleFs);
+  }, []);
+
   const focusCamera = (next: CameraPreset) => { setPreset(next); setCameraReset((value) => value + 1); };
   const selectAction = (next: ActionItem) => {
     setActionId(next.id); setDebugAnimation(''); setPaused(false); setReplay((value) => value + 1);
@@ -163,17 +190,31 @@ export default function Tactical3DSimulation() {
     </div>
 
     <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-12">
-      <div data-testid="training-viewport" data-animation={animation} data-camera={preset} data-paused={paused}
-        className="relative h-[480px] min-w-0 overflow-hidden rounded-3xl border border-slate-700 bg-[#b5c7ce] shadow-lg sm:h-[580px] lg:col-span-8 lg:h-[680px] xl:h-[720px]">
+      <div ref={viewportContainerRef} data-testid="training-viewport" data-animation={animation} data-camera={preset} data-paused={paused}
+        className={`relative ${isFullscreen ? 'fixed inset-0 z-[99999] h-screen w-screen rounded-none border-none' : isExpanded ? 'h-[640px] sm:h-[720px] lg:h-[800px] rounded-3xl lg:col-span-12' : 'h-[480px] sm:h-[580px] lg:col-span-8 lg:h-[680px] xl:h-[720px] rounded-3xl'} min-w-0 overflow-hidden border border-slate-700 bg-[#b5c7ce] shadow-lg transition-all duration-300`}>
         <div className="absolute left-3 right-3 top-3 z-10 flex flex-wrap items-center justify-between gap-2">
           {!isCompass ? <div className="flex gap-0.5 rounded-xl border border-white/15 bg-slate-950/85 p-1 text-[11px] font-bold text-white backdrop-blur-md">
             <button aria-pressed={!squad} onClick={() => setSquad(false)} className={`rounded-lg px-2.5 py-1.5 ${!squad ? 'bg-red-600' : 'text-slate-300'}`}>1 chiến sĩ</button>
             <button aria-pressed={squad} onClick={() => setSquad(true)} className={`rounded-lg px-2.5 py-1.5 ${squad ? 'bg-red-600' : 'text-slate-300'}`}>Đội hình 3</button>
           </div> : <div className="rounded-xl bg-slate-950/85 px-3 py-2 text-xs font-bold text-amber-300">La bàn 3D</div>}
-          <div className="flex gap-1.5">
-            <button aria-label="Đặt lại góc nhìn" onClick={() => focusCamera(isCompass ? 'compass' : 'formationArea')} className="rounded-xl border border-white/15 bg-slate-950/85 p-2.5 text-white" title="Góc nhìn điều lệnh cận cảnh"><RotateCcw className="h-3.5 w-3.5" /></button>
-            <button onClick={() => setPaused((value) => !value)} className="flex items-center gap-1.5 rounded-xl border border-white/15 bg-slate-950/85 px-3 py-2 text-[11px] font-bold text-white">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <button aria-label="Đặt lại góc nhìn" onClick={() => focusCamera(isCompass ? 'compass' : 'formationArea')} className="rounded-xl border border-white/15 bg-slate-950/85 p-2.5 text-white cursor-pointer hover:bg-slate-800" title="Góc nhìn điều lệnh cận cảnh"><RotateCcw className="h-3.5 w-3.5" /></button>
+            <button onClick={() => setPaused((value) => !value)} className="flex items-center gap-1.5 rounded-xl border border-white/15 bg-slate-950/85 px-3 py-2 text-[11px] font-bold text-white cursor-pointer hover:bg-slate-800">
               {paused ? <Play className="h-3.5 w-3.5 text-emerald-400" /> : <Pause className="h-3.5 w-3.5 text-amber-300" />}{paused ? 'Tiếp tục' : 'Tạm dừng'}</button>
+            <button
+              onClick={() => setIsExpanded((prev) => !prev)}
+              className={`rounded-xl border border-white/15 p-2.5 text-white transition-colors cursor-pointer ${isExpanded ? 'bg-amber-500 text-slate-950 font-bold' : 'bg-slate-950/85 hover:bg-slate-800'}`}
+              title={isExpanded ? 'Thu gọn khung nhìn' : 'Phóng to 100% khung nhìn'}
+            >
+              {isExpanded ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+            </button>
+            <button
+              onClick={toggleFullscreen}
+              className={`rounded-xl border border-white/15 p-2.5 text-white transition-colors cursor-pointer ${isFullscreen ? 'bg-red-600' : 'bg-slate-950/85 hover:bg-slate-800'}`}
+              title={isFullscreen ? 'Thoát toàn màn hình' : 'Xem toàn màn hình'}
+            >
+              {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+            </button>
           </div>
         </div>
 
@@ -203,7 +244,7 @@ export default function Tactical3DSimulation() {
         {import.meta.env.DEV && stats && <span data-testid="training-render-stats" className="pointer-events-none absolute bottom-12 right-3 rounded bg-slate-950/70 px-2 py-1 font-mono text-[9px] text-slate-300">{stats}</span>}
       </div>
 
-      <div className="min-w-0 space-y-4 lg:col-span-4">
+      <div className={`min-w-0 space-y-4 ${isExpanded ? 'lg:col-span-12 grid grid-cols-1 md:grid-cols-2 gap-4 space-y-0' : 'lg:col-span-4'} transition-all duration-300`}>
         <div className="space-y-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-[#111827]">
           <div><span className="text-[10px] font-black uppercase tracking-wider text-red-600 dark:text-red-400">Quan sát & thực hành</span>
             <h2 className="mt-1 text-lg font-black text-slate-900 dark:text-white">{current.title}</h2>

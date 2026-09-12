@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Pose worker smoke test</title></head>
+<body style="font:16px system-ui;max-width:900px;margin:40px auto;padding:20px">
+  <h1>Pose worker smoke test</h1>
+  <p>Development-only test: uses a blank synthetic image, never a webcam. Pass the built worker URL in <code>?worker=</code>. Assets must be served on the same origin.</p>
+  <button id="cpu">Test CPU worker</button> <button id="gpu">Test GPU worker with CPU fallback</button>
+  <pre id="output" role="status" style="white-space:pre-wrap">Ready.</pre>
+  <script type="module">
+    const output = document.getElementById('output');
+    const log = message => output.textContent += '\n' + message;
+    let worker, timeout;
+    async function run(delegate) {
+      if (worker) worker.terminate();
+      clearTimeout(timeout);
+      output.textContent = 'Initializing ' + delegate + '…';
+      const path = new URL(location.href).searchParams.get('worker');
+      if (!path || !path.startsWith('/dist/assets/pose.worker-')) { log('ERROR: Provide the generated worker path.'); return; }
+      worker = new Worker(path);
+      timeout = setTimeout(() => { log('FAIL: timeout'); worker.terminate(); }, 45000);
+      worker.onerror = event => { log('FAIL: ' + event.message); clearTimeout(timeout); worker.terminate(); };
+      worker.onmessage = async ({ data }) => {
+        if (data.type === 'error') { log('FAIL: ' + data.message); clearTimeout(timeout); worker.terminate(); }
+        if (data.type === 'ready') {
+          log('Model ready using ' + data.delegate);
+          const canvas = document.createElement('canvas'); canvas.width = 640; canvas.height = 480;
+          canvas.getContext('2d').fillStyle = '#888'; canvas.getContext('2d').fillRect(0, 0, 640, 480);
+          const frame = await createImageBitmap(canvas);
+          worker.postMessage({ type: 'analyzeFrame', frame, timestampMs: performance.now(), width: 640, height: 480, lighting: { mean: 136, darkRatio: 0, brightRatio: 0 } }, [frame]);
+        }
+        if (data.type === 'analysis') {
+          const s = data.snapshot;
+          log('Inference: ' + s.inferenceMs.toFixed(1) + ' ms; people: ' + s.frame.personCount + '; quality passed: ' + s.quality.passed);
+          log(s.frame.personCount === 0 && !s.quality.passed ? 'PASS: blank image refused without a score' : 'FAIL: unexpected analysis');
+          worker.postMessage({ type: 'dispose' });
+        }
+        if (data.type === 'disposed') { log('PASS: model disposed and worker closed'); clearTimeout(timeout); worker.terminate(); }
+      };
+      worker.postMessage({ type: 'initialize', delegate });
+    }
+    document.getElementById('cpu').onclick = () => run('CPU');
+    document.getElementById('gpu').onclick = () => run('GPU');
+    window.addEventListener('pagehide', () => { clearTimeout(timeout); worker?.terminate(); });
+  </script>
+</body></html>

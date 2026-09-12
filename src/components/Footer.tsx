@@ -15,11 +15,11 @@ import {
 } from "lucide-react";
 
 interface FooterProps {
-  onNavigate?: (tab: "home" | "theory" | "quiz" | "exam" | "sim" | "chat" | "training" | "map" | "gamification" | "webar" | "shooting") => void;
+  onNavigate?: (tab: "home" | "theory" | "quiz" | "exam" | "sim" | "chat" | "training" | "map" | "gamification" | "webar" | "shooting" | "pose") => void;
 }
 
 export default function Footer({ onNavigate }: FooterProps) {
-  const handleNav = (tab: "home" | "theory" | "quiz" | "exam" | "sim" | "chat" | "training" | "map" | "gamification" | "webar" | "shooting") => {
+  const handleNav = (tab: "home" | "theory" | "quiz" | "exam" | "sim" | "chat" | "training" | "map" | "gamification" | "webar" | "shooting" | "pose") => {
     if (onNavigate) {
       onNavigate(tab);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -159,6 +159,7 @@ export default function Footer({ onNavigate }: FooterProps) {
             </div>
 
             <ul className="space-y-2 text-xs">
+              <li><button onClick={() => handleNav("pose")} className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 cursor-pointer text-left"><Camera className="w-3.5 h-3.5 text-emerald-400" /><span>Chấm điểm tư thế AI</span></button></li>
               <li>
                 <button
                   onClick={() => handleNav("shooting")}

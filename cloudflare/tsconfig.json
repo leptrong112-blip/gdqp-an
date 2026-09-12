@@ -1,0 +1,15 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "types": [
+      "node",
+      "@cloudflare/workers-types"
+    ]
+  },
+  "include": [
+    "./worker.ts",
+    "../worker-configuration.d.ts",
+    "../src/data/survey.ts"
+  ],
+  "exclude": []
+}

@@ -6,3 +6,10 @@ coverage/
 *.log
 .env*
 !.env.example
+/data/
+
+# Local Netlify folder
+.netlify
+.wrangler/
+.wrangler-dry-run/
+.codex-workers-types/
