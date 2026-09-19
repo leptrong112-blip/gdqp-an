@@ -13,3 +13,9 @@ coverage/
 .wrangler/
 .wrangler-dry-run/
 .codex-workers-types/
+
+# Temporary and testing artifacts
+scratch/
+artifacts/ak-sight/
+UPDATE-WEBSITE.bat
+

@@ -8,7 +8,6 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
-  included_files = ["data/accounts.json"]
 
 [[redirects]]
   from = "/api/survey/*"

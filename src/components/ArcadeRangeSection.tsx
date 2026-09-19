@@ -2,6 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import ShootingRange3D, { RangeImpact } from './ShootingRange3D';
 import { ammoAction, ARCADE_EXERCISES, initialAmmo } from './arcadeRangeLogic';
 import type { TargetId } from '../data/akShootingData';
+import { useRangeControls } from './useRangeControls';
+import RangeViewControls from './RangeViewControls';
+import { loadSightPreset } from './rangeSightPresets';
 
 type Shot = RangeImpact & { shotNumber: number };
 export default function ArcadeRangeSection() {
@@ -19,12 +22,18 @@ export default function ArcadeRangeSection() {
   const [reloadProgress, setReloadProgress] = useState(0);
   const reloadElapsed = useRef(0);
   const [aim, setAim] = useState({ x: 0, y: 0 });
+  const [sightPresetId, setSightPresetId] = useState<string>(loadSightPreset);
+  const [hasSeparateSight, setHasSeparateSight] = useState(false);
   const [report, setReport] = useState('');
   const fireRef = useRef<((aim?: { x: number; y: number }) => Promise<RangeImpact | null>) | null>(null);
   const legacyRef = useRef<(() => RangeImpact | null) | null>(null);
   const totalRounds = exercise.rounds * exercise.magazines;
   const completed = shots.length === totalRounds;
   const running = started && !paused && !completed;
+  const rangeRef = useRef<HTMLDivElement>(null);
+  const inputFire = useRef<() => void>(() => {});
+  const [adsHeld, setAdsHeld] = useState(false);
+  const controls = useRangeControls(rangeRef, { active: running, round: roundKey, fire: () => inputFire.current(), ads: setAdsHeld, release: () => setAdsHeld(false) });
   const targetId: TargetId = exercise.distance === 10 ? 'dong_tien' : exercise.distance === 100 ? 'bia_4' : 'bia_8';
   const changeAmmo = useCallback((value: typeof ammo) => { ammoRef.current = value; setAmmo(value); }, []);
   useEffect(() => () => { epoch.current++; }, []);
@@ -41,7 +50,7 @@ export default function ArcadeRangeSection() {
     reloadElapsed.current = 0; setReloadProgress(0); setAim({ x: 0, y: 0 }); setRoundKey(k => k + 1);
   };
   const fire = useCallback(async (shotAim?: { x: number; y: number }) => {
-    if (!running || flightLock.current || !fireRef.current) return;
+    if (!running || controls.panel || flightLock.current || !fireRef.current) return;
     const previous = ammoRef.current;
     const next = ammoAction(previous, 'fire', exercise);
     if (next === previous) { setReport(previous.reloading ? 'Đang thay băng…' : 'Băng đã hết. Nhấn R hoặc nút Thay băng.'); return; }
@@ -58,15 +67,16 @@ export default function ArcadeRangeSection() {
     } finally {
       if (token === epoch.current) { flightLock.current = false; setFlying(false); }
     }
-  }, [running, exercise, changeAmmo]);
+  }, [running, exercise, changeAmmo, controls.panel]);
+  inputFire.current = () => { void fire(); };
   const reload = useCallback(() => {
-    if (!running || flightLock.current) return;
+    if (!running || controls.panel || flightLock.current) return;
     const next = ammoAction(ammoRef.current, 'reload', exercise);
     if (next === ammoRef.current) return;
     reloadElapsed.current = 0; setReloadProgress(0); changeAmmo(next); setReport('Đang thay băng…');
-  }, [running, exercise, changeAmmo]);
+  }, [running, exercise, changeAmmo, controls.panel]);
   useEffect(() => {
-    if (!running || !ammo.reloading) return;
+    if (!running || controls.panel || !ammo.reloading) return;
     const token = epoch.current;
     const timer = window.setInterval(() => {
       if (token !== epoch.current) return;
@@ -77,16 +87,16 @@ export default function ArcadeRangeSection() {
       }
     }, 100);
     return () => window.clearInterval(timer);
-  }, [running, ammo.reloading, exercise, changeAmmo]);
+  }, [running, ammo.reloading, exercise, changeAmmo, controls.panel]);
   useEffect(() => {
     const key = (event: KeyboardEvent) => {
-      if (event.repeat || (event.target instanceof HTMLElement && event.target.closest('input, textarea, select, [contenteditable="true"]'))) return;
+      if (event.repeat || controls.panel || (event.target instanceof HTMLElement && event.target.closest('button, input, textarea, select, [contenteditable="true"]'))) return;
       if (event.code === 'KeyR' || event.key.toLowerCase() === 'r') { event.preventDefault(); reload(); }
       if (event.code === 'Space' || event.key === ' ') { event.preventDefault(); void fire(); }
-      if (event.key === 'Escape' && started && !completed) setPaused(p => !p);
+      if (event.key === 'Escape' && started && !completed && !document.pointerLockElement && !controls.locked) setPaused(p => !p);
     };
     window.addEventListener('keydown', key); return () => window.removeEventListener('keydown', key);
-  }, [reload, fire, started, completed]);
+  }, [reload, fire, started, completed, controls.panel, controls.locked]);
   const score = shots.reduce((sum, shot) => sum + shot.score, 0);
   const hits = shots.filter(s => s.isHit).length;
   const canReload = running && !flying && !ammo.reloading && ammo.left === 0 && ammo.magazine < exercise.magazines;
@@ -101,19 +111,21 @@ export default function ArcadeRangeSection() {
       <p className="mt-1 text-xs text-cyan-200">Hoàn thành khi dùng đủ tất cả các băng. {exercise.targets} bia {exercise.moving ? 'di chuyển qua lại' : 'cố định'}. Hiệu ứng và thời gian bay theo cơ chế game; cự ly là thông số màn chơi.</p>
     </div>
     <div className="grid lg:grid-cols-[minmax(0,2fr)_minmax(260px,1fr)] gap-4">
-      <div className="relative h-[550px] sm:h-[640px] rounded-3xl overflow-hidden border border-slate-700 bg-slate-950 touch-none"
+      <div ref={rangeRef} tabIndex={0} data-range-gameplay data-pointer-locked={controls.locked} onContextMenu={e => e.preventDefault()} className={`relative h-[550px] sm:h-[640px] rounded-3xl overflow-hidden border border-slate-700 bg-slate-950 touch-none ${controls.locked ? 'cursor-none' : 'cursor-crosshair'}`}
         onPointerMove={e => {
-          if (!running || (e.target as HTMLElement).closest('button')) return;
+          if (e.pointerType === 'mouse' || !running || controls.panel || (e.target as HTMLElement).closest('button, [data-range-controls]')) return;
           setAim(pointerAim(e));
         }}
-        onPointerDown={e => { if (e.button === 0 && !(e.target as HTMLElement).closest('button')) { e.preventDefault(); const shotAim = pointerAim(e); setAim(shotAim); void fire(shotAim); } }}>
-        <ShootingRange3D key={roundKey} ads={false} aim={aim} sway={{ x: 0, y: 0 }} recoil={{ x: 0, y: 0 }} targetId={targetId} shots={shots} fireRef={legacyRef}
-          arcade={{ moving: exercise.moving, running, targets: exercise.targets, reloading: ammo.reloading, fireRef }} />
-        <div className="absolute top-4 left-4 right-4 flex flex-wrap justify-between gap-2 pointer-events-none text-xs font-bold text-white">
+        onPointerDown={e => { if (e.pointerType !== 'mouse' && e.button === 0 && !controls.panel && !(e.target as HTMLElement).closest('button, [data-range-controls]')) { e.preventDefault(); const shotAim = pointerAim(e); setAim(shotAim); void fire(shotAim); } }}>
+        <RangeViewControls controls={controls} isAds={controls.panel ? controls.previewAds : adsHeld} sightPresetId={sightPresetId} onSightPresetChange={setSightPresetId} hasSeparateSight={hasSeparateSight} />
+        <ShootingRange3D key={roundKey} ads={controls.panel ? controls.previewAds : adsHeld} aim={aim} sway={{ x: 0, y: 0 }} recoil={{ x: 0, y: 0 }} targetId={targetId} shots={shots} fireRef={legacyRef}
+          look={controls.look} alignment={controls.alignment} sightPresetId={sightPresetId} onSightAvailabilityChange={setHasSeparateSight} hideReticle={true}
+          arcade={{ moving: exercise.moving, running: running && !controls.panel, targets: exercise.targets, reloading: ammo.reloading, fireRef }} />
+        <div className="absolute top-14 left-4 right-4 flex flex-wrap justify-between gap-2 pointer-events-none text-xs font-bold text-white">
           <span className="rounded-xl bg-slate-950/80 px-3 py-2">BĂNG {ammo.magazine}/{exercise.magazines} · CÒN {ammo.left}/{exercise.rounds} VIÊN</span>
           <span className="rounded-xl bg-slate-950/80 px-3 py-2">TIẾN ĐỘ {shots.length}/{totalRounds}</span>
         </div>
-        {report && <div aria-live="polite" className="absolute top-16 left-4 rounded-xl bg-cyan-950/90 px-3 py-2 text-xs text-cyan-100 pointer-events-none">{report}</div>}
+        {report && <div aria-live="polite" className="absolute top-24 left-4 rounded-xl bg-cyan-950/90 px-3 py-2 text-xs text-cyan-100 pointer-events-none">{report}</div>}
         <div className="absolute bottom-4 left-4 right-4 flex flex-wrap justify-between gap-2" onPointerMove={e => e.stopPropagation()}>
           <button disabled={!started || completed} onClick={() => setPaused(p => !p)} className="rounded-xl bg-slate-950/90 px-3 py-3 text-xs text-white disabled:opacity-40">{paused ? 'Tiếp tục' : 'Tạm dừng'}</button>
           <button disabled={!canReload} onClick={reload} className="rounded-xl bg-amber-500 px-4 py-3 text-sm font-bold text-slate-950 disabled:opacity-50">{ammo.reloading ? `Đang thay ${Math.round(reloadProgress * 100)}%` : 'Thay băng [R]'}</button>
@@ -121,7 +133,7 @@ export default function ArcadeRangeSection() {
         </div>
         {(!started || paused || completed) && <div className="absolute inset-0 z-10 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center p-8 text-center text-white gap-4">
           <h3 className="text-2xl font-black">{completed ? 'Hoàn thành bài game!' : paused && started ? 'Đã tạm dừng' : exercise.title}</h3>
-          <p className="text-sm max-w-md">{completed ? `${score}/${totalRounds * 10} điểm · ${hits}/${totalRounds} lượt trúng · ${ammo.reloads} lần thay băng` : 'Di chuột để điều khiển tâm. Click hoặc Space để bắn. Dùng hết băng rồi nhấn R để thay. Esc để tạm dừng.'}</p>
+          <p className="text-sm max-w-md">{completed ? `${score}/${totalRounds * 10} điểm · ${hits}/${totalRounds} lượt trúng · ${ammo.reloads} lần thay băng` : 'Nhấp vào cảnh để điều khiển chuột. Giữ phải để ngắm, nhấn trái hoặc Space để bắn. Dùng hết băng rồi nhấn R để thay. Esc để thoát điều khiển; dùng nút Tạm dừng để nghỉ. Cảm ứng: chạm bia để bắn.'}</p>
           {completed ? <div className="flex gap-3"><button className="rounded-xl bg-cyan-600 p-3 font-bold" onClick={() => reset()}>Chơi lại</button>{exerciseIndex < ARCADE_EXERCISES.length - 1 && <button className="rounded-xl bg-amber-500 text-slate-950 p-3 font-bold" onClick={() => reset(exerciseIndex + 1)}>Bài tiếp theo →</button>}</div>
             : <button className="rounded-xl bg-cyan-600 px-7 py-3 font-bold" onClick={() => { setStarted(true); setPaused(false); }}> {started ? 'Tiếp tục chơi' : 'Bắt đầu bài game'} </button>}
         </div>}

@@ -47,7 +47,7 @@ test('Exam API shares account sessions, enforces roles and persists server ident
       assert.equal(res.status, 200);
       assert.deepEqual((await res.json()).results, []);
     }
-    for (const body of [[], { studentClass: 123 }]) {
+    for (const body of [[], { studentClass: 123 }, { score: 15 }, { score: -2 }, { accuracyPercent: 150 }]) {
       assert.equal((await request('exam/results', 'POST', cookies.student, body)).status, 400);
     }
     for (const account of accounts) {
@@ -66,13 +66,44 @@ test('Exam API shares account sessions, enforces roles and persists server ident
       assert.deepEqual(result.details, payload.details);
       assert.equal(result.hash, undefined);
     }
+
+    // Chống gian lận điểm thi (Server-side score validation):
+    // Học sinh chọn sai câu 1001 nhưng gửi fake score 10.0 và fake isCorrect: true
+    const tamperedPayload = {
+      id: 'result-tampered',
+      studentClass: '10A1',
+      mode: 'grade_10',
+      format: 'mcq',
+      timeLimitMinutes: 15,
+      score: 10.0,
+      xpGained: 1000,
+      accuracyPercent: 100,
+      details: [{
+        questionId: 1001,
+        selectedOption: 2, // Sai: "02/09/1945" (Đáp án đúng là "22/12/1944", index 0)
+        options: ["22/12/1944", "19/08/1945", "02/09/1945", "22/12/1946"],
+        isCorrect: true
+      }],
+      tfDetails: [],
+      essayDetails: []
+    };
+    const tamperedRes = await request('exam/results', 'POST', cookies.student, tamperedPayload);
+    assert.equal(tamperedRes.status, 201);
+    const { result: tamperedResult } = await tamperedRes.json();
+    assert.equal(tamperedResult.score, 0);
+    assert.equal(tamperedResult.accuracyPercent, 0);
+    assert.equal(tamperedResult.correctCount, 0);
+    assert.equal(tamperedResult.details[0].isCorrect, false);
+    assert.equal(tamperedResult.details[0].correctOption, 0);
+
     const persisted = (await readFile(path.join(directory, 'exam_results.jsonl'), 'utf8')).trim().split('\n').map(line => JSON.parse(line));
-    assert.equal(persisted.length, 3);
+    assert.equal(persisted.length, 4);
     assert.ok(persisted.every(r => accounts.some(a => a.id === r.studentId && a.name === r.studentName)));
     assert.equal((await request('exam/results/result-student', 'DELETE', cookies.student)).status, 403);
     assert.equal((await request('exam/results', 'POST', cookies.student, {}, 'https://other.invalid')).status, 403);
     assert.equal((await request('exam/results/result-student', 'DELETE', cookies.teacher, undefined, 'https://other.invalid')).status, 403);
     assert.equal((await request('exam/results/result-student', 'DELETE', cookies.teacher)).status, 200);
+    assert.equal((await request('exam/results/result-tampered', 'DELETE', cookies.teacher)).status, 200);
     assert.equal((await request('exam/results/result-admin', 'DELETE', cookies.admin)).status, 200);
     assert.equal((await request('exam/results/missing', 'DELETE', cookies.teacher)).status, 404);
     const remaining = await request('exam/results', 'GET', cookies.teacher);

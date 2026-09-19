@@ -349,6 +349,129 @@ const WEBAR_CATALOG: ARModelItem[] = [
       },
     ],
   },
+  {
+    id: "vnsoldier_bothap",
+    name: "Chiến Sĩ Bò Thấp Dã Chiến K20",
+    category: "soldier",
+    subtitle: "Quân phục K20 & súng tiểu liên AKM dã chiến",
+    description:
+      "Mô hình 3D chiến sĩ bộ binh Quân đội Nhân dân Việt Nam mặc quân phục ngụy trang dã chiến K20 thế hệ mới, trang bị súng tiểu liên AKM, mũ dã chiến hiện đại. Chiến sĩ thực hiện động tác bò thấp luồn sâu, áp sát mặt đất né tránh hỏa lực ngắm bắn trực tiếp của địch.",
+    modelPath: "/models/VNSoldierBoThap.glb",
+    animationName: "rig.002Action",
+    baseHeightOffset: 0.1,
+    initialPoseTime: 0,
+    defaultScale: 0.85,
+    realScale: 1.0,
+    miniScale: 0.45,
+    recommendedPlacement: "floor",
+    placementGuidance: "Đặt sát mặt sàn để quan sát tư thế bò thấp ôm súng AKM ngang ngực.",
+    historicalEra: "Trang bị K20 Quân đội Nhân dân Việt Nam",
+    specs: [
+      { label: "Trang bị", value: "Quân phục dã chiến K20, Mũ chiến thuật, Súng AKM" },
+      { label: "Tư thế súng", value: "Súng AKM ôm trước ngực, nòng chếch lên chống đất bẩn" },
+      { label: "Độ cao thân người", value: "Dưới 20 - 25 cm so với mặt đất" },
+      { label: "Đặc điểm cơ động", value: "Dùng lực cẳng tay và mũi chân đẩy thân trườn tiến vững vàng" },
+    ],
+    parts: [
+      {
+        id: "bothap_sung",
+        name: "1. Kỹ thuật ôm súng AKM dã chiến",
+        detail: "Tay phải nắm ốp lót tay hoặc cổ báng súng, súng áp dọc theo cẳng tay trước ngực, mũi nòng nâng cao tránh bụi bẩn.",
+      },
+      {
+        id: "bothap_than",
+        name: "2. Thân người hạ thấp trọng tâm",
+        detail: "Ngực, bụng và đùi ép thấp vừa phải để vừa cơ động nhanh vừa không bị lộ mục tiêu trước hỏa lực bắn tỉa.",
+      },
+      {
+        id: "bothap_chan",
+        name: "3. Nhịp đẩy của mũi bàn chân và cẳng tay",
+        detail: "Mũi bàn chân bám đất kết hợp cùi chỏ tỳ đẩy cơ thể lướt về phía trước êm dịu, không phát ra tiếng động.",
+      },
+    ],
+  },
+  {
+    id: "vnsoldier_nghinghiem",
+    name: "Chiến Sĩ Điều Lệnh Nghiêm - Nghỉ K20",
+    category: "soldier",
+    subtitle: "Tác phong quân nhân chính quy chuẩn điều lệnh",
+    description:
+      "Mô hình chiến sĩ QĐND Việt Nam thực hiện các động tác điều lệnh đội ngũ từng người không có súng: Nghiêm và Nghỉ. Toàn bộ quân phục K20, quân hàm, mũ dã chiến bọc rằn ri và tác phong quân nhân được tái hiện sống động chuẩn xác theo Điều lệnh Quân đội.",
+    modelPath: "/models/VNSoldiernghinghiem.glb",
+    animationName: "rig.002Action",
+    baseHeightOffset: 0.0,
+    initialPoseTime: 0,
+    defaultScale: 0.85,
+    realScale: 1.0,
+    miniScale: 0.45,
+    recommendedPlacement: "floor",
+    placementGuidance: "Đặt trên sàn nhà hoặc lớp học để học sinh đối chiếu tư thế đứng nghiêm chuẩn mực.",
+    historicalEra: "Điều lệnh đội ngũ QĐND Việt Nam",
+    specs: [
+      { label: "Trang phục", value: "Quân phục dã chiến K20 toàn phần" },
+      { label: "Góc mở bàn chân", value: "45 độ tính từ hai mép trong bàn chân" },
+      { label: "Gót chân", value: "Hai gót chân chụm sát nhau trên một đường thẳng" },
+      { label: "Tác phong thân người", value: "Ngực nở, bụng thót, vai thăng bằng, mắt nhìn thẳng" },
+    ],
+    parts: [
+      {
+        id: "nghinghiem_chan",
+        name: "1. Vị trí hai bàn chân góc 45°",
+        detail: "Hai gót chân sát nhau, hai bàn chân mở rộng thành một góc 45 độ, trọng lượng toàn thân dồn đều lên hai bàn chân.",
+      },
+      {
+        id: "nghinghiem_than",
+        name: "2. Thân trên ngay ngắn, ngực nở",
+        detail: "Hai đầu gối thẳng, lưng thẳng tự nhiên, ngực hơi nở về trước, hai vai thăng bằng, đầu ngay cổ thẳng, mắt nhìn thẳng.",
+      },
+      {
+        id: "nghinghiem_tay",
+        name: "3. Tay buông tự nhiên",
+        detail: "Năm ngón tay khép cong tự nhiên, đầu ngón tay cái áp vào đốt thứ hai của ngón trỏ, mép bàn tay áp sát mép chỉ quần.",
+      },
+    ],
+  },
+  {
+    id: "vnsoldier_tactical",
+    name: "Chiến Sĩ K20 Trườn Tiến Đặt Súng",
+    category: "soldier",
+    subtitle: "Kỹ thuật vận động chiến trường tiến đặt súng về trước",
+    description:
+      "Mô hình 3D chiến sĩ bộ binh dã chiến K20 thực hiện kỹ thuật trườn tiến có súng: Cây súng AK-47 đặt nằm trên mặt đất, người lính trườn tiến lên ngang tầm súng, tay phải vươn nhấc súng đưa về phía trước mặt đất rồi tiếp tục trườn tiến áp sát mục tiêu.",
+    modelPath: "/models/VNSoldier.glb",
+    animationName: "rig.002Action",
+    baseHeightOffset: 0.1,
+    initialPoseTime: 0,
+    defaultScale: 0.85,
+    realScale: 1.0,
+    miniScale: 0.45,
+    recommendedPlacement: "floor",
+    placementGuidance: "Đặt trên mặt sàn để quan sát động tác trườn tiến nhấc đặt súng AK-47 về phía trước.",
+    historicalEra: "Kỹ thuật chiến đấu bộ binh QĐND Việt Nam",
+    specs: [
+      { label: "Trang phục", value: "Rằn ri dã chiến K20, Áo giáp Molle, Mũ Kevlar" },
+      { label: "Vũ khí", value: "Súng tiểu liên AK-47 tiêu chuẩn" },
+      { label: "Kỹ thuật súng", value: "Đặt súng trên đất -> Trườn lên -> Nhấc súng đặt về trước -> Trườn tiếp" },
+      { label: "Đặc điểm cơ động", value: "Áp sát mặt đất tối đa, bảo toàn hỏa lực cá nhân" },
+    ],
+    parts: [
+      {
+        id: "tactical_dat_sung",
+        name: "1. Kỹ thuật đặt súng trên mặt đất",
+        detail: "Súng đặt nằm trên mặt cỏ/cát theo hướng tiến công, nòng súng hướng về phía địch, báng súng hướng về phía người.",
+      },
+      {
+        id: "tactical_truon_tien",
+        name: "2. Trườn thân người lên ngang tầm súng",
+        detail: "Dùng lực đẩy của cẳng tay và mũi hai bàn chân đẩy thân người lướt sát mặt đất tiến lên ngang tầm tay với súng.",
+      },
+      {
+        id: "tactical_nhac_sung",
+        name: "3. Nhấc súng chuyển dịch về trước",
+        detail: "Tay phải vươn lên nắm ốp lót tay, nâng súng êm nhẹ đưa về phía trước đặt xuống đất rồi tiếp tục động tác trườn.",
+      },
+    ],
+  },
 ];
 
 // ════════════════════════════════════════════════════════════════════════════════
@@ -1419,3 +1542,6 @@ export default function WebARSection() {
 useGLTF.preload("/models/ak47.glb");
 useGLTF.preload("/models/f1-classroom.glb");
 useGLTF.preload("/models/vietnam_people_army_advanced_animations.optimized.glb");
+useGLTF.preload("/models/VNSoldierBoThap.glb");
+useGLTF.preload("/models/VNSoldiernghinghiem.glb");
+useGLTF.preload("/models/VNSoldier.glb");

@@ -77,28 +77,34 @@ test('Account roles, isolation, persistence, survey validation and admin reporti
     const pubRes = await request('/responses', publicStudent);
     assert.equal(pubRes.status, 201);
 
-    // Test access via x-admin-pin
+    // Verify that x-admin-pin header is strictly rejected (no backdoor)
     const pinRes = await fetch(base + '/responses', { headers: { 'x-admin-pin': '123456' } });
-    assert.equal(pinRes.status, 200);
-    const pinData = await pinRes.json();
-    assert.equal(pinData.responses.length, 4);
-    assert.ok(pinData.responses.some((r: { name?: string; className?: string }) => r.name === 'Trần Văn Nam' && r.className === '11A1'));
+    assert.equal(pinRes.status, 401, 'x-admin-pin must be rejected with 401');
 
-    // Test change-password via old password
-    const changeRes = await request('/change-password', { targetUsername: 'teacher', oldPassword: password, newPassword: 'new-teacher-password' });
+    // Verify that unauthenticated change-password via PIN is rejected
+    const unauthPinRes = await request('/change-password', { targetUsername: 'admin', pin: '123456', newPassword: 'brand-new-admin-pass' });
+    assert.equal(unauthPinRes.status, 401, 'Unauthenticated password change with PIN must be rejected with 401');
+
+    // Verify student cannot change teacher password
+    const studentHacksTeacher = await request('/change-password', { targetUsername: 'teacher', oldPassword: 'wrong', newPassword: 'hack-attempt-pass' }, student);
+    assert.equal(studentHacksTeacher.status, 403, 'User cannot change another user password');
+
+    // Test authenticated change-password via old password
+    const changeRes = await request('/change-password', { targetUsername: 'teacher', oldPassword: password, newPassword: 'new-teacher-password' }, teacher);
     assert.equal(changeRes.status, 200);
     const checkOld = await request('/login', { username: 'teacher', password });
     assert.equal(checkOld.status, 401);
     const checkNew = await request('/login', { username: 'teacher', password: 'new-teacher-password' });
     assert.equal(checkNew.status, 200);
 
-    // Test change-password via Admin PIN (without login or old password)
-    const pinResetRes = await request('/change-password', { targetUsername: 'admin', pin: '123456', newPassword: 'brand-new-admin-pass' });
-    assert.equal(pinResetRes.status, 200);
+    // Test authenticated admin change-password via old password
+    const adminChangeRes = await request('/change-password', { targetUsername: 'admin', oldPassword: password, newPassword: 'brand-new-admin-pass' }, admin);
+    assert.equal(adminChangeRes.status, 200);
     const checkAdminNew = await request('/login', { username: 'admin', password: 'brand-new-admin-pass' });
     assert.equal(checkAdminNew.status, 200);
+    const adminNewCookie = checkAdminNew.headers.get('set-cookie')!.split(';')[0];
     // Reset back for subsequent tests
-    await request('/change-password', { targetUsername: 'admin', pin: '123456', newPassword: password });
+    await request('/change-password', { targetUsername: 'admin', oldPassword: 'brand-new-admin-pass', newPassword: password }, adminNewCookie);
 
     await request('/logout', {}, admin); assert.equal((await request('/responses', undefined, admin)).status, 401);
     const second = express(); second.use(express.json()); second.use('/api/survey', createSurveyRouter(directory));

@@ -45,7 +45,13 @@ function makeAccount(username: string, name: string, role: AccountRole, password
 async function seedAccounts(): Promise<Account[]> {
   const existing = await accountsStore.get('accounts', { type: 'json', consistency: 'strong' }) as Account[] | null;
   if (existing) return existing;
-  const defaults = JSON.parse(await readFile(path.join(process.cwd(), 'data', 'accounts.json'), 'utf8')) as Account[];
+  let defaults: Account[] = [];
+  try {
+    defaults = JSON.parse(await readFile(path.join(process.cwd(), 'data', 'accounts.json'), 'utf8')) as Account[];
+  } catch {
+    const adminPassword = process.env.ADMIN_INITIAL_PASSWORD || 'GdqpAdmin@2026';
+    defaults = [makeAccount('admin', 'Quản trị viên GDQP', 'admin', adminPassword)];
+  }
   await accountsStore.setJSON('accounts', defaults, { onlyIfNew: true });
   return await accountsStore.get('accounts', { type: 'json', consistency: 'strong' }) as Account[] || defaults;
 }

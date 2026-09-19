@@ -4,6 +4,7 @@ import {
   deleteExamResultOnServer,
 } from '../../utils/examEngine';
 import { ExamResultRecord } from '../../types/exam';
+import { exportExamResultsToExcel } from '../../utils/excelExport';
 import ExamResultModal from './ExamResultModal';
 import {
   BarChart3,
@@ -137,7 +138,17 @@ export default function ExamAdminSection({ onBack }: { onBack?: () => void }) {
     return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800 dark:bg-red-950/80 dark:text-red-300 border border-red-300">Chưa đạt</span>;
   };
 
-  // Xuất file CSV / Excel với BOM UTF-8 không lỗi font tiếng Việt
+  // Xuất file Excel (.xlsx) chuẩn Microsoft Excel
+  const handleExportExcel = () => {
+    if (filteredResults.length === 0) {
+      alert('Không có dữ liệu để xuất file Excel.');
+      return;
+    }
+    const filterDesc = selectedClass !== 'all' ? ` - Lớp ${selectedClass}` : '';
+    exportExamResultsToExcel(filteredResults, `Kiểm tra GDQP-AN${filterDesc}`);
+  };
+
+  // Xuất file CSV dự phòng với BOM UTF-8 không lỗi font tiếng Việt
   const handleExportCsv = () => {
     if (filteredResults.length === 0) {
       alert('Không có dữ liệu để xuất file.');
@@ -242,12 +253,21 @@ export default function ExamAdminSection({ onBack }: { onBack?: () => void }) {
           </button>
 
           <button
-            onClick={handleExportCsv}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md cursor-pointer transition-all"
-            title="Xuất bảng điểm ra file Excel/CSV chuẩn tiếng Việt"
+            onClick={handleExportExcel}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white shadow-md cursor-pointer transition-all"
+            title="Xuất bảng điểm ra file Excel (.xlsx) chuẩn Microsoft Excel"
           >
             <FileSpreadsheet className="w-4 h-4" />
-            Xuất Excel / CSV
+            Xuất Bảng Điểm Excel (.xlsx)
+          </button>
+
+          <button
+            onClick={handleExportCsv}
+            className="flex items-center gap-1 px-2.5 py-2 rounded-xl text-xs font-semibold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer transition-all"
+            title="Tải tệp CSV dự phòng"
+          >
+            <Download className="w-3.5 h-3.5" />
+            CSV
           </button>
 
           <button

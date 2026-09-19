@@ -12,11 +12,41 @@ dotenv.config();
 const app = express();
 const PORT = 3001;
 
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 const accountDirectory = process.env.SURVEY_DATA_DIR || path.join(process.cwd(), 'data');
 const accountAuth = createAuth(accountDirectory);
 app.use('/api/survey', createSurveyRouter(accountDirectory, accountAuth));
 app.use('/api/exam', createExamRouter(accountDirectory, accountAuth));
+
+// In-memory rate limiter for AI endpoints
+function createRateLimiter(windowMs: number, maxRequests: number, message: string) {
+  const requests = new Map<string, { count: number; resetAt: number }>();
+  return (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const now = Date.now();
+    const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || req.socket.remoteAddress || 'unknown';
+
+    for (const [key, val] of requests) {
+      if (val.resetAt <= now) requests.delete(key);
+    }
+
+    const record = requests.get(ip);
+    if (!record || record.resetAt <= now) {
+      requests.set(ip, { count: 1, resetAt: now + windowMs });
+      return next();
+    }
+
+    if (record.count >= maxRequests) {
+      res.setHeader('Retry-After', Math.ceil((record.resetAt - now) / 1000));
+      return res.status(429).json({ error: message });
+    }
+
+    record.count++;
+    next();
+  };
+}
+
+const askRateLimiter = createRateLimiter(60_000, 20, "Em đã gửi quá nhiều câu hỏi trong thời gian ngắn. Vui lòng đợi 1 phút trước khi hỏi tiếp nhé.");
+const essayRateLimiter = createRateLimiter(60_000, 10, "Yêu cầu chấm tự luận đang gửi quá nhanh. Em vui lòng đợi 1 phút rồi thử lại nhé.");
 
 // Initialize Gemini
 const ai = new GoogleGenAI({
@@ -29,12 +59,17 @@ const ai = new GoogleGenAI({
 });
 
 // AI Instructor assistant endpoint
-app.post("/api/ask", async (req, res) => {
+app.post("/api/ask", askRateLimiter, async (req, res) => {
   try {
     const { message, history } = req.body;
-    
-    if (!message) {
+
+    if (!message || typeof message !== 'string' || !message.trim()) {
       return res.status(400).json({ error: "Em vui lòng nhập câu hỏi." });
+    }
+
+    const cleanMessage = message.trim();
+    if (cleanMessage.length > 2000) {
+      return res.status(400).json({ error: "Câu hỏi vượt quá độ dài cho phép (tối đa 2.000 ký tự). Em vui lòng tóm lược lại nhé." });
     }
     
     // Construct structured context from dialog history to avoid version mismatch issues
@@ -55,12 +90,13 @@ Lịch sử trò chuyện:
 `;
 
     if (history && Array.isArray(history)) {
-      history.forEach((turn: any) => {
-        const roleName = turn.role === "user" ? "Học sinh" : "Trung tá Quyết";
-        promptText += `${roleName}: ${turn.content}\n`;
+      history.slice(-15).forEach((turn: any) => {
+        const roleName = turn?.role === "user" ? "Học sinh" : "Trung tá Quyết";
+        const content = typeof turn?.content === 'string' ? turn.content.slice(0, 1000) : '';
+        if (content) promptText += `${roleName}: ${content}\n`;
       });
     }
-    promptText += `Học sinh: ${message}\nTrung tá Quyết:`;
+    promptText += `Học sinh: ${cleanMessage}\nTrung tá Quyết:`;
 
     const response = await ai.models.generateContent({
       model: "gemini-3.5-flash",
@@ -71,20 +107,25 @@ Lịch sử trò chuyện:
     res.json({ reply });
   } catch (err: any) {
     console.error("Gemini API Error:", err);
-    res.status(500).json({ error: err.message || "Máy chủ trợ giảng tạm thời gián đoạn." });
+    res.status(500).json({ error: "Máy chủ trợ giảng tạm thời gián đoạn. Em vui lòng thử lại sau ít phút nhé." });
   }
 });
 
 // AI Essay Grader endpoint
-app.post("/api/evaluate-essay", async (req, res) => {
+app.post("/api/evaluate-essay", essayRateLimiter, async (req, res) => {
   try {
     const { prompt, userResponse, rubric, suggestedAnswer, maxScore = 3.0 } = req.body;
 
-    if (!userResponse || !userResponse.trim()) {
+    if (!userResponse || typeof userResponse !== 'string' || !userResponse.trim()) {
       return res.json({
         score: 0,
         feedback: "Học sinh chưa hoàn thành phần làm bài tự luận. Em hãy đọc kỹ đề bài và trình bày các ý chính theo kiến thức bài học SGK nhé!",
       });
+    }
+
+    const cleanResponse = userResponse.trim();
+    if (cleanResponse.length > 5000) {
+      return res.status(400).json({ error: "Bài tự luận vượt quá dung lượng tối đa cho phép (5.000 ký tự)." });
     }
 
     if (!process.env.GEMINI_API_KEY) {

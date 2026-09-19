@@ -4,6 +4,9 @@ import { Html, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { AK_TARGETS, TargetId } from '../data/akShootingData';
 import { arcadeFlightSeconds, arcadeTargetX } from './arcadeRangeLogic';
+import { DEFAULT_ADS_ALIGNMENT, MAX_LOOK_PITCH, type AdsVisualAlignment } from './rangeVisualConfig';
+import { getSightPreset, DEFAULT_PRESET_ID } from './rangeSightPresets';
+import { bindRearSight } from './rearSightTransform';
 
 // Coordinates measured from this GLB, after its authored node transforms.
 // Keep the imported scale: one world unit is one metre.
@@ -13,7 +16,9 @@ const ALIGN = new THREE.Quaternion().setFromUnitVectors(FRONT.clone().sub(REAR).
 const MODEL_OFFSET = REAR.clone().applyQuaternion(ALIGN).negate();
 const EYE_HEIGHT = 1.55;
 const EYE_RELIEF = 0.22;
-const ADS_EYE = new THREE.Vector3(0, 0, EYE_RELIEF);
+// Game presentation: keep the target visible above the model, including raised sight states.
+// Independent from the scoring ray and from user-saved alignment offsets.
+const ADS_EYE = new THREE.Vector3(0, .03, .32);
 const FREE_EYE = new THREE.Vector3(-0.18, 0.12, 0.46);
 const LOOK = new THREE.Vector3(0, 0, -10);
 
@@ -28,6 +33,11 @@ interface Props {
   shots: { x: number; y: number; isHit: boolean; shotNumber: number; targetIndex?: number }[];
   fireRef: React.MutableRefObject<(() => RangeImpact | null) | null>;
   arcade?: ArcadeSceneOptions;
+  look?: React.MutableRefObject<{ x: number; y: number; active: boolean }>;
+  alignment?: AdsVisualAlignment;
+  hideReticle?: boolean;
+  sightPresetId?: string;
+  onSightAvailabilityChange?: (available: boolean) => void;
 }
 
 // Visual assistance for a desktop viewport. Width/distance still decreases
@@ -53,7 +63,10 @@ function updateRigAim(rig: THREE.Group, props: Props) {
   const pitch = Math.atan2(layout.centerY - EYE_HEIGHT, distance - EYE_RELIEF);
   const horizontalRange = props.arcade ? layout.width / distance * 3.5 : .09;
   const verticalRange = props.arcade ? Math.max(.06, layout.height / distance) : .06;
-  rig.rotation.set(pitch + (props.aim.y + props.sway.y) * verticalRange - props.recoil.y * .15, -(props.aim.x + props.sway.x) * horizontalRange + props.recoil.x * .15, 0, 'YXZ');
+  const yaw = props.look?.current.active ? props.look.current.x : -props.aim.x * horizontalRange;
+  const elevation = props.look?.current.active ? props.look.current.y : props.aim.y * verticalRange;
+  if (props.look && !props.look.current.active) Object.assign(props.look.current, { x: yaw, y: elevation });
+  rig.rotation.set(THREE.MathUtils.clamp(pitch + elevation + props.sway.y * verticalRange - props.recoil.y * .15, -MAX_LOOK_PITCH, MAX_LOOK_PITCH), yaw - props.sway.x * horizontalRange + props.recoil.x * .15, 0, 'YXZ');
 }
 
 function TargetBoard({ id, active, shots, arcade, lane = 1, time }: { id: TargetId; active: boolean; shots: Props['shots']; arcade?: ArcadeSceneOptions; lane?: number; time?: React.MutableRefObject<number> }) {
@@ -102,7 +115,7 @@ function TargetBoard({ id, active, shots, arcade, lane = 1, time }: { id: Target
 }
 
 function Scene(props: Props) {
-  const { scene } = useGLTF('/models/akm.glb');
+  const { scene } = useGLTF('/models/ak47_adjustable.glb');
   const weapon = useMemo(() => scene.clone(true), [scene]);
   const rig = useRef<THREE.Group>(null!);
   const gunDisplay = useRef<THREE.Group>(null!);
@@ -119,13 +132,21 @@ function Scene(props: Props) {
   const arcadeRef = useRef(props.arcade);
   arcadeRef.current = props.arcade;
   const arcadeFireRef = props.arcade?.fireRef;
+
+  // Cấu hình trạng thái Thước ngắm 3D
+  const preset = getSightPreset(props.sightPresetId || DEFAULT_PRESET_ID);
+  const rearSight = useMemo(() => bindRearSight(weapon), [weapon]);
+  useEffect(() => {
+    props.onSightAvailabilityChange?.(!!rearSight);
+  }, [rearSight, props.onSightAvailabilityChange]);
+  useEffect(() => () => rearSight?.restore(), [rearSight]);
   useEffect(() => {
     if (!arcadeFireRef) return;
     arcadeFireRef.current = (shotAim) => {
       if (pending.current || !arcadeRef.current?.running) return Promise.resolve(null);
       // Pointer movement and click can arrive before the next render frame.
       // Capture the click's aim now instead of firing along the previous frame.
-      if (shotAim) updateRigAim(rig.current, { ...latestProps.current, aim: shotAim });
+      updateRigAim(rig.current, shotAim ? { ...latestProps.current, aim: shotAim } : latestProps.current);
       rig.current.updateWorldMatrix(true, false);
       const start = new THREE.Vector3(0, 0, -.55).applyMatrix4(rig.current.matrixWorld);
       const eyeOrigin = new THREE.Vector3(0, 0, EYE_RELIEF).applyMatrix4(rig.current.matrixWorld);
@@ -142,6 +163,7 @@ function Scene(props: Props) {
   useEffect(() => {
     props.fireRef.current = () => {
       if (!rig.current) return null;
+      updateRigAim(rig.current, latestProps.current);
       rig.current.updateWorldMatrix(true, false);
       vectors.origin.set(0, 0, EYE_RELIEF).applyMatrix4(rig.current.matrixWorld);
       vectors.direction.set(0, 0, -1).transformDirection(rig.current.matrixWorld);
@@ -187,18 +209,51 @@ function Scene(props: Props) {
       }
     }
     const blend = 1 - Math.exp(-14 * Math.min(delta, .05));
-    gunDisplay.current.position.y = THREE.MathUtils.lerp(gunDisplay.current.position.y, props.arcade?.reloading ? -.35 : 0, blend);
-    gunDisplay.current.position.z = THREE.MathUtils.lerp(gunDisplay.current.position.z, pending.current ? .045 : 0, blend);
-    eye.current.lerp(props.ads ? ADS_EYE : FREE_EYE, blend);
+    const a = props.alignment || DEFAULT_ADS_ALIGNMENT;
+    gunDisplay.current.position.x = THREE.MathUtils.lerp(gunDisplay.current.position.x, props.ads ? a.weaponOffsetX : 0, blend);
+    gunDisplay.current.position.y = THREE.MathUtils.lerp(gunDisplay.current.position.y, (props.arcade?.reloading ? -.35 : 0) + (props.ads ? a.weaponOffsetY : 0), blend);
+    gunDisplay.current.position.z = THREE.MathUtils.lerp(gunDisplay.current.position.z, (pending.current ? .045 : 0) + (props.ads ? a.weaponOffsetZ : 0), blend);
+
+    // Áp dụng góc xoay mô hình súng khi ADS (Pitch, Yaw, Roll)
+    gunDisplay.current.rotation.x = THREE.MathUtils.lerp(gunDisplay.current.rotation.x, props.ads ? (a.weaponPitch || 0) : 0, blend);
+    gunDisplay.current.rotation.y = THREE.MathUtils.lerp(gunDisplay.current.rotation.y, props.ads ? (a.weaponYaw || 0) : 0, blend);
+    gunDisplay.current.rotation.z = THREE.MathUtils.lerp(gunDisplay.current.rotation.z, props.ads ? (a.weaponRoll || 0) : 0, blend);
+
+    vectors.eye.copy(props.ads ? ADS_EYE : FREE_EYE);
+    if (props.ads) {
+      vectors.eye.x += a.cameraOffsetX;
+      vectors.eye.y += a.cameraOffsetY;
+      vectors.eye.z += a.cameraOffsetZ;
+    }
+    eye.current.lerp(vectors.eye, blend);
     updateRigAim(rig.current, props);
     rig.current.updateWorldMatrix(true, false);
     vectors.eye.copy(eye.current).applyMatrix4(rig.current.matrixWorld);
-    vectors.look.copy(LOOK).applyMatrix4(rig.current.matrixWorld);
+
+    // Áp dụng góc nhìn camera khi ADS (Camera Pitch & Yaw)
+    const adsLook = LOOK.clone();
+    if (props.ads) {
+      adsLook.x += (a.cameraYaw || 0) * 10;
+      adsLook.y += (a.cameraPitch || 0) * 10;
+    }
+    vectors.look.copy(adsLook).applyMatrix4(rig.current.matrixWorld);
+
     camera.position.copy(vectors.eye);
     camera.lookAt(vectors.look);
+
+    // Áp dụng góc nghiêng camera (Camera Roll)
+    if (props.ads && a.cameraRoll) {
+      const upDir = new THREE.Vector3(Math.sin(a.cameraRoll), Math.cos(a.cameraRoll), 0).applyQuaternion(rig.current.quaternion);
+      camera.up.copy(upDir);
+    } else {
+      camera.up.set(0, 1, 0).applyQuaternion(rig.current.quaternion);
+    }
+
     const perspective = camera as THREE.PerspectiveCamera;
     perspective.fov = THREE.MathUtils.lerp(perspective.fov, props.ads ? 42 : 60, blend);
     perspective.updateProjectionMatrix();
+
+    rearSight?.update(preset, delta);
   });
   return <>
     <color attach="background" args={['#b8dded']} />
@@ -207,8 +262,11 @@ function Scene(props: Props) {
     <directionalLight position={[-15, 35, 12]} intensity={2.2} />
     {props.arcade && <mesh ref={orb} visible={false}><boxGeometry args={[1, 1, 1]} /><meshBasicMaterial color="#ffe3a0" transparent opacity={.85} toneMapped={false} /></mesh>}
     <group ref={rig} position={[0, EYE_HEIGHT, 0]}>
-      <group ref={gunDisplay}><group quaternion={ALIGN} position={MODEL_OFFSET}><primitive object={weapon} /></group></group>
-      {!props.ads && <Html center zIndexRange={[6, 0]} position={[0, 0, EYE_RELIEF - target.standardDistance]} style={{ pointerEvents: 'none', color: 'white', textShadow: '0 1px 2px black' }}>+</Html>}
+      <group ref={gunDisplay}>
+        <group quaternion={ALIGN} position={MODEL_OFFSET}>
+          <primitive object={weapon} />
+        </group>
+      </group>
     </group>
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -.02, -115]}><planeGeometry args={[500, 500]} /><meshStandardMaterial color="#77905a" roughness={1} /></mesh>
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, -110]}><planeGeometry args={[7, 230]} /><meshStandardMaterial color="#baa47b" roughness={1} /></mesh>
@@ -232,7 +290,7 @@ function Scene(props: Props) {
 class SceneBoundary extends React.Component<{ children: React.ReactNode }, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
-  render() { return this.state.failed ? <div className="absolute inset-0 grid place-items-center bg-slate-900 text-white p-8 text-center">Không tải được cảnh 3D. Hãy tải lại trang và kiểm tra WebGL / tệp akm.glb.</div> : this.props.children; }
+  render() { return this.state.failed ? <div className="absolute inset-0 grid place-items-center bg-slate-900 text-white p-8 text-center">Không tải được cảnh 3D. Hãy tải lại trang và kiểm tra WebGL / tệp ak47_adjustable.glb.</div> : this.props.children; }
 }
 
 export default function ShootingRange3D(props: Props) {

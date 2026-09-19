@@ -96,17 +96,18 @@ export function createAuth(directory: string) {
     }
     next();
   };
-  router.post('/change-password', optionalUser, async (req, res) => {
-    const pin = req.headers['x-admin-pin'] || req.body?.pin;
-    const isPinAdmin = pin === '123456' || pin === 'admin123';
+  router.post('/change-password', requireUser, async (req, res) => {
     const user = res.locals.user;
-
-    const targetUsername = (typeof req.body?.targetUsername === 'string' ? req.body.targetUsername.trim().toLowerCase() : '') || user?.username || 'admin';
+    const targetUsername = (typeof req.body?.targetUsername === 'string' ? req.body.targetUsername.trim().toLowerCase() : '') || user.username;
     const oldPassword = typeof req.body?.oldPassword === 'string' ? req.body.oldPassword : '';
     const newPassword = typeof req.body?.newPassword === 'string' ? req.body.newPassword : '';
 
-    if (!newPassword || newPassword.length < 6 || newPassword.length > 128) {
-      return res.status(400).json({ error: 'Mật khẩu mới phải có ít nhất 6 ký tự.' });
+    if (user.role !== 'admin' && targetUsername !== user.username) {
+      return res.status(403).json({ error: 'Bạn chỉ có quyền đổi mật khẩu của chính mình.' });
+    }
+
+    if (!newPassword || newPassword.length < 8 || newPassword.length > 128) {
+      return res.status(400).json({ error: 'Mật khẩu mới phải có từ 8 đến 128 ký tự.' });
     }
 
     try {
@@ -117,17 +118,14 @@ export function createAuth(directory: string) {
       }
       const account = accounts[accountIndex];
 
-      if (!isPinAdmin) {
-        if (!oldPassword && !user) {
-          return res.status(401).json({ error: 'Vui lòng nhập mật khẩu hiện tại hoặc mã PIN quản trị (123456).' });
+      // Khi người dùng đổi mật khẩu của chính mình (hoặc admin tự đổi), bắt buộc phải có mật khẩu cũ
+      if (targetUsername === user.username || !oldPassword) {
+        if (!oldPassword) {
+          return res.status(400).json({ error: 'Vui lòng nhập mật khẩu hiện tại.' });
         }
-        if (oldPassword) {
-          const hash = scryptSync(oldPassword, account.salt, 64);
-          if (!timingSafeEqual(hash, Buffer.from(account.hash, 'hex'))) {
-            return res.status(401).json({ error: 'Mật khẩu hiện tại không đúng.' });
-          }
-        } else if (!user || (user.role !== 'admin' && user.username !== targetUsername)) {
-          return res.status(403).json({ error: 'Không có quyền đổi mật khẩu tài khoản này.' });
+        const hash = scryptSync(oldPassword, account.salt, 64);
+        if (!timingSafeEqual(hash, Buffer.from(account.hash, 'hex'))) {
+          return res.status(401).json({ error: 'Mật khẩu hiện tại không đúng.' });
         }
       }
 

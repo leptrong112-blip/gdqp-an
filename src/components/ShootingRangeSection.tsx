@@ -33,7 +33,10 @@ import {
 import { useGamification } from "../context/GamificationContext";
 
 import ShootingRange3D, { RangeImpact } from "./ShootingRange3D";
+import { useRangeControls } from './useRangeControls';
+import RangeViewControls from './RangeViewControls';
 import ArcadeRangeSection from './ArcadeRangeSection';
+import { loadSightPreset } from "./rangeSightPresets";
 
 interface ShotRecord {
   shotNumber: number;
@@ -55,6 +58,8 @@ export default function ShootingRangeSection() {
 
   // State chọn bài bắn & bia
   const [selectedExerciseId, setSelectedExerciseId] = useState<ExerciseId>("tap_dong_tien");
+  const [sightPresetId, setSightPresetId] = useState<string>(loadSightPreset);
+  const [hasSeparateSight, setHasSeparateSight] = useState(false);
   const selectedExercise = AK_EXERCISES.find((e) => e.id === selectedExerciseId) || AK_EXERCISES[0];
 
   // Map exercise sang target tương ứng
@@ -109,6 +114,21 @@ export default function ShootingRangeSection() {
   // Tham chiếu khung nhìn thao trường để tính pixel thực tế
   const rangeRef = useRef<HTMLDivElement>(null);
   const lastValidAimRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const fireInputRef = useRef<() => void>(() => {});
+  const [controlRound, setControlRound] = useState(0);
+  const controls = useRangeControls(rangeRef, {
+    active: activeTab === 'simulator' && hasStarted && !isCompleted,
+    round: `${selectedExerciseId}:${controlRound}:${activeTab}`,
+    fire: () => fireInputRef.current(), ads: setAdsHeld,
+    toggleAds: () => setIsAimingDownSights(value => !value),
+    release: () => { setAdsHeld(false); setIsHoldingBreath(false); },
+  });
+  const shotLock = useRef(false);
+  const shotTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const clearShotTimers = useCallback(() => {
+    shotTimers.current.forEach(clearTimeout); shotTimers.current = []; shotLock.current = false;
+  }, []);
+  useEffect(() => { clearShotTimers(); setIsShooting(false); return clearShotTimers; }, [activeTab, selectedExerciseId, controlRound, clearShotTimers]);
 
   // Âm thanh Web Audio API Synthesizer (AK Gunshot + Casing Ping)
   const playGunshotSound = useCallback(() => {
@@ -255,11 +275,12 @@ export default function ShootingRangeSection() {
   // Bắn theo đường ngắm trong cảnh 3D.
   const handleFire = useCallback(
     () => {
-      if (!hasStarted || isShooting || isCompleted) return;
+      if (!hasStarted || isShooting || isCompleted || controls.panel || shotLock.current) return;
       if (shots.length >= selectedExercise.ammoCount) return;
 
       const impact = fire3DRef.current?.();
       if (!impact) return;
+      shotLock.current = true;
       setIsShooting(true);
       playGunshotSound();
 
@@ -309,23 +330,25 @@ export default function ShootingRangeSection() {
       setLastShotReport(reportText);
 
       // Hồi phục sau giật (recoil settle)
-      setTimeout(() => {
+      shotTimers.current.push(setTimeout(() => {
         setRecoilOffset({ x: 0, y: 0 });
         setIsShooting(false);
-      }, 280);
+        shotLock.current = false;
+      }, 280));
 
       // Kiểm tra hoàn thành bài bắn
       if (nextShots.length >= selectedExercise.ammoCount) {
-        setTimeout(() => {
+        shotTimers.current.push(setTimeout(() => {
           setIsCompleted(true);
           const total = nextShots.reduce((acc, s) => acc + s.score, 0);
           fireXPToast(total * 4, `Hoàn thành ${selectedExercise.title}`);
           recordSkillCompletion("ak_shooting");
-        }, 900);
+        }, 900));
       }
     },
     [
       hasStarted,
+      controls.panel,
       isShooting,
       isCompleted,
       shots,
@@ -342,9 +365,12 @@ export default function ShootingRangeSection() {
       recordSkillCompletion,
     ]
   );
+  fireInputRef.current = handleFire;
 
   // Reset bài bắn
   const handleResetShots = useCallback(() => {
+    clearShotTimers();
+    setControlRound(r => r + 1);
     releaseTouchControls();
     setIsHoldingBreath(false);
     setShots([]);
@@ -357,6 +383,7 @@ export default function ShootingRangeSection() {
 
   // Thay đổi bài bắn (chuyển sang bài mới sẽ hiện màn hình Bắt đầu)
   const handleChangeExercise = (exId: ExerciseId) => {
+    clearShotTimers();
     releaseTouchControls();
     setIsHoldingBreath(false);
     setSelectedExerciseId(exId);
@@ -407,48 +434,6 @@ export default function ShootingRangeSection() {
     setIsHoldingBreath(false);
   }, [activeTab, hasStarted, isCompleted, releaseTouchControls]);
 
-  // Xử lý di chuột trên thao trường ngắm
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!hasStarted || isShooting || isCompleted) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const nx = ((e.clientX - rect.left) / rect.width - 0.5) * 2; // -1 .. 1
-    const ny = -(((e.clientY - rect.top) / rect.height - 0.5) * 2.2); // căn giữa tâm bia
-    const clampedX = Math.max(-1.1, Math.min(1.1, nx));
-    const clampedY = Math.max(-1.1, Math.min(1.1, ny));
-    setAimPos({ x: clampedX, y: clampedY });
-    lastValidAimRef.current = { x: clampedX, y: clampedY };
-  };
-
-  // Xử lý nhấp chuột trên khung ngắm: Giữ chuột phải để ADS, chuột trái bóp cò bắn ngay cả khi giữ chuột phải
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!hasStarted || isShooting || isCompleted) return;
-    e.preventDefault();
-
-    // Chuột phải (button === 2) -> Giữ để ADS
-    if (e.button === 2) {
-      setAdsHeld(true);
-      return;
-    }
-
-    // Chuột giữa (button === 1) -> Đổi chế độ ngắm (ADS / Bắn từ hông)
-    if (e.button === 1) {
-      setIsAimingDownSights((prev) => !prev);
-      return;
-    }
-
-    // Chuột trái (button === 0 HOẶC có cờ bitmask buttons & 1, kể cả khi buttons = 3 tức đang giữ chuột phải)
-    if (e.button === 0 || (e.buttons & 1)) {
-      handleFire();
-    }
-  };
-
-  // Xử lý nhả chuột (nhả chuột phải -> thoát ADS tạm thời)
-  const handleMouseUp = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.button === 2 || !(e.buttons & 2)) {
-      setAdsHeld(false);
-    }
-  };
-
   // Lắng nghe sự kiện nhả chuột toàn cục để đảm bảo không bị kẹt trạng thái nín thở
   useEffect(() => {
     const handleGlobalMouseUp = (e: MouseEvent) => {
@@ -473,7 +458,8 @@ export default function ShootingRangeSection() {
   // Phím tắt bàn phím: Space / Enter để Bắt đầu hoặc Bắn, Q để đổi Ngắm bắn, Shift để Nín thở, R để Bắn lại
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (activeTab !== "simulator" || e.repeat) return;
+      if (activeTab !== "simulator" || e.repeat || controls.panel) return;
+      if (e.target instanceof HTMLElement && e.target.closest('button, input, select, textarea, [contenteditable="true"]')) return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
       if (!hasStarted) {
@@ -502,7 +488,7 @@ export default function ShootingRangeSection() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeTab, hasStarted, playCockSound, handleFire, handleResetShots]);
+  }, [activeTab, hasStarted, playCockSound, handleFire, handleResetShots, controls.panel]);
 
   // Tổng điểm và xếp loại
   const totalScore = shots.reduce((acc, s) => acc + s.score, 0);
@@ -628,21 +614,44 @@ export default function ShootingRangeSection() {
             {/* ══════════ KHUNG NHÌN SÚNG & THAO TRƯỜNG (VIEWPORT CHÍNH) ══════════ */}
             <div
               ref={rangeRef}
-              onPointerDown={(e) => { if (e.pointerType === 'mouse') handleMouseDown(e); else handleTouchAimDown(e); }}
-              onPointerMove={(e) => { if (e.pointerType === 'mouse') handleMouseMove(e); else handleTouchAimMove(e); }}
-              onPointerUp={(e) => { if (e.pointerType === 'mouse') handleMouseUp(e); else releaseTouchAim(e); }}
+              tabIndex={0}
+              data-range-gameplay
+              data-pointer-locked={controls.locked}
+              onPointerDown={(e) => { if (e.pointerType !== 'mouse' && !controls.panel) handleTouchAimDown(e); }}
+              onPointerMove={(e) => { if (e.pointerType !== 'mouse' && !controls.panel) handleTouchAimMove(e); }}
+              onPointerUp={releaseTouchAim}
               onPointerCancel={releaseTouchAim}
               onLostPointerCapture={releaseTouchAim}
-              onPointerLeave={(e) => { if (e.pointerType === 'mouse') { setAdsHeld(false); setIsHoldingBreath(false); } }}
+              onPointerLeave={(e) => { if (e.pointerType === 'mouse' && !controls.locked) { setAdsHeld(false); setIsHoldingBreath(false); } }}
               onContextMenu={(e) => e.preventDefault()}
-              className="relative w-full h-[520px] sm:h-[600px] lg:h-[660px] rounded-3xl overflow-hidden border-2 border-slate-300 dark:border-slate-700 shadow-2xl select-none cursor-crosshair group touch-none bg-gradient-to-b from-sky-400 via-sky-200 to-emerald-800"
+              className={`relative w-full h-[520px] sm:h-[600px] lg:h-[660px] rounded-3xl overflow-hidden border-2 border-slate-300 dark:border-slate-700 shadow-2xl select-none ${controls.locked ? 'cursor-none' : 'cursor-crosshair'} group touch-none bg-gradient-to-b from-sky-400 via-sky-200 to-emerald-800`}
             >
-              <ShootingRange3D ads={isAimingDownSights || adsHeld || touchAdsHeld} aim={aimPos} sway={swayOffset}
-                recoil={recoilOffset} targetId={currentTarget.id} shots={shots} fireRef={fire3DRef} />
+              <RangeViewControls
+                controls={controls}
+                isAds={controls.panel ? controls.previewAds : (isAimingDownSights || adsHeld || touchAdsHeld)}
+                breath
+                sightPresetId={sightPresetId}
+                onSightPresetChange={setSightPresetId}
+                hasSeparateSight={hasSeparateSight}
+              />
+              <ShootingRange3D
+                ads={controls.panel ? controls.previewAds : (isAimingDownSights || adsHeld || touchAdsHeld)}
+                aim={aimPos}
+                sway={controls.panel ? { x: 0, y: 0 } : swayOffset}
+                look={controls.look}
+                alignment={controls.alignment}
+                sightPresetId={sightPresetId}
+                onSightAvailabilityChange={setHasSeparateSight}
+                hideReticle={true}
+                recoil={recoilOffset}
+                targetId={currentTarget.id}
+                shots={shots}
+                fireRef={fire3DRef}
+              />
 
               {/* ══════════ HUD GÓC TRÊN TRÁI: CỰ LY & CHẾ ĐỘ NGẮM (LUÔN RÕ RÀNG, KHÔNG BỊ SÚNG CHE) ══════════ */}
               <div data-range-controls onPointerDown={(e) => e.stopPropagation()} onPointerMove={(e) => e.stopPropagation()}
-                className="absolute top-3 left-3 sm:top-4 sm:left-4 z-20 flex flex-col gap-1.5 pointer-events-auto">
+                className="absolute top-14 left-3 sm:left-4 z-20 flex flex-col gap-1.5 pointer-events-auto">
                 <div className="flex flex-wrap items-center gap-2 max-w-[calc(100vw-6rem)]">
                   {/* Nút đổi nhanh Ngắm Bắn / Bắn từ hông */}
                   <button
@@ -692,7 +701,7 @@ export default function ShootingRangeSection() {
               </div>
 
               {/* ══════════ HUD GÓC TRÊN PHẢI: SỐ ĐẠN & BÁO BIA ══════════ */}
-              <div className="absolute top-28 right-3 sm:top-24 sm:right-4 lg:top-4 z-20 flex flex-col items-end gap-2 pointer-events-none max-w-[85%]">
+              <div className="absolute top-40 right-3 sm:top-32 sm:right-4 lg:top-24 z-20 flex flex-col items-end gap-2 pointer-events-none max-w-[85%]">
                 <div className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/20 text-white text-xs font-mono font-bold flex items-center gap-2 shadow-md">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                   <span>ĐẠN: {shots.length} / {selectedExercise.ammoCount} VIÊN</span>

@@ -4,12 +4,13 @@ import {
   LockKeyhole, Sparkles, TrendingUp, ShieldCheck, Award, Users, CheckCircle2, 
   Compass, Brain, Printer, RefreshCw, Layers, ArrowUpRight, Flame, Target, BookOpen,
   Eye, HeartHandshake, BookMarked, ThumbsUp, GitCompare, GraduationCap, School,
-  Activity, Check, HelpCircle
+  Activity, Check, HelpCircle, FileSpreadsheet
 } from 'lucide-react';
 import AccountManagement from './AccountManagement';
 import { useAccount } from './AccountGate';
 import { surveyQuestions, roleLabel, phaseLabel, pairedResponses, type SurveyResponse, type SurveyRole, type SurveyPhase } from '../data/survey';
 import { surveyApi, surveyButton, surveyInput, surveyPanel } from './SurveySection';
+import { exportSurveyReportToExcel } from '../utils/excelExport';
 
 const average = (values: number[]) => values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
 const display = (value: number | null) => value === null ? 'Chưa có dữ liệu' : `${value.toFixed(2)}/5`;
@@ -694,6 +695,15 @@ export default function SurveyAdminSection({ onBack }: { onBack?: () => void }) 
           <button className={`${surveyButton} flex items-center gap-1.5 cursor-pointer`} disabled={busy} onClick={refresh}>
             <RefreshCw className={`w-4 h-4 ${busy ? 'animate-spin' : ''}`} />
             Làm mới
+          </button>
+
+          <button
+            onClick={() => exportSurveyReportToExcel(rows, { role, mode, grade: selectedGradeFilter })}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs shadow-md shadow-emerald-600/20 cursor-pointer transition-all"
+            title="Xuất toàn bộ báo cáo phân tích và dữ liệu chi tiết ra file Excel chuẩn (.xlsx)"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-emerald-100" />
+            Xuất Báo Cáo Excel (.xlsx)
           </button>
         </div>
       </div>
@@ -1407,10 +1417,19 @@ export default function SurveyAdminSection({ onBack }: { onBack?: () => void }) 
           </select>
         </label>
         <button
-          className="flex items-center gap-2 border rounded-xl px-4 py-3 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-800 print:hidden cursor-pointer"
-          onClick={() => downloadCsv(group, `bao-cao-khao-sat-${role}`)}
+          className="flex items-center gap-2 border border-emerald-600/30 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 rounded-xl px-4 py-3 text-sm font-bold hover:bg-emerald-100 dark:hover:bg-emerald-900/60 print:hidden cursor-pointer shadow-xs transition-all active:scale-95"
+          onClick={() => exportSurveyReportToExcel(rows, { role, mode, grade: selectedGradeFilter })}
+          title="Xuất toàn bộ báo cáo tổng hợp và chi tiết ra file Excel (.xlsx)"
         >
-          <Download size={17} className="text-red-600" /> Xuất Excel/CSV · {roleLabel[role]}
+          <FileSpreadsheet size={18} className="text-emerald-600 dark:text-emerald-400" />
+          Xuất Báo Cáo Excel (.xlsx) · {roleLabel[role]}
+        </button>
+        <button
+          className="flex items-center gap-1.5 border rounded-xl px-3.5 py-3 text-xs font-semibold text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 print:hidden cursor-pointer"
+          onClick={() => downloadCsv(group, `bao-cao-khao-sat-${role}`)}
+          title="Tải tệp định dạng CSV"
+        >
+          <Download size={15} /> CSV
         </button>
         <button
           className="flex items-center gap-2 border rounded-xl px-4 py-3 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 print:hidden cursor-pointer"
