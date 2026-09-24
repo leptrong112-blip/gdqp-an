@@ -14,6 +14,8 @@ import WasmCompatibilityNotice from '../../components/WasmCompatibilityNotice';
 export default function PoseAnalysisPage() {
   const session = usePoseSession();
   const currentExercise = EXERCISE_CATALOG.find(e => e.id === session.movementId) || EXERCISE_CATALOG[0];
+  const activeMovementId = session.snapshot?.drillProgress?.movementId ?? session.movementId;
+  const activeExercise = EXERCISE_CATALOG.find(e => e.id === activeMovementId) ?? currentExercise;
   const studioContainerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showDashboardInFullscreen, setShowDashboardInFullscreen] = useState(true);
@@ -183,7 +185,7 @@ export default function PoseAnalysisPage() {
               {currentExercise.name}
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-3xl">
-              Quy trình 2 bước: <strong>Bước 1</strong> kiểm tra camera &amp; vị trí toàn thân <span className="mx-1 text-red-600 dark:text-red-400 font-black">→</span> <strong>Bước 2</strong> làm theo 4 động tác điều lệnh {currentExercise.name.toLowerCase()} để hiệu chuẩn và chấm điểm.
+              Quy trình 2 bước: <strong>Bước 1</strong> kiểm tra camera &amp; vị trí toàn thân <span className="mx-1 text-red-600 dark:text-red-400 font-black">→</span> <strong>Bước 2</strong> làm theo hướng dẫn, chờ đếm ngược rồi giữ mỗi tư thế ổn định để chấm điểm.
             </p>
           </div>
 
@@ -217,6 +219,10 @@ export default function PoseAnalysisPage() {
             isFullscreen={isFullscreen}
             onToggleFullscreen={toggleFullscreen}
             autoCountdown={autoCountdown}
+            movementLabel={activeExercise.name}
+            qualityPassed={ready}
+            pauseReason={session.snapshot?.quality.reasons[0] ?? session.snapshot?.message}
+            drillProgress={session.snapshot?.drillProgress}
           />
 
           {session.sequenceEngine === 'javascript' && <WasmCompatibilityNotice feature="pose-sequence" />}
@@ -311,7 +317,7 @@ export default function PoseAnalysisPage() {
               onRetry={handleRetry}
               scoreComparison={session.scoreComparison}
               isFullscreen={isFullscreen}
-              movementId={session.movementId}
+              movementId={activeMovementId}
               activeStep={activeStep}
               onStepChange={setActiveStep}
               autoCalibrate={autoCalibrate}

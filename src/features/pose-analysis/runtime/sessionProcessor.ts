@@ -14,7 +14,9 @@ import { saluteMovement } from '../scoring/saluteMovement';
 import { distance } from '../pipeline/geometry';
 import { TemporalMotionBuffer } from '../pipeline/motionBuffer';
 import { DynamicTurnTracker } from '../scoring/dynamicMovementAnalyzer';
-import type { MovementDefinition } from '../scoring/scoringTypes';
+import type { MovementDefinition, DrillStepResult, ScoreResult } from '../scoring/scoringTypes';
+import { BASIC_DRILL, DRILL_IDS, summarizeDrill } from '../scoring/basicDrill';
+import { stableStaticHold } from '../pipeline/staticHold';
 import type { SessionCommand, WorkerEvent } from './workerProtocol';
 import { javascriptSequenceEngine, type SequenceEngine } from '../scoring/sequenceEngine';
 
@@ -34,14 +36,48 @@ export class SessionProcessor {
   private lastTime = -1;
   private lastGood = false;
   private failureSince: number | null = null;
+  private drill = false;
+  private drillIndex = 0;
+  private drillSteps: DrillStepResult[] = [];
+
+  private finish(result: ScoreResult, events: WorkerEvent[]) {
+    if (this.drill) {
+      this.drillSteps.push({ movementId: DRILL_IDS[this.drillIndex], result });
+      if (result.status === 'scored' && this.drillIndex < BASIC_DRILL.length - 1) {
+        this.drillIndex++;
+        this.movement = BASIC_DRILL[this.drillIndex];
+        this.stage = 'countdown'; this.elapsed = 0; this.samples = [];
+        this.lastGood = false; this.failureSince = null;
+        this.quality.reset(); this.smoother.reset(); this.outliers.reset();
+        return;
+      }
+      const drill = summarizeDrill(this.drillSteps);
+      result = result.status === 'scored'
+        ? { status: 'scored', total: Math.round(drill.totalPoints / 3), confidence: Math.min(...this.drillSteps.map(s => s.result.status === 'scored' ? s.result.confidence : 0)),
+            criteria: [], corrections: drill.passed ? [] : ['Xem nhận xét từng động tác và luyện lại bước chưa đạt.'], passed: drill.passed, drill }
+        : { ...result, drill };
+    }
+    events.push({ type: 'score', result });
+    this.stage = result.status === 'scored' ? 'completed' : 'blocked';
+    this.samples = [];
+  }
 
   command(command: SessionCommand) {
+    if (command.startsWith('select')) {
+      const definitions: Partial<Record<SessionCommand, MovementDefinition>> = {
+        selectAttention: attentionMovement, selectAtEase: atEaseMovement, selectTurnLeft: turnLeftMovement,
+        selectTurnRight: turnRightMovement, selectSalute: saluteMovement, selectBasicDrill: attentionMovement,
+      };
+      this.drill = command === 'selectBasicDrill'; this.drillIndex = 0; this.drillSteps = [];
+      this.command('reset');
+      this.movement = definitions[command] ?? attentionMovement;
+      return;
+    }
+    if (command === 'reset' || command === 'startCalibration' || command === 'startAttempt') {
+      this.drillSteps = []; this.drillIndex = 0;
+      if (this.drill) this.movement = attentionMovement;
+    }
     if (command === 'reset' || command === 'startCalibration') this.outliers.reset();
-    if (command === 'selectAttention') { this.movement = attentionMovement; this.motionBuffer.clear(); this.dynamicTracker.reset(); return; }
-    if (command === 'selectAtEase') { this.movement = atEaseMovement; this.motionBuffer.clear(); this.dynamicTracker.reset(); return; }
-    if (command === 'selectTurnLeft') { this.movement = turnLeftMovement; this.motionBuffer.clear(); this.dynamicTracker.reset(); return; }
-    if (command === 'selectTurnRight') { this.movement = turnRightMovement; this.motionBuffer.clear(); this.dynamicTracker.reset(); return; }
-    if (command === 'selectSalute') { this.movement = saluteMovement; this.motionBuffer.clear(); this.dynamicTracker.reset(); return; }
     if (command === 'reset') { this.quality.reset(); this.smoother.reset(); this.profile = undefined; this.stage = 'quality-check'; }
     if (command === 'startCalibration') { this.profile = undefined; this.smoother.reset(); this.stage = 'calibrating'; }
     if (command === 'startAttempt' && this.profile) this.stage = 'countdown';
@@ -53,12 +89,15 @@ export class SessionProcessor {
     const delta = this.lastTime < 0 ? 0 : raw.timestampMs - this.lastTime;
     this.lastTime = raw.timestampMs;
     const events: WorkerEvent[] = [];
+    const initialStage = this.stage;
+    let message: string | undefined;
     const { frame: filtered, rejected } = this.outliers.apply(filterLandmarks(raw));
     this.smoother.discard(rejected);
     const allowTurn = this.stage === 'scoring' && this.movement.type === 'DYNAMIC';
     // Evaluate current raw evidence, never carried-forward smoothed points.
     const quality = this.quality.check(filtered, lighting, this.profile, {
       allowTurn, assessKnees: this.movement.id === 'atEase' && this.stage === 'scoring',
+      relaxedPosture: !!this.movement.robustPosture && (this.stage === 'countdown' || this.stage === 'scoring'),
     });
     const continuous = delta <= C.maximumFrameGapMs;
     if (!continuous) { quality.passed = false; quality.reasons = ['Camera quá chậm hoặc bị gián đoạn. Vui lòng thử lại.']; }
@@ -74,9 +113,16 @@ export class SessionProcessor {
       if (rawGood) this.failureSince = null;
       else this.failureSince ??= raw.timestampMs;
       if (this.stage === 'calibrating') { this.elapsed = 0; this.calibration = []; }
+      if (this.stage === 'countdown' || (this.stage === 'scoring' && this.movement.type !== 'DYNAMIC')) {
+        this.elapsed = 0; this.samples = [];
+        message = 'Tạm dừng: giữ lại tư thế ổn định. Thời gian giữ sẽ tính lại từ đầu.';
+      }
+      // Repositioning during preparation is expected; missing/cropped joints are not.
+      const onlyRepositioning = this.stage === 'countdown' && quality.checks.filter(c => !c.passed).every(c => c.id === 'stability' || c.id === 'orientation');
+      if (onlyRepositioning) this.failureSince = null;
       if ((this.failureSince !== null && raw.timestampMs - this.failureSince > C.maximumQualityGapMs) || !continuous) {
         this.stage = 'blocked'; this.profile = undefined; this.samples = []; this.calibration = []; this.motionBuffer.clear();
-        events.push({ type: 'score', result: { status: 'notScorable', reasons: quality.reasons.length ? quality.reasons : ['Không đủ dữ liệu để theo dõi chuyển động ổn định. Vui lòng đảm bảo toàn thân nằm trong khung hình.'] } });
+        this.finish({ status: 'notScorable', reasons: quality.reasons.length ? quality.reasons : ['Không đủ dữ liệu để theo dõi chuyển động ổn định. Vui lòng đảm bảo toàn thân nằm trong khung hình.'] }, events);
       }
     } else if (good) this.failureSince = null;
 
@@ -86,7 +132,7 @@ export class SessionProcessor {
         this.profile = createCalibration(this.calibration) ?? undefined;
         this.calibration = []; this.elapsed = 0;
         if (this.profile) { events.push({ type: 'calibrationComplete', profile: this.profile }); this.stage = 'countdown'; }
-        else { this.stage = 'blocked'; events.push({ type: 'score', result: { status: 'notScorable', reasons: ['Chưa hiệu chuẩn được tỷ lệ cơ thể. Giữ toàn thân rõ ràng rồi thử lại.'] } }); }
+        else { this.finish({ status: 'notScorable', reasons: ['Chưa hiệu chuẩn được tỷ lệ cơ thể. Giữ toàn thân rõ ràng rồi thử lại.'] }, events); }
       }
     } else if (this.stage === 'countdown' && good) {
       this.elapsed += duration;
@@ -103,7 +149,8 @@ export class SessionProcessor {
     let dynamicRatio = 0;
 
     if (this.stage === 'scoring' && good && this.profile) {
-      this.elapsed += duration;
+      // The interval ending at countdown completion belongs to preparation, not scoring.
+      this.elapsed += initialStage === 'scoring' ? duration : 0;
       // Short visual holds must never supply missing/rejected joints to scoring.
       const observed = { ...smoothed, landmarks: Object.fromEntries(
         Object.keys(filtered.landmarks).map(name => [name, smoothed.landmarks[name as keyof typeof smoothed.landmarks]]),
@@ -112,6 +159,10 @@ export class SessionProcessor {
       if (normalized) {
         const sample = extractFeatures(normalized);
         this.samples.push(sample);
+        if (this.movement.type !== 'DYNAMIC' && !stableStaticHold(this.samples)) {
+          this.samples = []; this.elapsed = 0;
+          message = 'Tư thế còn thay đổi. Giữ yên khoảng 3 giây để chốt kết quả.';
+        }
         if (this.movement.type === 'DYNAMIC') {
           // Smoothing is visual assistance, not evidence that intermediate poses occurred.
           const measured = normalizePose(filtered, this.profile);
@@ -147,16 +198,12 @@ export class SessionProcessor {
         dynamicRatio = update.progressRatio;
         if (update.isComplete) {
           const result = evaluate(this.movement, { samples: this.samples, validDurationMs: this.elapsed, qualityPassed: good }, this.motionBuffer, this.sequenceEngine);
-          events.push({ type: 'score', result });
-          this.stage = result.status === 'scored' ? 'completed' : 'blocked';
-          this.samples = [];
+          this.finish(result, events);
         }
       } else {
         if (this.elapsed >= C.attemptMs) {
           const result = evaluate(this.movement, { samples: this.samples, validDurationMs: this.elapsed, qualityPassed: good });
-          events.push({ type: 'score', result });
-          this.stage = result.status === 'scored' ? 'completed' : 'blocked';
-          this.samples = [];
+          this.finish(result, events);
         }
       }
     }
@@ -177,6 +224,8 @@ export class SessionProcessor {
         inferenceMs,
         inferenceFps: delta > 0 ? 1000 / delta : 0,
         dynamicProgress,
+        message,
+        drillProgress: this.drill ? { index: this.drillIndex, completed: this.drillSteps.filter(s => s.result.status === 'scored').length, total: 3, movementId: DRILL_IDS[this.drillIndex] } : undefined,
       },
     });
 

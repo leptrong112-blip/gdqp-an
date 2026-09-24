@@ -1,5 +1,5 @@
 import type { FeatureId, MovementId } from '../types';
-import type { CriterionResult, CriterionStatusLevel } from './scoringTypes';
+import type { CriterionResult, CriterionStatusLevel, FeatureRule } from './scoringTypes';
 
 export interface RequirementCardResult {
   id: string;
@@ -20,7 +20,8 @@ export function diagnoseMeasurements(
   criterionId: string,
   measurements: { feature: FeatureId; value: number; variability: number }[],
   defaultFeedback: string,
-  fraction: number
+  fraction: number,
+  rules?: FeatureRule[]
 ): { statusLevel: CriterionStatusLevel; specificFeedback: string; mistakes: string[] } {
   const mistakes: string[] = [];
   const measurementMap = new Map(measurements.map(m => [m.feature, m.value]));
@@ -158,6 +159,30 @@ export function diagnoseMeasurements(
   }
 
   let specificFeedback = defaultFeedback;
+  // Nghiêm/nghỉ feedback must use the exact rubric, not the older hard-coded bands.
+  if (rules) {
+    mistakes.length = 0;
+    if (statusLevel !== 'PASS') for (const rule of rules) {
+      const value = measurementMap.get(rule.feature);
+      if (value === undefined || (value >= rule.ideal[0] && value <= rule.ideal[1])) continue;
+      const messages: Partial<Record<FeatureId, string>> = {
+        heelGapRatio: 'Hai gót chân chưa đủ gần nhau.',
+        footOpeningAngle: 'Điều chỉnh hai mũi chân mở chữ V tự nhiên, khoảng 45°.',
+        torsoTilt: 'Giữ thân người ngay ngắn, tránh nghiêng hoặc cúi.',
+        shoulderTilt: 'Giữ hai vai cân bằng tự nhiên.', hipTilt: 'Điều chỉnh độ nghiêng hông trong tư thế đang tập.',
+        leftKneeAngle: 'Đầu gối trái gập nhiều; duỗi tự nhiên, không cần khóa gối.',
+        rightKneeAngle: 'Đầu gối phải gập nhiều; duỗi tự nhiên, không cần khóa gối.',
+        maxKneeAngle: 'Giữ một chân thẳng tự nhiên làm chân trụ.',
+        minKneeAngle: value > rule.ideal[1] ? 'Chưa chùng một đầu gối ở tư thế đứng nghỉ.' : 'Đầu gối chùng quá sâu, tránh khụy gối quá mức.',
+        kneeAngleDiff: value < rule.ideal[0] ? 'Chùng nhẹ một chân, tránh chùng đều cả hai chân.' : 'Hai chân chênh lệch quá nhiều; giảm độ khụy gối.',
+        leftWristHipDistance: 'Tay trái đang hơi cách thân.', rightWristHipDistance: 'Tay phải đang hơi cách thân.',
+        leftElbowAngle: 'Thả lỏng và duỗi tay trái tự nhiên.', rightElbowAngle: 'Thả lỏng và duỗi tay phải tự nhiên.',
+        headOffset: 'Giữ đầu ngay ngắn ở giữa hai vai.',
+      };
+      const message = messages[rule.feature] ?? defaultFeedback;
+      if (!mistakes.includes(message)) mistakes.push(message);
+    }
+  }
   if (statusLevel === 'PASS') {
     switch (criterionId) {
       case 'feet':
@@ -526,6 +551,7 @@ export function buildRequirementCards(
 
   let card2Status: CriterionStatusLevel = 'PASS';
   if (bodySub.length < 3) card2Status = 'NOT_SCORABLE';
+  else if (bodySub.some(c => c.required && c.statusLevel === 'NOT_ACHIEVED')) card2Status = 'NOT_ACHIEVED';
   else if (bodyRatio >= 0.9) card2Status = 'PASS';
   else if (bodyRatio >= 0.6) card2Status = 'NEEDS_ADJUSTMENT';
   else card2Status = 'NOT_ACHIEVED';

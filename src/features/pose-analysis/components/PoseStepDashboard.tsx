@@ -302,7 +302,7 @@ export function PoseStepDashboard({
             {/* 4 ĐỘNG TÁC CẦN THỰC HIỆN THEO ĐỘNG TÁC ĐANG CHỌN */}
             <div className="space-y-2 pt-1">
               <h3 className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                Yêu cầu 4 động tác cốt lõi:
+                {movementId === 'basicDrill' ? 'Trình tự 3 động tác:' : 'Các yêu cầu cốt lõi:'}
               </h3>
 
               <div className="grid gap-2">
@@ -368,10 +368,10 @@ export function PoseStepDashboard({
             {stage === 'countdown' && (
               <div className="p-3.5 rounded-2xl bg-amber-500 text-slate-950 text-center shadow-xl">
                 <span className="text-xs font-black uppercase tracking-wider">
-                  Chuẩn bị {currentExercise.name.toLowerCase()}
+                  {ready ? `Chuẩn bị ${currentExercise.name.toLowerCase()}` : 'Tạm dừng · chờ theo dõi ổn định'}
                 </span>
                 <div className="text-3xl font-black font-mono my-0.5">
-                  {Math.max(1, Math.ceil(3 * (1 - progress)))}
+                  {ready ? Math.max(1, Math.ceil(3 * (1 - progress))) : '—'}
                 </div>
                 <p className="text-xs font-bold">Chỉnh ngay ngắn chân, tay và mắt nhìn thẳng!</p>
               </div>

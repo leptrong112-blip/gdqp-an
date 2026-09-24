@@ -30,6 +30,15 @@ export interface ExerciseInfo {
 
 export const EXERCISE_CATALOG: ExerciseInfo[] = [
   {
+    id: 'basicDrill', name: 'Chuỗi điều lệnh cơ bản', shortDesc: 'Nghiêm → Nghỉ → Chào, giữ mỗi tư thế 3 giây; nhận tổng kết cuối chuỗi.',
+    badge: '3 động tác', icon: '🏅', available: true,
+    guidelines: [
+      { number: 1, title: 'Đứng nghiêm', description: 'Sau đếm ngược, giữ tư thế đứng nghiêm ổn định trong 3 giây.' },
+      { number: 2, title: 'Đứng nghỉ', description: 'Khi đổi lệnh, chùng nhẹ một chân rồi giữ ổn định sau đếm ngược.' },
+      { number: 3, title: 'Chào', description: 'Đưa tay phải lên chào theo lệnh, giữ 3 giây để nhận kết quả toàn chuỗi.' },
+    ],
+  },
+  {
     id: 'attention',
     name: 'Tư thế đứng nghiêm',
     shortDesc: 'Hai gót sát, mũi mở 45°, hai chân thẳng, tay áp sát chỉ quần.',

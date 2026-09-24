@@ -14,7 +14,7 @@ export class QualityChecker {
   private history: { frame: CanonicalPoseFrame; coverage: number; confidence: number }[] = [];
   private goodSince: number | null = null;
   reset() { this.history = []; this.goodSince = null; }
-  check(frame: CanonicalPoseFrame, lighting: LightingMetrics, calibration?: CalibrationProfile, options?: { allowTurn?: boolean; assessKnees?: boolean }): QualityReport {
+  check(frame: CanonicalPoseFrame, lighting: LightingMetrics, calibration?: CalibrationProfile, options?: { allowTurn?: boolean; assessKnees?: boolean; relaxedPosture?: boolean }): QualityReport {
     const points = REQUIRED.map(n => frame.landmarks[n]), valid = points.filter(usable);
     const coverage = valid.length / REQUIRED.length, confidence = mean(valid.map(p => p.confidence));
     this.history.push({ frame, coverage, confidence });
@@ -25,6 +25,10 @@ export class QualityChecker {
     const length = calibration?.torsoLength || median(m.map(v => v.torsoLength));
     const center = m.length ? { x: median(m.map(v => v.root.x)), y: median(m.map(v => v.root.y)), z: 0 } : { x: 0, y: 0, z: 0 };
     const rootMovement = m.length && length > 0 ? Math.max(...m.map(v => distance(v.root, center))) / length : Infinity;
+    // Up to twice the existing vertical settling tolerance, without relaxing lateral drift.
+    // This gates tracking only; absolute hip height never contributes to posture points.
+    const staticMovement = options?.relaxedPosture && m.length && length > 0
+      ? Math.max(...m.map(v => Math.hypot(v.root.x - center.x, (v.root.y - center.y) / 2))) / length : rootMovement;
     const scaleVariation = variation(m.map(v => v.torsoLength));
     const p = frame.landmarks, ls = p.leftShoulder?.world, rs = p.rightShoulder?.world, lh = p.leftHip?.world, rh = p.rightHip?.world;
     const facing = !!ls && !!rs && !!lh && !!rh && Math.abs(ls.z - rs.z) / Math.max(distance(ls, rs), 1e-6) < 0.35 && Math.abs(lh.z - rh.z) / Math.max(distance(lh, rh), 1e-6) < 0.4;
@@ -40,7 +44,7 @@ export class QualityChecker {
       { id: 'person', label: 'Một người', passed: frame.personCount === 1, message: frame.personCount > 1 ? 'Chỉ để một người trong khung hình.' : 'Đứng vào trước camera.' },
       { id: 'framing', label: 'Thấy toàn thân', passed: framing && footVisible, message: 'Lùi ra để thấy đầu, hai tay và cả bàn chân; giữ khoảng trống quanh người.' },
       { id: 'reliability', label: 'Khớp rõ ràng', passed: !kneeIssue && (allowTurn ? (rollingCoverage >= 0.75 && rollingConfidence >= 0.6) : (rollingCoverage >= C.reliabilityCoverage && rollingConfidence >= C.reliabilityMean && coverage === 1 && confidence >= C.reliabilityMean)), message: kneeIssue ?? 'Giữ các khớp không bị che khuất và hướng người về camera.' },
-      { id: 'stability', label: 'Khung hình ổn định', passed: allowTurn ? (rootMovement <= C.maximumRootMovement * 3 && scaleVariation <= C.maximumScaleVariation * 2.5) : (rootMovement <= C.maximumRootMovement && scaleVariation <= C.maximumScaleVariation), message: 'Đặt máy trên giá cố định và đứng yên tại chỗ.' },
+      { id: 'stability', label: 'Khung hình ổn định', passed: allowTurn ? (rootMovement <= C.maximumRootMovement * 3 && scaleVariation <= C.maximumScaleVariation * 2.5) : (staticMovement <= C.maximumRootMovement && scaleVariation <= C.maximumScaleVariation), message: 'Đặt máy trên giá cố định và đứng yên tại chỗ.' },
       { id: 'orientation', label: 'Nhìn chính diện', passed: allowTurn ? true : facing, message: 'Xoay người và camera để thấy chính diện hai vai và hông.' },
     ];
     const rawPassed = checks.every(c => c.passed);

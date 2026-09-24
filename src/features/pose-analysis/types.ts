@@ -36,7 +36,8 @@ export type MovementId =
   | 'turnRight'
   | 'turnLeft'
   | 'aboutFace'
-  | 'salute';
+  | 'salute'
+  | 'basicDrill';
 export type FeatureId =
   | 'torsoTilt'
   | 'shoulderTilt'
@@ -75,4 +76,5 @@ export interface AnalysisSnapshot {
   frame: CanonicalPoseFrame; quality: QualityReport; stage: PoseStage; progress: number;
   inferenceMs: number; inferenceFps: number; message?: string;
   dynamicProgress?: DynamicProgress;
+  drillProgress?: { index: number; completed: number; total: number; movementId: 'attention' | 'atEase' | 'salute' };
 }

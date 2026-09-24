@@ -35,7 +35,8 @@ test('diagnoses specific Vietnamese actionable feedback and builds 4 requirement
   const data = window();
   // Simulate arm lệch nhẹ and heel gap
   data.samples.forEach(s => {
-    s.values.leftWristHipDistance!.value = 0.65;
+    // A clearly displaced arm still needs feedback; a mild single-rule error is now tolerated.
+    s.values.leftWristHipDistance!.value = 0.9;
     s.values.heelGapRatio!.value = 0.35;
   });
   const result = evaluate(attentionMovement, data);
@@ -170,5 +171,4 @@ test('saluteMovement: hand not raised to head loses points with specific Vietnam
     assert.ok(cards[0].mistakes.some(m => m.includes('Tay phải') || m.includes('Khuỷu tay')));
   }
 });
-
 

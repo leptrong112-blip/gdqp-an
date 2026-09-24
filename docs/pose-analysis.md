@@ -1,5 +1,7 @@
 # AI Pose Analysis V1
 
+For the revised static rubrics, stable-hold policy, and Nghiêm → Nghỉ → Chào mode, see [pose-basic-drill.md](./pose-basic-drill.md). That report supersedes older descriptions of static hold accumulation and describes the new per-step countdown/reset semantics.
+
 ## Feature boundary
 
 `src/features/pose-analysis` is loaded through the portal's `pose` tab. The page owns its camera, worker, model and session. MediaPipe is declared directly at **0.10.17**. No portal account, API, localStorage or XP integration is involved. Results are held in React state and discarded on navigation or restart.

@@ -16,6 +16,7 @@ import type { MovementId } from '../types';
 import type { ScoreResult } from '../scoring/scoringTypes';
 import { buildRequirementCards, extractTopCorrections } from '../scoring/postureFeedback';
 import { SequenceSummary } from './SequenceSummary';
+import { DrillResults } from './DrillResults';
 
 interface ScoreResultsProps {
   result: ScoreResult;
@@ -33,6 +34,7 @@ export function ScoreResults({
   compact = false,
 }: ScoreResultsProps) {
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
+  if (result.drill) return <DrillResults result={result} onRetry={onRetry} />;
 
   // ═══════════════════ TRƯỜNG HỢP KHÔNG THỂ CHẤM ĐIỂM (LỖI CHẤT LƯỢNG / CAMERA) ═══════════════════
   if (result.status === 'notScorable') {
@@ -101,6 +103,10 @@ export function ScoreResults({
   } else if (total >= 65) {
     tierLabel = 'ĐẠT';
     tierColor = 'bg-teal-500/15 text-teal-700 dark:text-teal-300 border-teal-500/30';
+  }
+  if (result.passed === false) {
+    tierLabel = 'CHƯA ĐẠT · XEM TIÊU CHÍ BẮT BUỘC';
+    tierColor = 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30';
   }
 
   const isTurn = movementId === 'turnLeft' || movementId === 'turnRight';
@@ -186,6 +192,11 @@ export function ScoreResults({
       </div>
 
       {result.sequence && <SequenceSummary report={result.sequence} />}
+      {criteria.some(c => c.required) && <p className="text-xs text-slate-600 dark:text-slate-300">
+        Tiêu chí bắt buộc: {criteria.filter(c => c.required).map(c => c.label).join(', ')}.
+        {' '}Cần ít nhất 60% điểm mỗi nhóm bắt buộc và 65/100 tổng điểm để đạt mức luyện tập.
+        {' '}Ngực nở, hướng mắt chính xác và phân bố trọng lượng chưa được camera đo trực tiếp.
+      </p>}
 
       {/* ══════════ CẦN CẢI THIỆN NHẤT (NẾU CÓ ĐIỂM TRỪ) ══════════ */}
       {topCorrections.length > 0 && (
@@ -326,7 +337,7 @@ export function ScoreResults({
             {criteria.map(c => (
               <div key={c.id} className="flex items-center justify-between py-1 border-b border-slate-200/50 dark:border-slate-700/50 last:border-none">
                 <div>
-                  <span className="font-bold text-slate-700 dark:text-slate-200">{c.label}</span>
+                  <span className="font-bold text-slate-700 dark:text-slate-200">{c.label}{c.required ? ' (bắt buộc)' : ''}</span>
                   <span className="text-[11px] text-slate-400 ml-2">({c.feedback})</span>
                 </div>
                 <span className="font-mono font-bold text-slate-600 dark:text-slate-300">

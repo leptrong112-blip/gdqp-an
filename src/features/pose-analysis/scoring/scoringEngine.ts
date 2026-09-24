@@ -47,18 +47,23 @@ export function evaluate(
   const confidences: number[] = [];
   const criteria = [];
   for (const criterion of definition.criteria) {
-    const measurements = [], scores: number[] = [];
+    const measurements = [], scores: number[] = [], essentialScores: number[] = [];
     for (const rule of criterion.rules) {
       const valid = window.samples.map(s => s.values[rule.feature]).filter(v => !!v && Number.isFinite(v.value) && v.confidence >= 0.6);
       if (valid.length < Math.max(definition.minimumSamples, Math.ceil(window.samples.length * 0.85)) || mean(valid.map(v => v.confidence)) < 0.75) return refuse(`Không đủ dữ liệu rõ ràng cho tiêu chí “${criterion.label}”.`);
       const values = valid.map(v => v.value), value = median(values);
       measurements.push({ feature: rule.feature, value, variability: mad(values) });
-      // Average evidence across the whole hold; a single best frame cannot win.
-      scores.push(mean(values.map(v => ruleScore(v, rule))));
+      // Symmetric 5% trimming removes isolated spikes, never a sustained bad hold.
+      const frameScores = values.map(v => ruleScore(v, rule)).sort((a, b) => a - b);
+      const trim = definition.robustPosture ? Math.floor(frameScores.length * 0.05) : 0;
+      const score = mean(frameScores.slice(trim, frameScores.length - trim));
+      scores.push(score);
+      if (rule.essential) essentialScores.push(score);
       confidences.push(...valid.map(v => v.confidence));
     }
-    const fraction = Math.min(...scores), points = Math.round(fraction * criterion.weight * 10) / 10;
-    const diagnosis = diagnoseMeasurements(criterion.id, measurements, criterion.feedback, fraction);
+    const fraction = definition.robustPosture ? Math.min(mean(scores), ...essentialScores) : Math.min(...scores);
+    const points = Math.round(fraction * criterion.weight * 10) / 10;
+    const diagnosis = diagnoseMeasurements(criterion.id, measurements, criterion.feedback, fraction, definition.robustPosture ? criterion.rules : undefined);
     criteria.push({
       id: criterion.id,
       label: criterion.label,
@@ -70,11 +75,14 @@ export function evaluate(
       specificFeedback: diagnosis.specificFeedback,
       mistakes: diagnosis.mistakes,
       measurements,
+      required: criterion.required,
     });
   }
+  const total = Math.round(criteria.reduce((sum, c) => sum + c.points, 0));
   return {
     status: 'scored',
-    total: Math.round(criteria.reduce((sum, c) => sum + c.points, 0)),
+    total,
+    ...(definition.robustPosture ? { passed: total >= 65 && criteria.every(c => !c.required || c.points / c.maximum >= 0.6) } : {}),
     confidence: mean(confidences),
     criteria,
     corrections: [...criteria]

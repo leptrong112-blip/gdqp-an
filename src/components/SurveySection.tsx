@@ -1,31 +1,106 @@
 import { useEffect, useState } from 'react';
 import { useAccount, accountApi } from './AccountGate';
-import { ClipboardCheck, CheckCircle2, ArrowRight, MessageSquareQuote, GraduationCap, UserCheck, ShieldAlert } from 'lucide-react';
-import { surveyQuestions, roleLabel, phaseLabel, type SurveyRole, type SurveyPhase } from '../data/survey';
+import { 
+  ClipboardCheck, 
+  CheckCircle2, 
+  ArrowRight, 
+  MessageSquareQuote, 
+  GraduationCap, 
+  UserCheck, 
+  ShieldAlert,
+  Sparkles,
+  Layers,
+  CheckCircle
+} from 'lucide-react';
+import { surveyQuestions, roleLabel, type SurveyRole, type SurveyQuestion } from '../data/survey';
 
-export const surveyPanel = 'rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 sm:p-7';
-export const surveyInput = 'w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 p-3 text-slate-900 dark:text-white';
-export const surveyButton = 'rounded-xl bg-red-600 hover:bg-red-700 px-5 py-3 font-bold text-white disabled:opacity-50 disabled:cursor-not-allowed';
+export const surveyPanel = 'rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 sm:p-7 shadow-xs';
+export const surveyInput = 'w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 p-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all';
+export const surveyButton = 'rounded-xl bg-red-600 hover:bg-red-700 px-6 py-3 font-bold text-white shadow-md shadow-red-600/30 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed';
 export const surveyApi = accountApi;
 
 const quickClasses = ['10A1', '10A2', '10A3', '11B1', '11B2', '11B3', '12C1', '12C2', '12C3'];
 const quickPositions = ['Giáo viên GDQP-AN', 'Tổ trưởng chuyên môn', 'Giáo viên chủ nhiệm', 'Cán bộ quản lý'];
+
+function QuestionCard({
+  index,
+  question: q,
+  selectedIndices,
+  onSelect,
+  disabled
+}: {
+  index: number;
+  question: SurveyQuestion;
+  selectedIndices: number[] | undefined;
+  onSelect: (indices: number[]) => void;
+  disabled: boolean;
+}) {
+  const isExclusive = q.exclusiveLast ?? (q.options[q.options.length - 1]?.toLowerCase().includes('không') || q.options[q.options.length - 1]?.toLowerCase().includes('chưa'));
+  const exclusive = q.options.length - 1;
+
+  return (
+    <fieldset disabled={disabled} className={surveyPanel}>
+      <legend className="sr-only">Câu {index}: {q.text}</legend>
+      <h4 className="font-bold mb-3.5 leading-relaxed text-slate-900 dark:text-white text-sm sm:text-base">
+        <span className="text-red-600 mr-2 font-black">{index}.</span>{q.text} <span className="text-red-600">*</span>
+      </h4>
+      <div className="space-y-2">
+        {q.options.map((option, optIdx) => {
+          const checked = selectedIndices?.includes(optIdx) || false;
+          return (
+            <label
+              key={option}
+              className={`flex items-center gap-3 cursor-pointer rounded-xl border p-3 transition-colors ${
+                checked
+                  ? 'border-red-500 bg-red-50 dark:bg-red-950/30 font-medium'
+                  : 'border-slate-200 dark:border-slate-700 hover:border-red-300 dark:hover:border-red-900/60'
+              }`}
+            >
+              <input
+                className="accent-red-600 w-4 h-4 shrink-0 cursor-pointer"
+                type={q.multiple ? 'checkbox' : 'radio'}
+                name={`q-${q.id}-${index}`}
+                checked={checked}
+                onChange={() => {
+                  const old = selectedIndices || [];
+                  const next = !q.multiple
+                    ? [optIdx]
+                    : old.includes(optIdx)
+                    ? old.filter(v => v !== optIdx)
+                    : (isExclusive && optIdx === exclusive)
+                    ? [optIdx]
+                    : isExclusive
+                    ? [...old.filter(v => v !== exclusive), optIdx]
+                    : [...old, optIdx];
+                  onSelect(next);
+                }}
+              />
+              <span className="text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-snug">{option}</span>
+            </label>
+          );
+        })}
+      </div>
+    </fieldset>
+  );
+}
 
 export default function SurveySection() {
   const account = useAccount();
   const user = account?.user || null;
 
   const [role, setRole] = useState<SurveyRole>(user?.role === 'teacher' ? 'teacher' : 'student');
-  const [phase, setPhase] = useState<SurveyPhase>('before');
 
-  // Thông tin người làm khảo sát (tự nhập hoặc tự điền từ tài khoản)
+  // Thông tin người làm khảo sát
   const [name, setName] = useState(user?.name || '');
   const [className, setClassName] = useState('11B1');
   const [position, setPosition] = useState('Giáo viên GDQP-AN');
-  const [school, setSchool] = useState('Trường THPT');
+  const [school, setSchool] = useState('Trường THPT Tân Phú');
 
-  const [answers, setAnswers] = useState<Record<string, number[]>>({});
+  // Bộ câu trả lời độc lập cho 2 phần (Trước và Sau)
+  const [beforeAnswers, setBeforeAnswers] = useState<Record<string, number[]>>({});
+  const [afterAnswers, setAfterAnswers] = useState<Record<string, number[]>>({});
   const [feedback, setFeedback] = useState('');
+  
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
@@ -34,14 +109,12 @@ export default function SurveySection() {
   const [isOpen, setIsOpen] = useState<boolean>(true);
 
   useEffect(() => {
-    // Tự động điền thông tin nếu có tài khoản
     if (user) {
       setName(user.name);
       if (user.role === 'teacher') {
         setRole('teacher');
       }
     }
-    // Kiểm tra cấu hình đợt khảo sát
     fetch('/api/survey/config')
       .then(res => res.json())
       .then(data => {
@@ -50,11 +123,17 @@ export default function SurveySection() {
       .catch(() => {});
   }, [user]);
 
-  const questions = surveyQuestions(role, phase);
-  const completed = questions.filter(q => answers[q.id]?.length).length;
+  const beforeQuestions = surveyQuestions(role, 'before');
+  const afterQuestions = surveyQuestions(role, 'after');
+
+  const completedBefore = beforeQuestions.filter(q => beforeAnswers[q.id]?.length).length;
+  const completedAfter = afterQuestions.filter(q => afterAnswers[q.id]?.length).length;
+  const totalCompleted = completedBefore + completedAfter;
+  const totalQuestions = beforeQuestions.length + afterQuestions.length;
 
   function reset() {
-    setAnswers({});
+    setBeforeAnswers({});
+    setAfterAnswers({});
     setFeedback('');
     setError('');
     setDone(false);
@@ -64,38 +143,28 @@ export default function SurveySection() {
     return (
       <section className={`${surveyPanel} max-w-2xl mx-auto text-center space-y-5 my-6 animate-fade-in`}>
         <CheckCircle2 className="w-16 h-16 text-emerald-600 mx-auto" />
-        <h2 className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white">Đã ghi nhận phản hồi khảo sát!</h2>
-        <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-sm space-y-1">
+        <h2 className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white">Đã ghi nhận toàn bộ phản hồi khảo sát!</h2>
+        <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-sm space-y-1.5 text-left">
           <p><strong>Người khảo sát:</strong> {name} ({roleLabel[role]})</p>
           <p><strong>Đơn vị:</strong> {role === 'student' ? `Lớp ${className}` : position} · {school}</p>
-          <p><strong>Giai đoạn:</strong> {phaseLabel[phase]}</p>
+          <p className="text-emerald-700 dark:text-emerald-300 font-semibold flex items-center gap-1.5 pt-1">
+            <CheckCircle className="w-4 h-4 shrink-0" />
+            Đã lưu đầy đủ dữ liệu đối sánh Trước &amp; Sau trải nghiệm ({totalQuestions} câu hỏi).
+          </p>
         </div>
-        <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-          Cảm ơn bạn đã đóng góp ý kiến quý báu để nâng cao chất lượng dạy và học thực hành GDQP-AN! Phản hồi đã được chuyển về trang Báo cáo kết quả của Thầy Cô.
+        <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-sm">
+          Cảm ơn bạn đã đóng góp ý kiến quý báu để nâng cao chất lượng dạy và học thực hành GDQP-AN! Dữ liệu đã được đồng bộ trực tiếp vào hệ thống Báo cáo nghiên cứu &amp; thống kê của đề tài.
         </p>
         <div className="flex flex-wrap justify-center gap-3 pt-2">
-          {phase === 'before' ? (
-            <button
-              className={surveyButton}
-              onClick={() => {
-                reset();
-                setPhase('after');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-            >
-              Mở khảo sát sau trải nghiệm
-            </button>
-          ) : (
-            <button
-              className={surveyButton}
-              onClick={() => {
-                reset();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-            >
-              Làm lại khảo sát mới
-            </button>
-          )}
+          <button
+            className={surveyButton}
+            onClick={() => {
+              reset();
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          >
+            Làm lại phiếu khảo sát mới
+          </button>
         </div>
       </section>
     );
@@ -103,7 +172,7 @@ export default function SurveySection() {
 
   return (
     <section className="max-w-3xl mx-auto space-y-6">
-      {/* Banner tiêu đề khảo sát */}
+      {/* ═════════ BANNER TIÊU ĐỀ KHẢO SÁT ═════════ */}
       <div className="rounded-3xl bg-gradient-to-br from-red-700 via-rose-700 to-red-800 text-white p-6 sm:p-8 shadow-xl relative overflow-hidden">
         <div className="flex flex-wrap items-start justify-between gap-4 relative z-10">
           <div>
@@ -112,7 +181,7 @@ export default function SurveySection() {
             </div>
             <h2 className="text-2xl sm:text-3xl font-black">Khảo sát trải nghiệm phần mềm</h2>
             <p className="mt-2 text-red-50 text-sm max-w-xl leading-relaxed">
-              Dành cho Thầy Cô và các em học sinh. <strong>Không cần tạo tài khoản hay đăng nhập</strong> — chỉ cần điền tên và trả lời trong khoảng 2–3 phút để phục vụ đề tài nghiên cứu.
+              Dành cho Thầy Cô và các em học sinh. <strong>Không cần tạo tài khoản hay đăng nhập</strong> — phiếu được thiết kế liền mạch theo hàng dọc, chỉ cần điền thông tin và hoàn thành 1 lần duy nhất để phục vụ đề tài nghiên cứu.
             </p>
           </div>
         </div>
@@ -129,7 +198,6 @@ export default function SurveySection() {
         </div>
       )}
 
-      {/* ═════════ 2 THẺ / TAB CHỌN ĐỐI TƯỢNG (HỌC SINH & GIÁO VIÊN) ═════════ */}
       {/* ═════════ 2 THẺ / TAB CHỌN ĐỐI TƯỢNG (HỌC SINH & GIÁO VIÊN) ═════════ */}
       <div className="grid grid-cols-2 gap-3 p-2 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
         <button
@@ -171,24 +239,56 @@ export default function SurveySection() {
           event.preventDefault();
           if (!name.trim()) {
             setError('Vui lòng nhập họ và tên của bạn.');
+            window.scrollTo({ top: 200, behavior: 'smooth' });
             return;
           }
+
+          // Kiểm tra xem đã trả lời hết câu hỏi Phần 1 chưa
+          const missingBefore = beforeQuestions.find(q => !beforeAnswers[q.id]?.length);
+          if (missingBefore) {
+            setError(`Vui lòng hoàn thành câu hỏi ở Phần 1: "${missingBefore.text}"`);
+            return;
+          }
+
+          // Kiểm tra xem đã trả lời hết câu hỏi Phần 2 chưa
+          const missingAfter = afterQuestions.find(q => !afterAnswers[q.id]?.length);
+          if (missingAfter) {
+            setError(`Vui lòng hoàn thành câu hỏi ở Phần 2: "${missingAfter.text}"`);
+            return;
+          }
+
           setBusy(true);
           setError('');
           try {
+            // 1. Gửi dữ liệu TRƯỚC trải nghiệm
             await surveyApi('responses', {
               method: 'POST',
               body: JSON.stringify({
                 role,
-                phase,
+                phase: 'before',
                 name: name.trim(),
                 school: school.trim(),
                 className: role === 'student' ? className.trim() : undefined,
                 position: role === 'teacher' ? position.trim() : undefined,
-                answers,
+                answers: beforeAnswers,
+              })
+            });
+
+            // 2. Gửi dữ liệu SAU trải nghiệm (kèm góp ý tự luận)
+            await surveyApi('responses', {
+              method: 'POST',
+              body: JSON.stringify({
+                role,
+                phase: 'after',
+                name: name.trim(),
+                school: school.trim(),
+                className: role === 'student' ? className.trim() : undefined,
+                position: role === 'teacher' ? position.trim() : undefined,
+                answers: afterAnswers,
                 feedback: feedback.trim()
               })
             });
+
             setDone(true);
             window.scrollTo({ top: 0, behavior: 'smooth' });
           } catch (e) {
@@ -205,7 +305,7 @@ export default function SurveySection() {
               {role === 'student' ? <GraduationCap className="w-5 h-5 text-red-600" /> : <UserCheck className="w-5 h-5 text-red-600" />}
               Thông tin người tham gia ({roleLabel[role]})
             </h3>
-            <span className="text-xs text-slate-500 font-medium">Tự điền nhanh</span>
+            <span className="text-xs text-slate-500 font-medium">Phiếu liên tục 2 phần</span>
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4">
@@ -244,7 +344,7 @@ export default function SurveySection() {
                       key={cls}
                       type="button"
                       onClick={() => setClassName(cls)}
-                      className={`text-xs px-2 py-1 rounded-lg border font-mono transition-all ${
+                      className={`text-xs px-2 py-1 rounded-lg border font-mono transition-all cursor-pointer ${
                         className === cls
                           ? 'bg-red-600 text-white border-red-600 font-bold'
                           : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-red-400'
@@ -275,7 +375,7 @@ export default function SurveySection() {
                       key={pos}
                       type="button"
                       onClick={() => setPosition(pos)}
-                      className={`text-xs px-2 py-1 rounded-lg border transition-all ${
+                      className={`text-xs px-2 py-1 rounded-lg border transition-all cursor-pointer ${
                         position === pos
                           ? 'bg-red-600 text-white border-red-600 font-bold'
                           : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-red-400'
@@ -288,7 +388,7 @@ export default function SurveySection() {
               </div>
             )}
 
-            <div>
+            <div className="sm:col-span-2">
               <label htmlFor="survey-school" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                 Trường THPT / Đơn vị công tác
               </label>
@@ -301,101 +401,84 @@ export default function SurveySection() {
                 className={surveyInput}
               />
             </div>
-
-            <div>
-              <label htmlFor="survey-phase" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                Thời điểm khảo sát <span className="text-red-600">*</span>
-              </label>
-              <select
-                id="survey-phase"
-                className={surveyInput}
-                value={phase}
-                onChange={e => {
-                  setPhase(e.target.value as SurveyPhase);
-                  reset();
-                }}
-              >
-                {Object.entries(phaseLabel).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
-                ))}
-              </select>
-            </div>
           </div>
         </fieldset>
 
-        {/* Thanh tiến độ làm bài */}
-        <div className="space-y-2">
-          <div className="flex justify-between text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-400">
-            <span>{phaseLabel[phase]} · {questions.length} câu hỏi trắc nghiệm</span>
-            <span className="text-red-600">{completed}/{questions.length} đã chọn</span>
+        {/* ═════════ THANH TIẾN ĐỘ LÀM BÀI TOÀN BỘ PHIẾU ═════════ */}
+        <div className="space-y-2 sticky top-2 z-20 bg-slate-900/90 backdrop-blur-md p-3 rounded-2xl border border-slate-700 shadow-lg">
+          <div className="flex justify-between text-xs sm:text-sm font-bold text-slate-300">
+            <span className="flex items-center gap-1.5">
+              <Layers className="w-4 h-4 text-amber-400" />
+              Tiến độ làm bài (Tổng cộng {totalQuestions} câu hỏi)
+            </span>
+            <span className={totalCompleted === totalQuestions ? 'text-emerald-400 font-black' : 'text-amber-400'}>
+              {totalCompleted}/{totalQuestions} câu đã chọn
+            </span>
           </div>
-          <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden" role="progressbar" aria-valuenow={completed} aria-valuemin={0} aria-valuemax={questions.length}>
-            <div className="h-full bg-red-600 transition-all duration-300" style={{ width: `${(completed / questions.length) * 100}%` }} />
+          <div className="h-2.5 rounded-full bg-slate-800 overflow-hidden" role="progressbar" aria-valuenow={totalCompleted} aria-valuemin={0} aria-valuemax={totalQuestions}>
+            <div 
+              className={`h-full transition-all duration-300 ${totalCompleted === totalQuestions ? 'bg-emerald-500' : 'bg-gradient-to-r from-red-600 to-amber-500'}`} 
+              style={{ width: `${(totalCompleted / totalQuestions) * 100}%` }} 
+            />
           </div>
         </div>
 
-        {/* ═════════ DANH SÁCH CÂU HỎI ═════════ */}
-        {questions.map((q, i) => {
-          const isExclusive = q.exclusiveLast ?? (q.options[q.options.length - 1]?.toLowerCase().includes('không') || q.options[q.options.length - 1]?.toLowerCase().includes('chưa'));
-          const exclusive = q.options.length - 1;
-          return (
-            <div key={`${role}-${phase}-${q.id}`} className="space-y-4">
-              {/* Banner phân đoạn B dành riêng cho giáo viên sau trải nghiệm (khớp 100% ảnh của Thầy) */}
-              {role === 'teacher' && phase === 'after' && i === 5 && (
-                <div className="rounded-2xl border border-red-200 dark:border-red-900/60 bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-950/40 dark:to-slate-900 p-4 sm:p-5 shadow-sm">
-                  <span className="text-xs font-bold uppercase tracking-wider text-red-600 dark:text-red-400">Đánh giá sư phạm &amp; Ứng dụng thực tế</span>
-                  <h3 className="text-base sm:text-lg font-black text-red-900 dark:text-red-200 mt-1">
-                    B. Khảo sát dành cho giáo viên (sau khi xem hoặc cho học sinh dùng thử)
-                  </h3>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                    Đánh giá khả năng hỗ trợ giảng dạy phần thực hành GDQP, giải quyết khó khăn thực tế và khả năng sẵn sàng áp dụng.
-                  </p>
-                </div>
-              )}
+        {/* ════════════════════════════════════════════════════════════════
+            PHẦN 1 (HÀNG DỌC): KHẢO SÁT TRƯỚC KHI TRẢI NGHIỆM PHẦN MỀM
+            ════════════════════════════════════════════════════════════════ */}
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-blue-200 dark:border-blue-900/60 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-slate-900 p-4 sm:p-5 shadow-xs">
+            <span className="inline-block px-2.5 py-1 rounded-md bg-blue-600 text-white text-[11px] font-black uppercase tracking-wider mb-2">
+              Phần 1 / 2 · Trước khi trải nghiệm phần mềm
+            </span>
+            <h3 className="text-base sm:text-lg font-black text-blue-950 dark:text-blue-200">
+              A. Đánh giá cảm nhận &amp; thực trạng học tập trước đây (Phương pháp thông thường)
+            </h3>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+              Xin vui lòng cho biết cảm nhận của bạn khi học tập theo phương pháp nghe giảng và quan sát tranh ảnh truyền thống.
+            </p>
+          </div>
 
-              <fieldset disabled={busy} className={surveyPanel}>
-                <legend className="sr-only">Câu {i + 1}: {q.text}</legend>
-                <h3 className="font-bold mb-4 leading-relaxed text-slate-900 dark:text-white">
-                  <span className="text-red-600 mr-2">{i + 1}.</span>{q.text} <span className="text-red-600">*</span>
-                </h3>
-                <div className="space-y-2">
-                  {q.options.map((option, index) => (
-                    <label
-                      key={option}
-                      className={`flex items-center gap-3 cursor-pointer rounded-xl border p-3 transition-colors ${
-                        answers[q.id]?.includes(index)
-                          ? 'border-red-500 bg-red-50 dark:bg-red-950/30 font-medium'
-                          : 'border-slate-200 dark:border-slate-700 hover:border-red-300'
-                      }`}
-                    >
-                      <input
-                        className="accent-red-600 w-4 h-4 shrink-0"
-                        type={q.multiple ? 'checkbox' : 'radio'}
-                        name={q.id}
-                        required={!q.multiple && (!answers[q.id] || answers[q.id].length === 0)}
-                        checked={answers[q.id]?.includes(index) || false}
-                        onChange={() => setAnswers(previous => {
-                          const old = previous[q.id] || [];
-                          const next = !q.multiple
-                            ? [index]
-                            : old.includes(index)
-                            ? old.filter(v => v !== index)
-                            : (isExclusive && index === exclusive)
-                            ? [index]
-                            : isExclusive
-                            ? [...old.filter(v => v !== exclusive), index]
-                            : [...old, index];
-                          return { ...previous, [q.id]: next };
-                        })}
-                      />
-                      <span className="text-sm text-slate-800 dark:text-slate-200">{option}</span>
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-            </div>
-          );
-        })}
+          {beforeQuestions.map((q, i) => (
+            <QuestionCard
+              key={`before-${q.id}`}
+              index={i + 1}
+              question={q}
+              selectedIndices={beforeAnswers[q.id]}
+              onSelect={indices => setBeforeAnswers(prev => ({ ...prev, [q.id]: indices }))}
+              disabled={busy}
+            />
+          ))}
+        </div>
+
+        {/* ════════════════════════════════════════════════════════════════
+            PHẦN 2 (HÀNG DỌC TIẾP NỐI): KHẢO SÁT SAU KHI TRẢI NGHIỆM 3D & WEBAR
+            ════════════════════════════════════════════════════════════════ */}
+        <div className="space-y-4 pt-4">
+          <div className="rounded-2xl border border-rose-200 dark:border-rose-900/60 bg-gradient-to-r from-rose-50 to-red-50 dark:from-rose-950/40 dark:to-slate-900 p-4 sm:p-5 shadow-xs">
+            <span className="inline-block px-2.5 py-1 rounded-md bg-red-600 text-white text-[11px] font-black uppercase tracking-wider mb-2 flex items-center gap-1.5 w-fit">
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              Phần 2 / 2 · Sau khi trải nghiệm mô phỏng 3D &amp; WebAR
+            </span>
+            <h3 className="text-base sm:text-lg font-black text-red-950 dark:text-red-200">
+              B. Đánh giá hiệu quả, tính trực quan &amp; trải nghiệm với ứng dụng
+            </h3>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+              Xin vui lòng đánh giá mức độ tiến bộ, sự hào hứng và hiệu quả hỗ trợ của phần mềm mô phỏng 3D &amp; WebAR trong môn GDQP-AN.
+            </p>
+          </div>
+
+          {afterQuestions.map((q, i) => (
+            <QuestionCard
+              key={`after-${q.id}`}
+              index={beforeQuestions.length + i + 1}
+              question={q}
+              selectedIndices={afterAnswers[q.id]}
+              onSelect={indices => setAfterAnswers(prev => ({ ...prev, [q.id]: indices }))}
+              disabled={busy}
+            />
+          ))}
+        </div>
 
         {/* ═════════ MỤC TỰ LUẬN / GÓP Ý & ĐỀ XUẤT ═════════ */}
         <fieldset disabled={busy} className={surveyPanel}>
@@ -416,7 +499,7 @@ export default function SurveySection() {
           </p>
           <textarea
             id="survey-feedback"
-            className={`${surveyInput} min-h-[110px] resize-y leading-relaxed text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500`}
+            className={`${surveyInput} min-h-[110px] resize-y leading-relaxed text-sm`}
             maxLength={1000}
             rows={4}
             placeholder={
@@ -429,20 +512,28 @@ export default function SurveySection() {
           />
         </fieldset>
 
-        {error && <p role="alert" className="rounded-xl bg-red-50 text-red-700 p-4 text-sm font-semibold">{error}</p>}
+        {error && (
+          <div role="alert" className="rounded-xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-200 p-4 text-sm font-semibold flex items-center gap-2">
+            <ShieldAlert className="w-5 h-5 text-red-600 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
 
         <div className="flex flex-wrap justify-between items-center gap-4 pb-12">
-          <span className="text-xs sm:text-sm text-slate-500">Vui lòng chọn đầy đủ các câu hỏi có dấu *.</span>
+          <span className="text-xs sm:text-sm text-slate-500">
+            {totalCompleted === totalQuestions 
+              ? '✓ Bạn đã chọn đầy đủ tất cả câu hỏi của 2 phần.' 
+              : `Còn ${totalQuestions - totalCompleted} câu hỏi bắt buộc chưa chọn.`}
+          </span>
           <button
-            disabled={busy || completed !== questions.length}
+            disabled={busy || totalCompleted !== totalQuestions}
             className={`${surveyButton} flex items-center gap-2 text-base px-7 py-3.5 shadow-lg shadow-red-600/30`}
           >
-            {busy ? 'Đang gửi phản hồi…' : 'Gửi khảo sát'}
+            {busy ? 'Đang gửi phản hồi…' : 'Gửi phiếu khảo sát'}
             <ArrowRight className="w-5 h-5" />
           </button>
         </div>
       </form>
-
     </section>
   );
 }

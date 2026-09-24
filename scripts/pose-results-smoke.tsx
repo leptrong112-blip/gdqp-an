@@ -6,6 +6,7 @@ import { SessionProcessor } from '../src/features/pose-analysis/runtime/sessionP
 import type { WorkerCommand, WorkerEvent } from '../src/features/pose-analysis/runtime/workerProtocol';
 import type { AnalysisSnapshot } from '../src/features/pose-analysis/types';
 import { attentionFrame, goodLighting } from './tests/fixtures/pose/attention';
+import { drillFrame } from './tests/fixtures/pose/drill';
 import '../src/index.css';
 
 let currentWorker: FixtureWorker | undefined;
@@ -23,7 +24,8 @@ class FixtureWorker {
       command.frame.close();
       this.time += 100;
       queueMicrotask(() => {
-        for (const event of this.processor.process(attentionFrame(this.time), goodLighting, 10)) {
+        const pose = this.snapshot?.drillProgress ? drillFrame(this.snapshot.drillProgress.movementId, this.time) : attentionFrame(this.time);
+        for (const event of this.processor.process(pose, goodLighting, 10)) {
           if (event.type === 'analysis') this.snapshot = event.snapshot;
           this.emit(event);
         }

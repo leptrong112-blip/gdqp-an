@@ -14,7 +14,8 @@ export type SessionCommand =
   | 'selectAtEase'
   | 'selectTurnLeft'
   | 'selectTurnRight'
-  | 'selectSalute';
+  | 'selectSalute'
+  | 'selectBasicDrill';
 export type WorkerCommand =
   | { type: 'initialize'; delegate?: 'CPU' | 'GPU' }
   | { type: 'analyzeFrame'; frame: ImageBitmap; timestampMs: number; width: number; height: number; lighting: LightingMetrics }

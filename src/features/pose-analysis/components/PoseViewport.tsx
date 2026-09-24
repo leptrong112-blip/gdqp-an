@@ -1,6 +1,7 @@
 import { useRef, useState, type RefObject } from 'react';
 import { Maximize2, Minimize2 } from 'lucide-react';
-import type { PoseStage } from '../types';
+import type { PoseStage, AnalysisSnapshot } from '../types';
+import { DRILL_LABELS } from '../scoring/basicDrill';
 
 export function PoseViewport({
   videoRef,
@@ -11,6 +12,10 @@ export function PoseViewport({
   isFullscreen = false,
   onToggleFullscreen,
   autoCountdown = null,
+  movementLabel = 'Đứng nghiêm',
+  qualityPassed = true,
+  pauseReason,
+  drillProgress,
 }: {
   videoRef: RefObject<HTMLVideoElement>;
   canvasRef: RefObject<HTMLCanvasElement>;
@@ -20,6 +25,10 @@ export function PoseViewport({
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
   autoCountdown?: number | null;
+  movementLabel?: string;
+  qualityPassed?: boolean;
+  pauseReason?: string;
+  drillProgress?: AnalysisSnapshot['drillProgress'];
 }) {
   const container = useRef<HTMLDivElement>(null), [localExpanded, setLocalExpanded] = useState(false);
   const active = ['quality-check', 'calibrating', 'countdown', 'scoring', 'completed', 'blocked'].includes(stage);
@@ -27,7 +36,7 @@ export function PoseViewport({
   const labels: Partial<Record<PoseStage, string>> = {
     'loading-model': 'Đang mở camera và tải mô hình…',
     calibrating: 'Giữ nguyên tư thế để hiệu chuẩn (2 giây)',
-    countdown: `Chuẩn bị đứng nghiêm · ${Math.max(1, Math.ceil(3 * (1 - progress)))}`,
+    countdown: `Chuẩn bị ${movementLabel} · ${Math.max(1, Math.ceil(3 * (1 - progress)))}`,
     scoring: `Đang chấm... Giữ nguyên tư thế (${holdSeconds} / 3.0s)`,
     completed: '✓ Hoàn thành bài! Đang tính điểm...',
     result: 'Đã hoàn tất bài tập · Sẵn sàng thực hiện lại',
@@ -124,6 +133,22 @@ export function PoseViewport({
       </div>
 
       {/* Banner đếm ngược tự động hiệu chuẩn khi người dùng đứng đủ vị trí (rất hữu ích khi đứng xa 2.5m) */}
+      {drillProgress && <ol aria-label="Tiến trình chuỗi" className="absolute top-20 left-4 right-4 flex gap-2 z-10 text-xs text-white">
+        {DRILL_LABELS.map((label, i) => <li key={label} aria-current={i === drillProgress.index ? 'step' : undefined}
+          className={`rounded-xl px-3 py-2 ${i < drillProgress.completed ? 'bg-emerald-800' : i === drillProgress.index ? 'bg-amber-600' : 'bg-slate-900/90'}`}>
+          {i < drillProgress.completed ? '✓' : i + 1} {label}
+        </li>)}
+      </ol>}
+      {(stage === 'countdown' || (stage === 'scoring' && progress < 0.18)) && <div role="status" aria-live="polite"
+        className="absolute inset-0 z-10 grid place-content-center pointer-events-none text-center px-6">
+        <div className="rounded-3xl bg-slate-950/90 border border-amber-400 p-6 text-white shadow-2xl max-w-lg">
+          <p className="text-lg font-black">{!qualityPassed ? 'Tạm dừng chuẩn bị' : stage === 'countdown' ? 'Chuẩn bị bắt đầu' : 'Bắt đầu'}</p>
+          <p className="mt-2 text-xl font-bold text-amber-300">{movementLabel}</p>
+          {qualityPassed && stage === 'countdown' && <p className="text-7xl font-black my-3">{Math.max(1, Math.ceil(3 * (1 - progress)))}</p>}
+          <p className="mt-2 text-sm">{!qualityPassed ? pauseReason || 'Đứng lại trong vùng nhận diện.' : stage === 'countdown' ? 'Vào tư thế; chưa tính điểm trong lúc đếm ngược.' : 'Giữ tư thế ổn định trong 3 giây.'}</p>
+        </div>
+      </div>}
+      {stage === 'scoring' && !qualityPassed && <p role="alert" className="absolute bottom-6 inset-x-6 z-20 rounded-xl bg-amber-950 p-4 text-amber-100">{pauseReason || 'Tạm dừng: chưa đủ dữ liệu theo dõi.'}</p>}
       {autoCountdown !== null && stage === 'quality-check' && (
         <div className="absolute bottom-6 left-6 right-6 z-20 bg-emerald-950/95 border-2 border-emerald-400 text-white rounded-3xl p-4 shadow-2xl backdrop-blur-xl flex items-center justify-between gap-4 animate-in fade-in zoom-in-95 duration-200">
           <div className="flex items-center gap-3.5">
@@ -146,7 +171,7 @@ export function PoseViewport({
         </div>
       )}
 
-      {active && labels[stage] && !isFullscreen && stage !== 'completed' && autoCountdown === null && (
+      {active && labels[stage] && stage !== 'countdown' && stage !== 'completed' && autoCountdown === null && qualityPassed && (
         <div className="absolute bottom-6 left-6 right-6 bg-slate-950/90 rounded-2xl p-4 text-center text-white border border-slate-800 backdrop-blur-md shadow-2xl">
           <p className="font-bold text-base sm:text-lg" role="status">
             {labels[stage]}

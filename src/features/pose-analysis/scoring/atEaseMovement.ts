@@ -18,15 +18,18 @@ export const atEaseMovement: MovementDefinition = {
   label: 'Đứng nghỉ',
   minimumDurationMs: 2400,
   minimumSamples: 18,
+  robustPosture: true,
   criteria: [
     {
       id: 'legs',
       label: 'Chùng một chân, giữ chân trụ',
       weight: 25,
+      required: true,
       rules: [
-        above('maxKneeAngle', 170, 145), // Chân trụ phải duỗi thẳng
-        { feature: 'minKneeAngle', ideal: [145, 168], zero: [120, 180] }, // Chân chùng gập nhẹ
-        { feature: 'kneeAngleDiff', ideal: [10, 35], zero: [0, 50] }, // Có độ chênh lệch rõ ràng giữa 2 gối
+        { ...above('maxKneeAngle', 165, 145), essential: true }, // Chân trụ thẳng tự nhiên
+        { feature: 'minKneeAngle', ideal: [145, 175], zero: [120, 179], essential: true },
+        // A small but consistent asymmetry is enough; identical straight knees are not nghỉ.
+        { feature: 'kneeAngleDiff', ideal: [5, 35], zero: [1, 55], essential: true },
       ],
       feedback: 'Chùng nhẹ một đầu gối (trái hoặc phải), dồn trọng tâm sang chân trụ thẳng.',
     },
@@ -36,7 +39,7 @@ export const atEaseMovement: MovementDefinition = {
       weight: 20,
       rules: [
         below('heelGapRatio', 0.28, 0.7),
-        { feature: 'footOpeningAngle', ideal: [35, 55], zero: [10, 90] },
+        { feature: 'footOpeningAngle', ideal: [25, 65], zero: [5, 95] },
       ],
       feedback: 'Giữ hai gót chân tại vị trí, mở hai mũi chân khoảng 45°.',
     },
@@ -44,6 +47,7 @@ export const atEaseMovement: MovementDefinition = {
       id: 'torso',
       label: 'Thân người ngay ngắn',
       weight: 25,
+      required: true,
       rules: [below('torsoTilt', 9, 25)],
       feedback: 'Thân trên vẫn giữ ngay ngắn, không ngả nghiêng quá mức.',
     },

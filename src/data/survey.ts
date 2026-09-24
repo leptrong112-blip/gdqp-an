@@ -19,10 +19,34 @@ const levels = ['Rất thấp', 'Thấp', 'Trung bình', 'Cao', 'Rất cao'];
 export function surveyQuestions(role: SurveyRole, phase: SurveyPhase): SurveyQuestion[] {
   const student = role === 'student';
   const common: SurveyQuestion[] = [
-    { id: 'understanding', text: student ? 'Em hiểu và ghi nhớ nội dung thực hành GDQP-AN ở mức nào?' : 'Thầy/Cô đánh giá mức độ học sinh hiểu và ghi nhớ nội dung thực hành GDQP-AN như thế nào?', options: levels },
-    { id: 'visualization', text: student ? 'Em hình dung rõ các động tác và tình huống thực hành ở mức nào?' : 'Thầy/Cô có thể minh họa rõ các động tác và tình huống thực hành ở mức nào?', options: levels },
-    { id: 'interest', text: student ? 'Mức độ hứng thú của em với việc học thực hành GDQP-AN hiện nay?' : 'Thầy/Cô đánh giá mức độ hứng thú của học sinh với việc học thực hành GDQP-AN hiện nay?', options: levels },
-    { id: 'review', text: student ? 'Khả năng tự ôn tập nội dung thực hành ngoài giờ học của em ở mức nào?' : 'Khả năng hỗ trợ học sinh ôn tập thực hành ngoài giờ của Thầy/Cô ở mức nào?', options: levels },
+    { 
+      id: 'understanding', 
+      text: student 
+        ? (phase === 'before' ? 'Em hiểu và ghi nhớ nội dung thực hành GDQP-AN khi học theo phương pháp truyền thống ở mức nào?' : 'Sau khi học với mô phỏng 3D, em hiểu và ghi nhớ nội dung thực hành ở mức nào?') 
+        : (phase === 'before' ? 'Thầy/Cô đánh giá mức độ học sinh hiểu và ghi nhớ nội dung thực hành trước đây như thế nào?' : 'Thầy/Cô đánh giá mức độ học sinh hiểu và ghi nhớ khi có mô phỏng 3D hỗ trợ như thế nào?'), 
+      options: levels 
+    },
+    { 
+      id: 'visualization', 
+      text: student 
+        ? (phase === 'before' ? 'Em hình dung rõ các động tác và tình huống thực hành khi nghe giảng/xem tranh ảnh ở mức nào?' : 'Mô phỏng 3D và WebAR giúp em hình dung rõ các động tác thực hành ở mức nào?') 
+        : (phase === 'before' ? 'Thầy/Cô có thể minh họa rõ các động tác và tình huống thực hành trước đây ở mức nào?' : 'Khả năng minh họa trực quan các động tác với mô phỏng 3D & WebAR ở mức nào?'), 
+      options: levels 
+    },
+    { 
+      id: 'interest', 
+      text: student 
+        ? (phase === 'before' ? 'Mức độ hứng thú của em với việc học thực hành GDQP-AN trước khi dùng ứng dụng?' : 'Mức độ hứng thú của em với việc học GDQP-AN sau khi trải nghiệm ứng dụng 3D?') 
+        : (phase === 'before' ? 'Thầy/Cô đánh giá mức độ hứng thú của học sinh với việc học thực hành trước đây?' : 'Thầy/Cô đánh giá mức độ hứng thú của học sinh sau khi trải nghiệm ứng dụng như thế nào?'), 
+      options: levels 
+    },
+    { 
+      id: 'review', 
+      text: student 
+        ? (phase === 'before' ? 'Khả năng tự ôn tập nội dung thực hành ngoài giờ học của em trước đây ở mức nào?' : 'Khả năng tự ôn tập nội dung thực hành ngoài giờ của em khi có ứng dụng 3D hỗ trợ ở mức nào?') 
+        : (phase === 'before' ? 'Khả năng hỗ trợ học sinh ôn tập thực hành ngoài giờ của Thầy/Cô trước đây ở mức nào?' : 'Khả năng hỗ trợ học sinh tự ôn tập thực hành ngoài giờ khi có ứng dụng ở mức nào?'), 
+      options: levels 
+    },
   ];
   if (phase === 'before') {
     return [

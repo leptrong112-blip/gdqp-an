@@ -11,8 +11,8 @@ export interface DynamicMovementConfig {
   maxAttemptDurationMs: number;
 }
 
-export interface FeatureRule { feature: FeatureId; ideal: [number, number]; zero: [number, number] }
-export interface Criterion { id: string; label: string; weight: number; rules: FeatureRule[]; feedback: string }
+export interface FeatureRule { feature: FeatureId; ideal: [number, number]; zero: [number, number]; essential?: boolean }
+export interface Criterion { id: string; label: string; weight: number; rules: FeatureRule[]; feedback: string; required?: boolean }
 export interface MovementDefinition {
   id: string;
   label: string;
@@ -21,6 +21,8 @@ export interface MovementDefinition {
   minimumSamples: number;
   criteria: Criterion[];
   dynamicConfig?: DynamicMovementConfig;
+  /** Robust temporal aggregation for the two static training postures only. */
+  robustPosture?: boolean;
 }
 export type CriterionStatusLevel = 'PASS' | 'NEEDS_ADJUSTMENT' | 'NOT_ACHIEVED' | 'NOT_SCORABLE';
 export interface CriterionResult {
@@ -33,8 +35,12 @@ export interface CriterionResult {
   feedback: string;
   specificFeedback?: string;
   mistakes?: string[];
+  required?: boolean;
   measurements: { feature: FeatureId; value: number; variability: number }[];
 }
 export type ScoreResult =
-  | { status: 'notScorable'; reasons: string[] }
-  | { status: 'scored'; total: number; confidence: number; criteria: CriterionResult[]; corrections: string[]; sequence?: SequenceReport };
+  | { status: 'notScorable'; reasons: string[]; drill?: DrillSummary }
+  | { status: 'scored'; total: number; confidence: number; criteria: CriterionResult[]; corrections: string[]; sequence?: SequenceReport; passed?: boolean; drill?: DrillSummary };
+
+export interface DrillStepResult { movementId: 'attention' | 'atEase' | 'salute'; result: ScoreResult }
+export interface DrillSummary { steps: DrillStepResult[]; totalPoints: number; maximum: number; completion: number; passed: boolean }

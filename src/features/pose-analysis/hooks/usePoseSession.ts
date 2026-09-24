@@ -16,6 +16,7 @@ function getCommandForMovement(id: MovementId): SessionCommand {
     case 'turnLeft': return 'selectTurnLeft';
     case 'turnRight': return 'selectTurnRight';
     case 'salute': return 'selectSalute';
+    case 'basicDrill': return 'selectBasicDrill';
     case 'attention':
     default:
       return 'selectAttention';
@@ -187,6 +188,7 @@ export function usePoseSession() {
     finishedResult.current = null;
     setMovementId(id);
     setResult(null);
+    setSnapshot(null); latest.current = null;
     previousScoreRef.current = null;
     setScoreComparison(null);
     const engine = runtime.current;
