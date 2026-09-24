@@ -1,0 +1,16 @@
+{
+  "abi": 1,
+  "sourceSha256": "72733b950df71daa3a4ab11e3dd362b53ea2780b57cfa815fb3e33eb82f024ff",
+  "wasmSha256": "f79ed6b2db43db32007014182b3319cfbad658ffe363b837766653741a2bc92f",
+  "flags": [
+    "--target=wasm32-unknown-unknown",
+    "-std=c++17",
+    "-O3",
+    "-nostdlib",
+    "-fno-exceptions",
+    "-fno-rtti",
+    "-ffp-contract=off",
+    "-Wl,--no-entry",
+    "-Wl,--strip-all"
+  ]
+}

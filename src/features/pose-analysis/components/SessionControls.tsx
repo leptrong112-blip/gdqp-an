@@ -19,11 +19,6 @@ export function SessionControls({ stage, ready, start, stop, calibrate, retry, c
         <RotateCcw size={18} />Hiệu chuẩn & chấm
       </button>
     )}
-    {stage === 'result' && retry && (
-      <button onClick={retry} className={`${button} bg-red-600 text-white hover:bg-red-700 shadow-md`}>
-        <RotateCcw size={18} />Thực hiện lại
-      </button>
-    )}
     <button onClick={changeCamera} disabled={stage === 'loading-model'} className={`${button} border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800`}>
       <SwitchCamera size={18} />Đổi camera
     </button>

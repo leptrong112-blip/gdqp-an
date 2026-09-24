@@ -2,6 +2,7 @@ import { POSE_CONFIG as C } from '../config';
 import type { CalibrationProfile, CanonicalPoseFrame, DynamicProgress, FeatureSample, LightingMetrics, PoseStage } from '../types';
 import { filterLandmarks } from '../pipeline/confidenceFilter';
 import { LandmarkSmoother } from '../pipeline/smoothing';
+import { LandmarkOutlierFilter } from '../pipeline/outlierFilter';
 import { QualityChecker } from '../pipeline/qualityChecks';
 import { createCalibration, normalizePose } from '../pipeline/normalization';
 import { extractFeatures } from '../pipeline/featureExtraction';
@@ -9,15 +10,19 @@ import { evaluate } from '../scoring/scoringEngine';
 import { attentionMovement } from '../scoring/attentionMovement';
 import { atEaseMovement } from '../scoring/atEaseMovement';
 import { turnLeftMovement, turnRightMovement } from '../scoring/turnMovements';
+import { saluteMovement } from '../scoring/saluteMovement';
 import { distance } from '../pipeline/geometry';
 import { TemporalMotionBuffer } from '../pipeline/motionBuffer';
 import { DynamicTurnTracker } from '../scoring/dynamicMovementAnalyzer';
 import type { MovementDefinition } from '../scoring/scoringTypes';
 import type { SessionCommand, WorkerEvent } from './workerProtocol';
+import { javascriptSequenceEngine, type SequenceEngine } from '../scoring/sequenceEngine';
 
 export class SessionProcessor {
+  constructor(private sequenceEngine: SequenceEngine = javascriptSequenceEngine) {}
   private quality = new QualityChecker();
   private smoother = new LandmarkSmoother();
+  private outliers = new LandmarkOutlierFilter();
   private stage: PoseStage = 'quality-check';
   private profile?: CalibrationProfile;
   private movement: MovementDefinition = attentionMovement;
@@ -31,10 +36,12 @@ export class SessionProcessor {
   private failureSince: number | null = null;
 
   command(command: SessionCommand) {
+    if (command === 'reset' || command === 'startCalibration') this.outliers.reset();
     if (command === 'selectAttention') { this.movement = attentionMovement; this.motionBuffer.clear(); this.dynamicTracker.reset(); return; }
     if (command === 'selectAtEase') { this.movement = atEaseMovement; this.motionBuffer.clear(); this.dynamicTracker.reset(); return; }
     if (command === 'selectTurnLeft') { this.movement = turnLeftMovement; this.motionBuffer.clear(); this.dynamicTracker.reset(); return; }
     if (command === 'selectTurnRight') { this.movement = turnRightMovement; this.motionBuffer.clear(); this.dynamicTracker.reset(); return; }
+    if (command === 'selectSalute') { this.movement = saluteMovement; this.motionBuffer.clear(); this.dynamicTracker.reset(); return; }
     if (command === 'reset') { this.quality.reset(); this.smoother.reset(); this.profile = undefined; this.stage = 'quality-check'; }
     if (command === 'startCalibration') { this.profile = undefined; this.smoother.reset(); this.stage = 'calibrating'; }
     if (command === 'startAttempt' && this.profile) this.stage = 'countdown';
@@ -45,10 +52,14 @@ export class SessionProcessor {
     if (raw.timestampMs <= this.lastTime) return [];
     const delta = this.lastTime < 0 ? 0 : raw.timestampMs - this.lastTime;
     this.lastTime = raw.timestampMs;
-    const events: WorkerEvent[] = [], filtered = filterLandmarks(raw);
+    const events: WorkerEvent[] = [];
+    const { frame: filtered, rejected } = this.outliers.apply(filterLandmarks(raw));
+    this.smoother.discard(rejected);
     const allowTurn = this.stage === 'scoring' && this.movement.type === 'DYNAMIC';
     // Evaluate current raw evidence, never carried-forward smoothed points.
-    const quality = this.quality.check(filtered, lighting, this.profile, { allowTurn });
+    const quality = this.quality.check(filtered, lighting, this.profile, {
+      allowTurn, assessKnees: this.movement.id === 'atEase' && this.stage === 'scoring',
+    });
     const continuous = delta <= C.maximumFrameGapMs;
     if (!continuous) { quality.passed = false; quality.reasons = ['Camera quá chậm hoặc bị gián đoạn. Vui lòng thử lại.']; }
     if (raw.personCount !== 1) this.smoother.reset();
@@ -59,6 +70,7 @@ export class SessionProcessor {
     const rawGood = quality.checks.every(check => check.passed) && continuous;
 
     if (active && !good) {
+      if (this.movement.type === 'DYNAMIC') this.dynamicTracker.pause();
       if (rawGood) this.failureSince = null;
       else this.failureSince ??= raw.timestampMs;
       if (this.stage === 'calibrating') { this.elapsed = 0; this.calibration = []; }
@@ -92,13 +104,20 @@ export class SessionProcessor {
 
     if (this.stage === 'scoring' && good && this.profile) {
       this.elapsed += duration;
-      const normalized = normalizePose(smoothed, this.profile);
+      // Short visual holds must never supply missing/rejected joints to scoring.
+      const observed = { ...smoothed, landmarks: Object.fromEntries(
+        Object.keys(filtered.landmarks).map(name => [name, smoothed.landmarks[name as keyof typeof smoothed.landmarks]]),
+      ) };
+      const normalized = normalizePose(observed, this.profile);
       if (normalized) {
         const sample = extractFeatures(normalized);
         this.samples.push(sample);
         if (this.movement.type === 'DYNAMIC') {
-          const yaw = sample.values.bodyYaw?.value ?? 0;
-          const conf = sample.values.bodyYaw?.confidence ?? 0.8;
+          // Smoothing is visual assistance, not evidence that intermediate poses occurred.
+          const measured = normalizePose(filtered, this.profile);
+          const observedYaw = measured ? extractFeatures(measured).values.bodyYaw : undefined;
+          const yaw = observedYaw?.value ?? NaN;
+          const conf = observedYaw?.confidence ?? 0;
           let leftWristDist = sample.values.leftWristHipDistance?.value;
           let rightWristDist = sample.values.rightWristHipDistance?.value;
           const w = normalized.worldBody;
@@ -117,17 +136,17 @@ export class SessionProcessor {
             shoulderTilt: sample.values.shoulderTilt?.value,
             leftWristHipDistance: leftWristDist,
             rightWristHipDistance: rightWristDist,
-            isReliable: conf >= 0.5,
+            isReliable: Number.isFinite(yaw) && conf >= 0.6,
           });
         }
       }
 
       if (this.movement.type === 'DYNAMIC') {
-        const update = this.dynamicTracker.update(raw.timestampMs, this.motionBuffer, this.movement);
+        const update = this.dynamicTracker.update(this.elapsed, this.motionBuffer, this.movement);
         dynamicProgress = update.dynamicProgress;
         dynamicRatio = update.progressRatio;
         if (update.isComplete) {
-          const result = evaluate(this.movement, { samples: this.samples, validDurationMs: this.elapsed, qualityPassed: good }, this.motionBuffer);
+          const result = evaluate(this.movement, { samples: this.samples, validDurationMs: this.elapsed, qualityPassed: good }, this.motionBuffer, this.sequenceEngine);
           events.push({ type: 'score', result });
           this.stage = result.status === 'scored' ? 'completed' : 'blocked';
           this.samples = [];

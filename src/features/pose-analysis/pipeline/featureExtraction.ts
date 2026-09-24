@@ -16,6 +16,8 @@ export function extractFeatures(frame: NormalizedPoseFrame): FeatureSample {
       add('heelGapRatio', ['leftHeel', 'rightHeel', 'leftShoulder', 'rightShoulder'], () => distance(p.leftHeel!, p.rightHeel!) / width);
       add('headOffset', ['nose', 'leftShoulder', 'rightShoulder'], () => Math.abs(p.nose!.x - midpoint(p.leftShoulder!, p.rightShoulder!).x) / width);
       for (const side of ['left', 'right'] as const) add(`${side}WristHipDistance`, [`${side}Wrist`, `${side}Hip`, 'leftShoulder', 'rightShoulder'], () => distance(p[`${side}Wrist`]!, p[`${side}Hip`]!) / width);
+      const headTargetKey: LandmarkName = frame.landmarks.rightEye ? 'rightEye' : frame.landmarks.rightEar ? 'rightEar' : 'nose';
+      add('rightWristHeadDistance', ['rightWrist', headTargetKey, 'leftShoulder', 'rightShoulder'], () => distance(p.rightWrist!, p[headTargetKey]!) / width);
     }
   }
   if (w.leftShoulder || w.rightShoulder || w.leftHip || w.rightHip) {

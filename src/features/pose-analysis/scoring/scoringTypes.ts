@@ -1,4 +1,5 @@
 import type { FeatureId } from '../types';
+import type { SequenceReport } from './sequenceAnalysis';
 export type MovementType = 'STATIC' | 'DYNAMIC';
 
 export interface DynamicMovementConfig {
@@ -36,4 +37,4 @@ export interface CriterionResult {
 }
 export type ScoreResult =
   | { status: 'notScorable'; reasons: string[] }
-  | { status: 'scored'; total: number; confidence: number; criteria: CriterionResult[]; corrections: string[] };
+  | { status: 'scored'; total: number; confidence: number; criteria: CriterionResult[]; corrections: string[]; sequence?: SequenceReport };

@@ -114,3 +114,61 @@ test('atEaseMovement: standing with both straight knees loses points on leg flex
   }
 });
 
+test('saluteMovement: ideal salute posture earns 100 points and builds 4 correct cards', async () => {
+  const { saluteMovement } = await import('../../src/features/pose-analysis/scoring/saluteMovement');
+  const { buildRequirementCards } = await import('../../src/features/pose-analysis/scoring/postureFeedback');
+  const data = window();
+  // Simulate tay phải chào: gập khuỷu tay 48°, tay chạm đầu/tai (rightWristHeadDistance 0.22)
+  data.samples.forEach(s => {
+    s.values.rightWristHeadDistance = { value: 0.22, confidence: 0.95 };
+    s.values.rightElbowAngle = { value: 48, confidence: 0.95 };
+    s.values.leftElbowAngle = { value: 172, confidence: 0.95 };
+    s.values.leftWristHipDistance = { value: 0.35, confidence: 0.95 };
+    s.values.torsoTilt = { value: 3, confidence: 0.95 };
+    s.values.shoulderTilt = { value: 2, confidence: 0.95 };
+    s.values.leftKneeAngle = { value: 175, confidence: 0.95 };
+    s.values.rightKneeAngle = { value: 175, confidence: 0.95 };
+    s.values.heelGapRatio = { value: 0.12, confidence: 0.95 };
+    s.values.footOpeningAngle = { value: 44, confidence: 0.95 };
+    s.values.headOffset = { value: 0.05, confidence: 0.95 };
+  });
+
+  const result = evaluate(saluteMovement, data);
+  assert.equal(result.status, 'scored');
+  if (result.status === 'scored') {
+    assert.equal(result.total, 100);
+    const cards = buildRequirementCards(result.criteria, 'salute');
+    assert.equal(cards.length, 4);
+    assert.equal(cards[0].title, 'Tay phải giơ lên chào tự nhiên');
+    assert.equal(cards[0].statusLevel, 'PASS');
+    assert.equal(cards[1].title, 'Tay trái buông tự nhiên dọc thân');
+    assert.equal(cards[1].statusLevel, 'PASS');
+    assert.equal(cards[2].title, 'Thân người ngay ngắn & Đứng thẳng');
+    assert.equal(cards[2].statusLevel, 'PASS');
+    assert.equal(cards[3].title, 'Đầu ngay ngắn, mắt nhìn thẳng');
+    assert.equal(cards[3].statusLevel, 'PASS');
+  }
+});
+
+test('saluteMovement: hand not raised to head loses points with specific Vietnamese feedback', async () => {
+  const { saluteMovement } = await import('../../src/features/pose-analysis/scoring/saluteMovement');
+  const { buildRequirementCards } = await import('../../src/features/pose-analysis/scoring/postureFeedback');
+  const data = window();
+  // Tay phải chưa giơ lên đầu (rightWristHeadDistance 1.25) và khuỷu tay thẳng (160°)
+  data.samples.forEach(s => {
+    s.values.rightWristHeadDistance = { value: 1.25, confidence: 0.95 };
+    s.values.rightElbowAngle = { value: 160, confidence: 0.95 };
+  });
+
+  const result = evaluate(saluteMovement, data);
+  assert.equal(result.status, 'scored');
+  if (result.status === 'scored') {
+    assert.ok(result.total < 100);
+    const cards = buildRequirementCards(result.criteria, 'salute');
+    assert.equal(cards[0].title, 'Tay phải giơ lên chào tự nhiên');
+    assert.notEqual(cards[0].statusLevel, 'PASS');
+    assert.ok(cards[0].mistakes.some(m => m.includes('Tay phải') || m.includes('Khuỷu tay')));
+  }
+});
+
+

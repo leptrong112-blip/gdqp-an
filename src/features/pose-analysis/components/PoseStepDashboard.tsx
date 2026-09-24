@@ -27,6 +27,11 @@ interface PoseStepDashboardProps {
   scoreComparison?: { previous: number; delta: number } | null;
   isFullscreen?: boolean;
   movementId?: MovementId;
+  activeStep?: 1 | 2;
+  onStepChange?: (step: 1 | 2) => void;
+  autoCalibrate?: boolean;
+  onToggleAutoCalibrate?: (enabled: boolean) => void;
+  autoCountdown?: number | null;
 }
 
 const CHECKLIST_ITEMS = [
@@ -51,11 +56,22 @@ export function PoseStepDashboard({
   scoreComparison,
   isFullscreen = false,
   movementId = 'attention',
+  activeStep: activeStepProp,
+  onStepChange,
+  autoCalibrate = true,
+  onToggleAutoCalibrate,
+  autoCountdown = null,
 }: PoseStepDashboardProps) {
   const currentExercise = EXERCISE_CATALOG.find(e => e.id === movementId) || EXERCISE_CATALOG[0];
 
   // activeStep: 1 = Kiểm tra vị trí/camera, 2 = Hướng dẫn động tác & thực hiện
-  const [activeStep, setActiveStep] = useState<1 | 2>(1);
+  const [internalStep, setInternalStep] = useState<1 | 2>(1);
+  const activeStep = activeStepProp ?? internalStep;
+  const handleStepChange = (s: 1 | 2) => {
+    setInternalStep(s);
+    onStepChange?.(s);
+  };
+
   const [showStep1Details, setShowStep1Details] = useState(false);
   const [transitionCountdown, setTransitionCountdown] = useState<number | null>(null);
 
@@ -63,7 +79,7 @@ export function PoseStepDashboard({
   useEffect(() => {
     // Nếu đang trong quá trình hiệu chuẩn, đếm ngược, chấm điểm, hoàn thành hoặc có kết quả, giữ luôn ở Bước 2
     if (['calibrating', 'countdown', 'scoring', 'completed', 'result'].includes(stage)) {
-      setActiveStep(2);
+      handleStepChange(2);
       setTransitionCountdown(null);
       return;
     }
@@ -76,7 +92,7 @@ export function PoseStepDashboard({
         const timer2 = setTimeout(() => setTransitionCountdown(1), 2000);
         const timer3 = setTimeout(() => {
           setTransitionCountdown(null);
-          setActiveStep(2);
+          handleStepChange(2);
         }, 2800);
 
         return () => {
@@ -97,7 +113,7 @@ export function PoseStepDashboard({
       {/* ══════════ THANH TIẾN TRÌNH 2 BƯỚC ══════════ */}
       <div className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-xs font-bold gap-2">
         <button
-          onClick={() => setActiveStep(1)}
+          onClick={() => handleStepChange(1)}
           className={`flex-1 py-2 px-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
             activeStep === 1
               ? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
@@ -113,7 +129,7 @@ export function PoseStepDashboard({
         <ArrowRight size={14} className="text-slate-400 shrink-0" />
 
         <button
-          onClick={() => setActiveStep(2)}
+          onClick={() => handleStepChange(2)}
           className={`flex-1 py-2 px-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
             activeStep === 2
               ? 'bg-emerald-500 text-slate-950 shadow-md font-extrabold'
@@ -196,7 +212,7 @@ export function PoseStepDashboard({
                 <button
                   onClick={() => {
                     setTransitionCountdown(null);
-                    setActiveStep(2);
+                    handleStepChange(2);
                   }}
                   className="px-3 py-1.5 rounded-xl bg-white text-emerald-800 font-black text-xs shadow hover:bg-amber-300 hover:text-slate-950 transition-colors shrink-0 cursor-pointer ml-2"
                 >
@@ -213,7 +229,7 @@ export function PoseStepDashboard({
                   <div className="flex items-center justify-between">
                     <span>Tất cả điều kiện đã đạt! Bấm chuyển sang Bước 2.</span>
                     <button
-                      onClick={() => setActiveStep(2)}
+                      onClick={() => handleStepChange(2)}
                       className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-colors shrink-0 ml-2 cursor-pointer"
                     >
                       Sang Bước 2 →
@@ -419,20 +435,67 @@ export function PoseStepDashboard({
               </div>
             )}
 
-            {/* Nút bấm điều khiển */}
-            {['quality-check', 'blocked'].includes(stage) && (
-              <button
-                disabled={!ready}
-                onClick={onCalibrate}
-                className={`w-full py-3.5 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-xl transition-all cursor-pointer ${
-                  ready
-                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white hover:scale-[1.02] shadow-emerald-600/30'
-                    : 'bg-slate-300 dark:bg-slate-800 text-slate-500 cursor-not-allowed opacity-60'
-                }`}
-              >
-                <RotateCcw size={18} />
-                <span>Bắt đầu hiệu chuẩn &amp; Chấm điểm</span>
-              </button>
+            {/* Khu vực kích hoạt hiệu chuẩn & Chấm điểm */}
+            {autoCountdown !== null && stage === 'quality-check' ? (
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 text-white shadow-xl space-y-2.5 animate-in fade-in zoom-in-95 duration-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-300 animate-ping" />
+                    <span className="font-extrabold text-xs uppercase tracking-wider text-amber-200">
+                      Tự động hiệu chuẩn &amp; Chấm
+                    </span>
+                  </div>
+                  <span className="text-2xl font-black font-mono text-amber-300 animate-bounce">
+                    {autoCountdown}s
+                  </span>
+                </div>
+                <p className="text-xs text-emerald-100 font-medium leading-relaxed">
+                  Đã nhận diện đủ toàn thân! Đứng yên đúng tư thế, hệ thống sẽ tự động đo tỉ lệ cơ thể sau <span className="font-black text-amber-300 font-mono">{autoCountdown}s</span>...
+                </p>
+                <div className="flex gap-2 pt-1">
+                  <button
+                    onClick={onCalibrate}
+                    className="flex-1 py-2 px-3 rounded-xl bg-white hover:bg-amber-300 text-emerald-950 font-black text-xs shadow transition-colors cursor-pointer"
+                  >
+                    Hiệu chuẩn ngay →
+                  </button>
+                  <button
+                    onClick={() => onToggleAutoCalibrate?.(false)}
+                    className="py-2 px-3 rounded-xl bg-emerald-950/60 hover:bg-emerald-950 text-emerald-200 text-xs font-bold border border-emerald-400/30 transition-colors cursor-pointer"
+                  >
+                    Tắt tự động
+                  </button>
+                </div>
+              </div>
+            ) : (
+              ['quality-check', 'blocked'].includes(stage) && (
+                <div className="space-y-2">
+                  <button
+                    disabled={!ready}
+                    onClick={onCalibrate}
+                    className={`w-full py-3.5 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-xl transition-all cursor-pointer ${
+                      ready
+                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white hover:scale-[1.02] shadow-emerald-600/30'
+                        : 'bg-slate-300 dark:bg-slate-800 text-slate-500 cursor-not-allowed opacity-60'
+                    }`}
+                  >
+                    <RotateCcw size={18} />
+                    <span>Bắt đầu hiệu chuẩn &amp; Chấm điểm</span>
+                  </button>
+
+                  {onToggleAutoCalibrate && (
+                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300 cursor-pointer pt-1 hover:text-slate-900 dark:hover:text-white transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={autoCalibrate}
+                        onChange={e => onToggleAutoCalibrate(e.target.checked)}
+                        className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                      />
+                      <span>Tự động hiệu chuẩn khi đứng đúng vị trí (Quay 1 mình)</span>
+                    </label>
+                  )}
+                </div>
+              )
             )}
 
             {running && stage !== 'result' && (

@@ -4,6 +4,7 @@ import type { FeatureRule, MovementDefinition, ScoreResult } from './scoringType
 import { diagnoseMeasurements } from './postureFeedback';
 import { evaluateDynamicAttempt } from './dynamicMovementAnalyzer';
 import { TemporalMotionBuffer } from '../pipeline/motionBuffer';
+import { javascriptSequenceEngine, type SequenceEngine } from './sequenceEngine';
 
 export function ruleScore(value: number, rule: FeatureRule): number {
   const [lo, hi] = rule.ideal, [zeroLo, zeroHi] = rule.zero;
@@ -15,16 +16,18 @@ export function ruleScore(value: number, rule: FeatureRule): number {
 export function evaluate(
   definition: MovementDefinition,
   window: FeatureWindow,
-  motionBuffer?: TemporalMotionBuffer
+  motionBuffer?: TemporalMotionBuffer,
+  sequenceEngine: SequenceEngine = javascriptSequenceEngine
 ): ScoreResult {
   if (definition.type === 'DYNAMIC') {
+    if (!window.qualityPassed) return { status: 'notScorable', reasons: ['Chất lượng dữ liệu chưa đủ để phân tích chuyển động.'] };
     if (motionBuffer && motionBuffer.length > 0) {
-      return evaluateDynamicAttempt(definition, motionBuffer);
+      return evaluateDynamicAttempt(definition, motionBuffer, sequenceEngine);
     }
     const buf = new TemporalMotionBuffer(Math.max(150, window.samples.length));
     for (const s of window.samples) {
-      const yaw = s.values.bodyYaw?.value ?? 0;
-      const conf = s.values.bodyYaw?.confidence ?? 0.8;
+      const yaw = s.values.bodyYaw?.value ?? NaN;
+      const conf = s.values.bodyYaw?.confidence ?? 0;
       buf.push({
         timestampMs: s.timestampMs,
         bodyYawDeg: yaw,
@@ -33,10 +36,10 @@ export function evaluate(
         shoulderTilt: s.values.shoulderTilt?.value,
         leftWristHipDistance: s.values.leftWristHipDistance?.value,
         rightWristHipDistance: s.values.rightWristHipDistance?.value,
-        isReliable: conf >= 0.5,
+        isReliable: Number.isFinite(yaw) && conf >= 0.6,
       });
     }
-    return evaluateDynamicAttempt(definition, buf);
+    return evaluateDynamicAttempt(definition, buf, sequenceEngine);
   }
 
   const refuse = (reason: string): ScoreResult => ({ status: 'notScorable', reasons: [reason] });

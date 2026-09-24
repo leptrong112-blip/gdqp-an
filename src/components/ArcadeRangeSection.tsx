@@ -1,15 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import ShootingRange3D, { RangeImpact } from './ShootingRange3D';
-import { ammoAction, ARCADE_EXERCISES, initialAmmo } from './arcadeRangeLogic';
+import { ammoAction, ARCADE_EXERCISES, initialAmmo, arcadeFlightSeconds } from './arcadeRangeLogic';
 import type { TargetId } from '../data/akShootingData';
 import { useRangeControls } from './useRangeControls';
 import RangeViewControls from './RangeViewControls';
 import { loadSightPreset } from './rangeSightPresets';
+import FlightCamMonitor, { type FlightCamReplayData } from './FlightCamMonitor';
 
 type Shot = RangeImpact & { shotNumber: number };
 export default function ArcadeRangeSection() {
   const [exerciseIndex, setExerciseIndex] = useState(0);
   const exercise = ARCADE_EXERCISES[exerciseIndex];
+  const [flightCamEnabled, setFlightCamEnabled] = useState(() => exercise.id === 'long');
+  const [replayData, setReplayData] = useState<FlightCamReplayData | null>(null);
   const [roundKey, setRoundKey] = useState(0);
   const [ammo, setAmmo] = useState(() => initialAmmo(exercise));
   const ammoRef = useRef(ammo);
@@ -27,6 +30,7 @@ export default function ArcadeRangeSection() {
   const [report, setReport] = useState('');
   const fireRef = useRef<((aim?: { x: number; y: number }) => Promise<RangeImpact | null>) | null>(null);
   const legacyRef = useRef<(() => RangeImpact | null) | null>(null);
+
   const totalRounds = exercise.rounds * exercise.magazines;
   const completed = shots.length === totalRounds;
   const running = started && !paused && !completed;
@@ -48,6 +52,10 @@ export default function ArcadeRangeSection() {
     setExerciseIndex(index); changeAmmo(initialAmmo(ARCADE_EXERCISES[index]));
     setShots([]); setStarted(false); setPaused(false); setReport('');
     reloadElapsed.current = 0; setReloadProgress(0); setAim({ x: 0, y: 0 }); setRoundKey(k => k + 1);
+    setReplayData(null);
+    if (ARCADE_EXERCISES[index].id === 'long') {
+      setFlightCamEnabled(true);
+    }
   };
   const fire = useCallback(async (shotAim?: { x: number; y: number }) => {
     if (!running || controls.panel || flightLock.current || !fireRef.current) return;
@@ -62,6 +70,16 @@ export default function ArcadeRangeSection() {
       if (!impact) { changeAmmo(previous); setReport('Cảnh đang tải. Hãy thử lại.'); return; }
       setShots(prev => [...prev, { ...impact, shotNumber: prev.length + 1 }]);
       setReport(impact.isHit ? `Bia ${(impact.targetIndex ?? 0) + 1}: +${impact.score} điểm` : 'Trượt bia · 0 điểm');
+      if (impact.snapshot) {
+        setReplayData({
+          snapshot: impact.snapshot,
+          isHit: impact.isHit,
+          targetLane: impact.targetIndex,
+          score: impact.score,
+          impactOffset: { x: impact.x / 1000, y: impact.y / 1000 },
+          timestamp: Date.now(),
+        });
+      }
     } catch {
       if (token === epoch.current) { changeAmmo(previous); setReport('Không thể thực hiện lượt này. Hãy thử lại.'); }
     } finally {
@@ -113,14 +131,39 @@ export default function ArcadeRangeSection() {
     <div className="grid lg:grid-cols-[minmax(0,2fr)_minmax(260px,1fr)] gap-4">
       <div ref={rangeRef} tabIndex={0} data-range-gameplay data-pointer-locked={controls.locked} onContextMenu={e => e.preventDefault()} className={`relative h-[550px] sm:h-[640px] rounded-3xl overflow-hidden border border-slate-700 bg-slate-950 touch-none ${controls.locked ? 'cursor-none' : 'cursor-crosshair'}`}
         onPointerMove={e => {
-          if (e.pointerType === 'mouse' || !running || controls.panel || (e.target as HTMLElement).closest('button, [data-range-controls]')) return;
+          if (controls.locked || !running || controls.panel || (e.target as HTMLElement).closest('button, [data-range-controls]')) return;
           setAim(pointerAim(e));
         }}
-        onPointerDown={e => { if (e.pointerType !== 'mouse' && e.button === 0 && !controls.panel && !(e.target as HTMLElement).closest('button, [data-range-controls]')) { e.preventDefault(); const shotAim = pointerAim(e); setAim(shotAim); void fire(shotAim); } }}>
+        onPointerDown={e => {
+          if (controls.locked || !running || controls.panel || (e.target as HTMLElement).closest('button, [data-range-controls]')) return;
+          const shotAim = pointerAim(e);
+          setAim(shotAim);
+          if (e.pointerType !== 'mouse' && e.button === 0) {
+            e.preventDefault();
+            void fire(shotAim);
+          }
+        }}>
         <RangeViewControls controls={controls} isAds={controls.panel ? controls.previewAds : adsHeld} sightPresetId={sightPresetId} onSightPresetChange={setSightPresetId} hasSeparateSight={hasSeparateSight} />
         <ShootingRange3D key={roundKey} ads={controls.panel ? controls.previewAds : adsHeld} aim={aim} sway={{ x: 0, y: 0 }} recoil={{ x: 0, y: 0 }} targetId={targetId} shots={shots} fireRef={legacyRef}
           look={controls.look} alignment={controls.alignment} sightPresetId={sightPresetId} onSightAvailabilityChange={setHasSeparateSight} hideReticle={true}
-          arcade={{ moving: exercise.moving, running: running && !controls.panel, targets: exercise.targets, reloading: ammo.reloading, fireRef }} />
+          arcade={{
+            moving: exercise.moving,
+            running: running && !controls.panel,
+            targets: exercise.targets,
+            reloading: ammo.reloading,
+            fireRef,
+          }} />
+        {controls.fullscreen && flightCamEnabled && (
+          <div className="absolute top-24 right-4 z-30 w-[260px] sm:w-[320px] shadow-2xl bg-slate-950/95 backdrop-blur-md p-3 rounded-2xl border border-cyan-500/40">
+            <FlightCamMonitor
+              enabled={flightCamEnabled}
+              replayData={replayData}
+              distance={exercise.distance}
+              onToggle={() => setFlightCamEnabled(false)}
+              onReplay={() => setReplayData(prev => prev ? { ...prev, timestamp: Date.now() } : null)}
+            />
+          </div>
+        )}
         <div className="absolute top-14 left-4 right-4 flex flex-wrap justify-between gap-2 pointer-events-none text-xs font-bold text-white">
           <span className="rounded-xl bg-slate-950/80 px-3 py-2">BĂNG {ammo.magazine}/{exercise.magazines} · CÒN {ammo.left}/{exercise.rounds} VIÊN</span>
           <span className="rounded-xl bg-slate-950/80 px-3 py-2">TIẾN ĐỘ {shots.length}/{totalRounds}</span>
@@ -143,6 +186,16 @@ export default function ArcadeRangeSection() {
         <div className="text-4xl font-black text-cyan-300">{score}<span className="text-base text-slate-400"> / {totalRounds * 10}</span></div>
         <progress className="w-full accent-cyan-400" value={shots.length} max={totalRounds} />
         <p className="text-xs">Đã dùng {ammo.fired}/{totalRounds} viên · Thay băng {ammo.reloads}/{exercise.magazines - 1} lần</p>
+
+        {/* ══════════ KHỐI FLIGHT CAM (C++/WASM) & TELEMETRY ══════════ */}
+        <FlightCamMonitor
+          enabled={flightCamEnabled}
+          replayData={replayData}
+          distance={exercise.distance}
+          onToggle={() => setFlightCamEnabled(prev => !prev)}
+          onReplay={() => setReplayData(prev => prev ? { ...prev, timestamp: Date.now() } : null)}
+        />
+
         {Array.from({ length: exercise.targets }, (_, lane) => <div key={lane} className="flex justify-between rounded-xl bg-slate-800 p-3 text-xs"><span>Bia {lane + 1}</span><span>{shots.filter(s => s.isHit && s.targetIndex === lane).length} lượt trúng</span></div>)}
         <div className="max-h-56 overflow-y-auto space-y-2" aria-label="Lịch sử lượt bắn">{shots.map(shot => <div key={shot.shotNumber} className="flex justify-between text-xs"><span>Lượt {shot.shotNumber} · {shot.isHit ? `Bia ${(shot.targetIndex ?? 0) + 1}` : 'Trượt'}</span><strong className="text-cyan-300">+{shot.score}</strong></div>)}</div>
         <p className="text-xs text-slate-400">Điểm được chốt khi vệt bắn tới mặt phẳng bia. Bia có thể đổi vị trí trong thời gian bay.</p>

@@ -31,7 +31,7 @@ function rotatedPoseFrame(yawDeg: number, timestampMs = 0, mirrored = false): Ca
     const zRot = -x0 * sin;
     landmark.world = { x: xRot, y: y0, z: zRot };
     landmark.image = {
-      x: 2 / 3 + xRot * (mirrored ? -1 : 1),
+      x: 0.5 + xRot * (mirrored ? -1 : 1) / frame.aspectRatio,
       y: landmark.image.y,
       z: zRot,
     };

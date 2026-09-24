@@ -7,6 +7,7 @@ import { filterLandmarks } from '../../src/features/pose-analysis/pipeline/confi
 import { LandmarkSmoother } from '../../src/features/pose-analysis/pipeline/smoothing';
 import { attentionFrame, goodLighting } from './fixtures/pose/attention';
 import { SessionProcessor } from '../../src/features/pose-analysis/runtime/sessionProcessor';
+import { getSkeletonViewport, projectSkeletonPoint } from '../../src/features/pose-analysis/rendering/skeletonRenderer';
 import type { PoseDetector, WorkerEvent } from '../../src/features/pose-analysis/runtime/workerProtocol';
 test('angles use geometry and reject zero-length limbs', () => {
   const a = { x: 1, y: 0, z: 0 }, b = { x: 0, y: 0, z: 0 }, c = { x: 0, y: 1, z: 1 };
@@ -18,9 +19,22 @@ test('body features are invariant to image scale, translation, mirroring and asp
     return extractFeatures(normalizePose(frame, profile)!).values;
   });
   for (const key of Object.keys(features[0])) for (const values of features.slice(1)) assert.ok(Math.abs(values[key].value - features[0][key].value) < 1e-6, key);
-  const frame = attentionFrame(); frame.aspectRatio = 9 / 16;
-  // Canonical x is already aspect-correct; dimensions cannot change joint geometry.
-  assert.deepEqual(extractFeatures(normalizePose(frame, createCalibration(Array(20).fill(frame))!)!).values, features[0]);
+  const frame = attentionFrame(), oldAspect = frame.aspectRatio, nextAspect = 9 / 16;
+  for (const point of Object.values(frame.landmarks)) {
+    if (!point) continue;
+    point.image.x = 0.5 + (point.image.x - 0.5) * oldAspect / nextAspect;
+    point.image.z = point.image.z * oldAspect / nextAspect;
+  }
+  frame.aspectRatio = nextAspect;
+  // Equivalent normalized coordinates at another aspect ratio keep body geometry.
+  const adjusted = extractFeatures(normalizePose(frame, createCalibration(Array(20).fill(frame))!)!).values;
+  for (const key of Object.keys(features[0])) assert.ok(Math.abs(adjusted[key].value - features[0][key].value) < 1e-12, key);
+});
+test('skeleton projection uses the same object-contain rectangle as the video', () => {
+  const viewport = getSkeletonViewport(1280, 720, 4 / 3);
+  assert.deepEqual(viewport, { width: 960, height: 720, offsetX: 160, offsetY: 0 });
+  assert.deepEqual(projectSkeletonPoint(viewport, { x: 0.5, y: 0.25, z: 0 }), { x: 640, y: 180 });
+  assert.deepEqual(projectSkeletonPoint(viewport, { x: 0, y: 1, z: 0 }), { x: 160, y: 720 });
 });
 test('filter rejects uncertain, absent-presence failures and nonfinite points', () => {
   const frame = attentionFrame(); frame.landmarks.leftWrist!.visibility = 0.4; frame.landmarks.rightWrist!.presence = 0.2; frame.landmarks.nose!.image.x = NaN;
@@ -34,6 +48,8 @@ test('smoothing expires missing data and resets after long gaps', () => {
   const missing = attentionFrame(200); delete missing.landmarks.nose; assert.ok(smoother.apply(missing).landmarks.nose);
   missing.timestampMs = 251; assert.equal(smoother.apply(missing).landmarks.nose, undefined);
   assert.equal(smoother.apply(attentionFrame(1000)).landmarks.nose!.image.x, initial.landmarks.nose!.image.x);
+  const changedAspect = attentionFrame(1050); changedAspect.aspectRatio = 16 / 9; changedAspect.landmarks.nose!.image.x = 0.75;
+  assert.equal(smoother.apply(changedAspect).landmarks.nose!.image.x, 0.75, 'aspect changes must not blend incompatible image coordinates');
 });
 test('calibration rejects unstable anatomical proportions', () => {
   const frames = Array.from({ length: 20 }, (_, i) => attentionFrame(i * 100));

@@ -1,13 +1,14 @@
 import { median } from '../pipeline/geometry';
 export class AdaptiveBudget {
-  fps: number; width = 640; height = 480;
+  fps: number;
   private durations: number[] = [];
   constructor(private fallback = false) { this.fps = fallback ? 10 : 15; }
   observe(duration: number) {
     this.durations.push(duration); if (this.durations.length > 30) this.durations.shift();
     if (this.durations.length < 15) return;
     const typical = median(this.durations);
-    if (typical > 80) { this.fps = Math.min(this.fps, 10); this.width = 480; this.height = 360; }
+    // Lower inference frequency without renegotiating the camera's aspect ratio.
+    if (typical > 80) this.fps = Math.min(this.fps, 10);
     if (typical > 125) this.fps = 8;
   }
 }

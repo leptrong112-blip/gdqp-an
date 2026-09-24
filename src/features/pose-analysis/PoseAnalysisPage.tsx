@@ -3,15 +3,41 @@ import { usePoseSession } from './hooks/usePoseSession';
 import { PoseViewport } from './components/PoseViewport';
 import { PoseStepDashboard } from './components/PoseStepDashboard';
 import { SessionControls } from './components/SessionControls';
-import { ScoreResults } from './components/ScoreResults';
+import { PoseResultDialog } from './components/PoseResultDialog';
 import { ExerciseDropdown } from './components/ExerciseDropdown';
+import { EXERCISE_CATALOG } from './scoring/movements';
 import { Minimize2, LayoutDashboard } from 'lucide-react';
+import { playCountdownBeep } from './utils/audioFeedback';
+import type { MovementId } from './types';
+import WasmCompatibilityNotice from '../../components/WasmCompatibilityNotice';
 
 export default function PoseAnalysisPage() {
   const session = usePoseSession();
+  const currentExercise = EXERCISE_CATALOG.find(e => e.id === session.movementId) || EXERCISE_CATALOG[0];
   const studioContainerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showDashboardInFullscreen, setShowDashboardInFullscreen] = useState(true);
+  const [dismissedResult, setDismissedResult] = useState<typeof session.result>(null);
+
+  // activeStep: 1 = Kiểm tra vị trí/camera, 2 = Hướng dẫn động tác & thực hiện
+  const [activeStep, setActiveStep] = useState<1 | 2>(1);
+
+  // Chế độ tự động hiệu chuẩn khi đứng đúng vị trí (dành cho học sinh tự quay 1 mình)
+  const [autoCalibrate, setAutoCalibrate] = useState(() => {
+    try {
+      return localStorage.getItem('pose_auto_calibrate') !== 'false';
+    } catch {
+      return true;
+    }
+  });
+  const [autoCountdown, setAutoCountdown] = useState<number | null>(null);
+
+  const handleToggleAutoCalibrate = (enabled: boolean) => {
+    setAutoCalibrate(enabled);
+    try {
+      localStorage.setItem('pose_auto_calibrate', enabled ? 'true' : 'false');
+    } catch {}
+  };
 
   // Bật/tắt toàn màn hình thật của trình duyệt & laptop/pc
   const toggleFullscreen = async () => {
@@ -45,6 +71,51 @@ export default function PoseAnalysisPage() {
 
   const ready = !!session.snapshot?.quality.passed;
 
+  // Luồng tự động hiệu chuẩn & đếm ngược khi người dùng đã vào vị trí chuẩn
+  useEffect(() => {
+    if (!autoCalibrate || activeStep !== 2 || session.stage !== 'quality-check' || !ready || session.result) {
+      setAutoCountdown(null);
+      return;
+    }
+
+    setAutoCountdown(3);
+    playCountdownBeep(700, 0.08);
+
+    const t1 = setTimeout(() => {
+      setAutoCountdown(2);
+      playCountdownBeep(700, 0.08);
+    }, 1000);
+
+    const t2 = setTimeout(() => {
+      setAutoCountdown(1);
+      playCountdownBeep(700, 0.08);
+    }, 2000);
+
+    const t3 = setTimeout(() => {
+      setAutoCountdown(null);
+      playCountdownBeep(1050, 0.18);
+      session.calibrate();
+    }, 3000);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      setAutoCountdown(null);
+    };
+  }, [autoCalibrate, activeStep, session.stage, ready, session.result, session.calibrate]);
+
+  const handleSelectMovement = (id: MovementId) => {
+    session.changeMovement(id);
+    setActiveStep(2);
+  };
+
+  const handleRetry = () => {
+    setDismissedResult(null);
+    session.retry();
+    setActiveStep(2);
+  };
+
   return (
     <div
       ref={studioContainerRef}
@@ -61,7 +132,7 @@ export default function PoseAnalysisPage() {
             <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse" />
             <div>
               <h1 className="text-sm sm:text-base font-extrabold text-white">
-                {session.movementId === 'atEase' ? 'Luyện tư thế đứng nghỉ' : 'Luyện tư thế đứng nghiêm'} · Toàn màn hình
+                {currentExercise.name} · Toàn màn hình
               </h1>
               <p className="text-[11px] text-slate-400 hidden sm:block">
                 AI MediaPipe Pose Landmark · Xử lý Offline bảo mật 100% trên thiết bị
@@ -73,7 +144,7 @@ export default function PoseAnalysisPage() {
             {/* Chuyển đổi động tác ở chế độ toàn màn hình */}
             <ExerciseDropdown
               currentId={session.movementId}
-              onSelect={session.changeMovement}
+              onSelect={handleSelectMovement}
               isFullscreen={true}
             />
 
@@ -109,10 +180,10 @@ export default function PoseAnalysisPage() {
               AI Pose Analysis · Bản thử nghiệm
             </p>
             <h1 className="text-2xl sm:text-3xl font-black mt-2">
-              {session.movementId === 'atEase' ? 'Luyện tư thế đứng nghỉ' : 'Luyện tư thế đứng nghiêm'}
+              {currentExercise.name}
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-3xl">
-              Quy trình 2 bước: <strong>Bước 1</strong> kiểm tra camera &amp; vị trí toàn thân <span className="mx-1 text-red-600 dark:text-red-400 font-black">→</span> <strong>Bước 2</strong> làm theo 4 động tác điều lệnh {session.movementId === 'atEase' ? 'đứng nghỉ' : 'đứng nghiêm'} để hiệu chuẩn và chấm điểm.
+              Quy trình 2 bước: <strong>Bước 1</strong> kiểm tra camera &amp; vị trí toàn thân <span className="mx-1 text-red-600 dark:text-red-400 font-black">→</span> <strong>Bước 2</strong> làm theo 4 động tác điều lệnh {currentExercise.name.toLowerCase()} để hiệu chuẩn và chấm điểm.
             </p>
           </div>
 
@@ -120,7 +191,7 @@ export default function PoseAnalysisPage() {
           <div className="self-start sm:self-center shrink-0">
             <ExerciseDropdown
               currentId={session.movementId}
-              onSelect={session.changeMovement}
+              onSelect={handleSelectMovement}
               isFullscreen={false}
             />
           </div>
@@ -145,7 +216,18 @@ export default function PoseAnalysisPage() {
             progress={session.snapshot?.progress ?? 0}
             isFullscreen={isFullscreen}
             onToggleFullscreen={toggleFullscreen}
+            autoCountdown={autoCountdown}
           />
+
+          {session.sequenceEngine === 'javascript' && <WasmCompatibilityNotice feature="pose-sequence" />}
+
+          {session.result && (
+            <button type="button" onClick={() => setDismissedResult(null)} className="shrink-0 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-lg hover:bg-emerald-700">
+              {session.result.status === 'scored'
+                ? `Xem kết quả · Mức đạt ${session.result.total}%`
+                : 'Xem lý do chưa thể chấm điểm'}
+            </button>
+          )}
 
           {!isFullscreen && (
             <>
@@ -155,7 +237,7 @@ export default function PoseAnalysisPage() {
                 start={session.start}
                 stop={session.stop}
                 calibrate={session.calibrate}
-                retry={session.retry}
+                retry={handleRetry}
                 changeCamera={session.changeCamera}
               />
 
@@ -226,10 +308,15 @@ export default function PoseAnalysisPage() {
               onStart={session.start}
               onStop={session.stop}
               onCalibrate={session.calibrate}
-              onRetry={session.retry}
+              onRetry={handleRetry}
               scoreComparison={session.scoreComparison}
               isFullscreen={isFullscreen}
               movementId={session.movementId}
+              activeStep={activeStep}
+              onStepChange={setActiveStep}
+              autoCalibrate={autoCalibrate}
+              onToggleAutoCalibrate={handleToggleAutoCalibrate}
+              autoCountdown={autoCountdown}
             />
 
             {!isFullscreen && (
@@ -241,15 +328,14 @@ export default function PoseAnalysisPage() {
         )}
       </div>
 
-      {/* KẾT QUẢ CHẤM ĐIỂM (Ở CHẾ ĐỘ THƯỜNG) */}
-      {!isFullscreen && session.result && (
-        <ScoreResults
+      <PoseResultDialog
           result={session.result}
+          open={!!session.result && dismissedResult !== session.result}
+          onClose={() => setDismissedResult(session.result)}
           movementId={session.movementId}
-          onRetry={session.retry}
+          onRetry={handleRetry}
           scoreComparison={session.scoreComparison}
-        />
-      )}
+      />
     </div>
   );
 }

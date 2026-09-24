@@ -10,6 +10,7 @@ export function PoseViewport({
   progress,
   isFullscreen = false,
   onToggleFullscreen,
+  autoCountdown = null,
 }: {
   videoRef: RefObject<HTMLVideoElement>;
   canvasRef: RefObject<HTMLCanvasElement>;
@@ -18,6 +19,7 @@ export function PoseViewport({
   progress: number;
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
+  autoCountdown?: number | null;
 }) {
   const container = useRef<HTMLDivElement>(null), [localExpanded, setLocalExpanded] = useState(false);
   const active = ['quality-check', 'calibrating', 'countdown', 'scoring', 'completed', 'blocked'].includes(stage);
@@ -63,7 +65,7 @@ export function PoseViewport({
           className="absolute inset-0 h-full w-full object-contain"
           aria-label="Hình ảnh trực tiếp từ camera"
         />
-        <canvas ref={canvasRef} className="absolute inset-0 h-full w-full pointer-events-none" aria-hidden="true" />
+        <canvas ref={canvasRef} className="absolute inset-0 z-[1] h-full w-full pointer-events-none" aria-hidden="true" />
       </div>
 
       {stage === 'completed' && (
@@ -90,7 +92,7 @@ export function PoseViewport({
           {stage === 'completed' || stage === 'result' ? (
             <>
               <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span>Camera sẵn sàng · Tạm dừng phân tích</span>
+              <span>Đã kết thúc lượt đánh giá</span>
             </>
           ) : active ? (
             <>
@@ -121,7 +123,30 @@ export function PoseViewport({
         </button>
       </div>
 
-      {active && labels[stage] && !isFullscreen && stage !== 'completed' && (
+      {/* Banner đếm ngược tự động hiệu chuẩn khi người dùng đứng đủ vị trí (rất hữu ích khi đứng xa 2.5m) */}
+      {autoCountdown !== null && stage === 'quality-check' && (
+        <div className="absolute bottom-6 left-6 right-6 z-20 bg-emerald-950/95 border-2 border-emerald-400 text-white rounded-3xl p-4 shadow-2xl backdrop-blur-xl flex items-center justify-between gap-4 animate-in fade-in zoom-in-95 duration-200">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500/25 border-2 border-amber-300 flex items-center justify-center font-black font-mono text-2xl text-amber-300 shrink-0 shadow-lg animate-pulse">
+              {autoCountdown}
+            </div>
+            <div>
+              <p className="font-black text-sm sm:text-base text-amber-300 flex items-center gap-1.5">
+                <span>🎯</span> ĐÃ ĐẠT CHUẨN VỊ TRÍ · TỰ ĐỘNG HIỆU CHUẨN
+              </p>
+              <p className="text-xs text-emerald-100 font-medium mt-0.5">
+                Đứng nghiêm/nghỉ ngay ngắn. Máy sẽ tự động đo tỷ lệ cơ thể sau <span className="font-bold text-amber-300 font-mono">{autoCountdown}s</span>...
+              </p>
+            </div>
+          </div>
+          <div className="hidden sm:flex items-center gap-1.5 text-xs text-emerald-200 font-bold bg-emerald-900/80 px-3 py-1.5 rounded-full border border-emerald-400/30 shrink-0">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            <span>Tập một mình</span>
+          </div>
+        </div>
+      )}
+
+      {active && labels[stage] && !isFullscreen && stage !== 'completed' && autoCountdown === null && (
         <div className="absolute bottom-6 left-6 right-6 bg-slate-950/90 rounded-2xl p-4 text-center text-white border border-slate-800 backdrop-blur-md shadow-2xl">
           <p className="font-bold text-base sm:text-lg" role="status">
             {labels[stage]}

@@ -2,6 +2,9 @@ import { Canvas, useFrame, useGraph } from '@react-three/fiber';
 import { OrbitControls, useGLTF, useAnimations } from '@react-three/drei';
 import { Suspense, useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import * as THREE from 'three';
+import { createGroundFlight, type Flight, type PhysicsEngine, type Vec3 } from '../../features/physics/projectile';
+import { usePhysicsEngineState } from '../../features/physics/usePhysicsEngine';
+import WasmCompatibilityNotice from '../WasmCompatibilityNotice';
 
 // 💡 THUẬT TOÁN QUÉT XƯƠNG (Chỉ giữ lại để tìm tọa độ phóng lựu đạn)
 function findHandBone(nodes: any, isLeftHand: boolean) {
@@ -93,7 +96,10 @@ function SoldierWithWeapons({
 }
 
 // 2. Component Quả lựu đạn bay Parabol (Lựu đạn này để tạo quỹ đạo bay)
-function FlyingGrenade({ isFlying, visible, spawnPos, onHit }: { isFlying: boolean; visible: boolean; spawnPos: [number, number, number]; onHit: () => void }) {
+function FlyingGrenade({ isFlying, visible, spawnPos, rotationAngle, onHit, physics }: { isFlying: boolean; visible: boolean; spawnPos: Vec3; rotationAngle: number; onHit: (position: Vec3) => void; physics: PhysicsEngine }) {
+  const pathRef = useRef<Flight | null>(null);
+  const pointRef = useRef<Vec3>([0, 0, 0]);
+  const hitRef = useRef(false);
   const grenadeRef = useRef<THREE.Group>(null);
   const timeRef = useRef<number>(0);
   const [hasHit, setHasHit] = useState<boolean>(false);
@@ -103,39 +109,42 @@ function FlyingGrenade({ isFlying, visible, spawnPos, onHit }: { isFlying: boole
   useFrame((state, delta) => {
     if (!isFlying || !grenadeRef.current || !visible || hasHit) return;
     
-    timeRef.current += delta * 1.6; 
-    const t = timeRef.current;
-
-    const speedX = 3.6;   
-    const initialVelocityY = 3.5; 
-    const gravity = 9.8; 
-
-    const x = spawnPos[0] + (t * speedX);
-    const y = spawnPos[1] + (initialVelocityY * t) - (0.5 * gravity * t * t); 
-    const z = spawnPos[2];
-
-    if (y < -0.4 && t > 0.1) {
-      setHasHit(true); 
-      onHit();
-      return;
+    if (hitRef.current) return;
+    if (!pathRef.current) {
+      // Preserve the existing stylized launch; rotate it with the character.
+      // Scene parameters are not calibrated to real equipment.
+      pathRef.current = createGroundFlight(physics,
+        [spawnPos[0], Math.max(-0.4, spawnPos[1]), spawnPos[2]],
+        [3.6 * Math.cos(rotationAngle), 3.5, -3.6 * Math.sin(rotationAngle)], -0.4, 9.8);
     }
-
-    grenadeRef.current.position.set(x, y, z);
-    grenadeRef.current.rotation.x += 0.2;
+    // Ignore background-tab gaps while preserving ordinary frame-rate independence.
+    if (document.hidden) return;
+    timeRef.current += Math.min(delta, 0.1) * 1.6;
+    const path = pathRef.current;
+    const point = path.sample(timeRef.current, pointRef.current);
+    grenadeRef.current.position.fromArray(point);
+    grenadeRef.current.rotation.x = timeRef.current * 7.5;
+    if (timeRef.current >= path.duration) {
+      hitRef.current = true;
+      setHasHit(true);
+      onHit([...point]);
+    }
   });
 
   useEffect(() => { 
     if (!isFlying) {
       timeRef.current = 0;
+      pathRef.current = null;
+      hitRef.current = false;
       setHasHit(false);
     }
   }, [isFlying]);
 
-  return <primitive ref={grenadeRef} object={grenadeClone} scale={0.01} visible={visible && !hasHit} />;
+  return <primitive ref={grenadeRef} object={grenadeClone} position={spawnPos} scale={0.01} visible={visible && !hasHit} />;
 }
 
 // 3. Component Hiệu ứng pháo hoa bùng nổ
-function ExplosionEffect({ triggerCount }: { triggerCount: number }) {
+function ExplosionEffect({ triggerCount, position }: { triggerCount: number; position: Vec3 }) {
   const groupRef = useRef<THREE.Group>(null);
   const lastTriggerRef = useRef<number>(0);
   const particlesDataRef = useRef<any[]>([]);
@@ -151,7 +160,7 @@ function ExplosionEffect({ triggerCount }: { triggerCount: number }) {
       const speed = 4.0 + Math.random() * 5.0; 
 
       return {
-        x: 2.0, y: -0.4, z: 0.0,
+        x: position[0], y: position[1], z: position[2],
         vx: Math.sin(phi) * Math.cos(theta) * speed,
         vy: (Math.cos(phi) * speed) + 4.5, 
         vz: Math.sin(phi) * Math.sin(theta) * speed,
@@ -159,7 +168,7 @@ function ExplosionEffect({ triggerCount }: { triggerCount: number }) {
       };
     });
     setActive(true);
-  }, [triggerCount]);
+  }, [triggerCount, position]);
 
   useFrame((state, delta) => {
     if (!active || !groupRef.current) return;
@@ -201,9 +210,12 @@ function ExplosionEffect({ triggerCount }: { triggerCount: number }) {
 
 // 4. Giao diện Thao Trường
 export default function GrenadeSimulation() {
+  const physicsState = usePhysicsEngineState();
   const [isThrowing, setIsThrowing] = useState<boolean>(false);
   const [isReleased, setIsReleased] = useState<boolean>(false);
   const [explosionTrigger, setExplosionTrigger] = useState<number>(0);
+  const [impactPosition, setImpactPosition] = useState<Vec3>([0, -0.4, 0]);
+  const [attempt, setAttempt] = useState(0);
   const [msg, setMsg] = useState<string>("Sẵn sàng bốc chốt... Bấm nút để thực hành ném!");
   const [handSpawnPos, setHandSpawnPos] = useState<[number, number, number]>([-1.5, 0.5, 0]);
   const [rotY, setRotY] = useState<number>(0); 
@@ -211,21 +223,26 @@ export default function GrenadeSimulation() {
   const handleStart = useCallback(() => {
     setIsThrowing(true);
     setIsReleased(false);
-    setMsg("💥 Đang vung đà cánh tay (Tìm mốc Frame 373)...");
+    setMsg("Đang thực hiện chuyển động ném…");
   }, []);
 
   const handleRelease = useCallback((handWorldPos: [number, number, number]) => {
     setHandSpawnPos(handWorldPos);
     setIsReleased(true); 
-    setMsg("🚀 CHẠM MỐC FRAME 373: Lựu đạn phóng ra từ đầu ngón tay!");
+    setMsg("Vật ném đang bay…");
   }, []);
 
-  const handleHit = useCallback(() => {
-    setMsg("🎯 TRÚNG MỤC TIÊU! Đạn nổ tốt rơi chuẩn hồng tâm.");
+  const handleHit = useCallback((position: Vec3) => {
+    setImpactPosition(position);
+    setMsg(Math.hypot(position[0] - 2, position[2]) <= 0.35
+      ? "Vật ném đã chạm vùng đánh dấu."
+      : "Vật ném đã chạm đất ngoài vùng đánh dấu.");
     setExplosionTrigger(prev => prev + 1); 
   }, []);
 
   const handleReset = useCallback(() => {
+    setAttempt(value => value + 1);
+    setExplosionTrigger(0);
     setIsThrowing(false);
     setIsReleased(false);
     setMsg("Sẵn sàng bốc chốt... Bấm nút để thực hành ném!");
@@ -238,6 +255,12 @@ export default function GrenadeSimulation() {
         <button onClick={handleReset} className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-md cursor-pointer transition-all active:scale-95">🔄 Nạp lại đạn</button>
       </div>
 
+      <div role="status" aria-live="polite" className="absolute top-12 left-2 right-2 z-20 pointer-events-none text-xs text-amber-100 bg-slate-900/85 rounded-lg p-2">{msg}</div>
+
+      {physicsState.status === 'fallback' && (
+        <WasmCompatibilityNotice feature="physics" className="absolute top-24 left-2 right-2 z-20 max-w-md pointer-events-none" />
+      )}
+
       <div className="absolute bottom-2 right-2 z-20 bg-slate-900/90 border border-slate-700 p-2.5 rounded-xl text-white text-[10px] w-52 flex flex-col gap-2 pointer-events-auto shadow-xl">
         <div className="font-bold text-amber-400 border-b border-slate-700 pb-1 flex justify-between">
           <span>🛠️ CĂN CHỈNH</span>
@@ -247,12 +270,12 @@ export default function GrenadeSimulation() {
         </div>
         <div>
           <span className="block mb-1 text-slate-300">Hướng mặt nhân vật:</span>
-          <div className="grid grid-cols-4 gap-1">
+          <fieldset disabled={isThrowing} className="grid grid-cols-4 gap-1 disabled:opacity-50">
             <button onClick={() => setRotY(0)} className={`p-1 rounded text-[9px] font-bold ${rotY === 0 ? 'bg-emerald-600' : 'bg-slate-800'}`}>0°</button>
             <button onClick={() => setRotY(Math.PI / 2)} className={`p-1 rounded text-[9px] font-bold ${rotY === Math.PI / 2 ? 'bg-emerald-600' : 'bg-slate-800'}`}>90°</button>
             <button onClick={() => setRotY(Math.PI)} className={`p-1 rounded text-[9px] font-bold ${rotY === Math.PI ? 'bg-emerald-600' : 'bg-slate-800'}`}>180°</button>
             <button onClick={() => setRotY(-Math.PI / 2)} className={`p-1 rounded text-[9px] font-bold ${rotY === -Math.PI / 2 ? 'bg-emerald-600' : 'bg-slate-800'}`}>270°</button>
-          </div>
+          </fieldset>
         </div>
       </div>
 
@@ -262,8 +285,8 @@ export default function GrenadeSimulation() {
           <directionalLight position={[5, 10, 5]} intensity={1.5} />
           <Suspense fallback={null}>
             <SoldierWithWeapons isThrowing={isThrowing} isReleased={isReleased} onRelease={handleRelease} rotationAngle={rotY} />
-            <FlyingGrenade isFlying={isThrowing} visible={isReleased} spawnPos={handSpawnPos} onHit={handleHit} />
-            <ExplosionEffect triggerCount={explosionTrigger} />
+            <FlyingGrenade key={`flight-${attempt}`} isFlying={isThrowing} visible={isReleased} spawnPos={handSpawnPos} rotationAngle={rotY} onHit={handleHit} physics={physicsState.engine} />
+            <ExplosionEffect key={`effect-${attempt}`} triggerCount={explosionTrigger} position={impactPosition} />
             <mesh position={[2, -0.49, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[0.35, 32]} /><meshStandardMaterial color="#dc2626" /></mesh>
             <mesh position={[2, -0.485, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[0.2, 32]} /><meshStandardMaterial color="#ffffff" /></mesh>
             <mesh position={[0, -0.5, 0]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[10, 10]} /><meshStandardMaterial color="#1e293b" /></mesh>

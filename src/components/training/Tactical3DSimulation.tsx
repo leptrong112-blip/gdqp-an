@@ -2,7 +2,7 @@ import { Component, Suspense, useEffect, useMemo, useRef, useState, type ReactNo
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Html, useAnimations, useGLTF, useProgress } from '@react-three/drei';
 import { Group, LoopOnce, LoopRepeat, MathUtils } from 'three';
-import { Users, Move, MapPin, Pause, Play, RotateCcw, CheckCircle2, Eye, Compass, Maximize2, Minimize2 } from 'lucide-react';
+import { Users, Move, MapPin, Pause, Play, RotateCcw, CheckCircle2, Eye, Compass, Maximize2, Minimize2, BookOpen, ExternalLink } from 'lucide-react';
 import TrainingGroundModel from './TrainingGroundModel';
 import Soldier3D from './Soldier3D';
 import TrainingCameraController from './TrainingCameraController';
@@ -11,36 +11,243 @@ import { OBSERVATION_POINTS, type CameraPreset, type GroundZone } from './traini
 import { MOVEMENT_ROUTE_LENGTH, sampleMovementRoute, SQUAD_SPACING_METERS } from './trainingMotion';
 
 type Category = 'doingu' | 'vandong' | 'diahinh' | 'laban';
-type ActionItem = { id: string; name: string; description: string; animation?: SoldierAnimationName; zone?: GroundZone; camera?: CameraPreset };
-const CATEGORIES: { id: Category; title: string; icon: typeof Users; actions: ActionItem[] }[] = [
-  { id: 'doingu', title: 'Đội ngũ', icon: Users, actions: [
-    { id: 'attention', name: 'Đứng nghiêm', animation: 'Attention', description: 'Quan sát tư thế thẳng, vai cân bằng, tay dọc thân và hướng nhìn phía trước.' },
-    { id: 'ease', name: 'Đứng nghỉ', animation: 'AtEase', description: 'Quan sát chuyển trọng tâm nhẹ, tư thế thư giãn và nhịp thở tự nhiên.' },
-    { id: 'salute', name: 'Chào', animation: 'Salute', description: 'Quan sát nhịp nâng tay phải, giữ tư thế chào rồi hạ tay về cạnh thân.' },
-    { id: 'left', name: 'Quay bên trái', animation: 'TurnLeft', description: 'Quan sát chuyển hướng 90° tại chỗ. Nhấn lại động tác để phát lại.' },
-    { id: 'right', name: 'Quay bên phải', animation: 'TurnRight', description: 'Quan sát phối hợp thân, hông và chân khi chuyển hướng 90° sang phải.' },
-    { id: 'idle', name: 'Tư thế tự nhiên', animation: 'Idle', description: 'Quan sát toàn thân, tỷ lệ nhân vật và chuyển động thở nhẹ.' },
-  ] },
-  { id: 'vandong', title: 'Vận động', icon: Move, actions: [
-    { id: 'walk', name: 'Đi bộ', animation: 'Walk', description: 'Theo dõi nhịp bước, đánh tay đối bên và chuyển trọng tâm trên đường tập. Nhân vật di chuyển theo đường vòng khép kín.' },
-    { id: 'run', name: 'Chạy bộ', animation: 'Run', description: 'Quan sát nhịp vận động nhanh hơn, đầu gối, cánh tay và độ nghiêng thân.' },
-    { id: 'sit', name: 'Ngồi xuống', animation: 'SitDown', description: 'Quan sát chuyển từ đứng sang tư thế ngồi thấp. Tư thế cuối được giữ để quan sát.' },
-    { id: 'stand', name: 'Đứng lên', animation: 'StandUp', description: 'Chuyển từ tư thế ngồi thấp về đứng; quan sát phối hợp đầu gối và thân.' },
-    { id: 'rest', name: 'Dừng nghỉ', animation: 'Idle', description: 'Dừng tại vị trí hiện tại trên đường tập và quan sát nhịp thở.' },
-  ] },
-  { id: 'diahinh', title: 'Địa hình', icon: MapPin, actions: [
-    { id: 'vegetation', name: 'Vật che khuất · Bụi cây', animation: 'LookAround', zone: 'vegetation', camera: 'vegetationArea', description: 'Quan sát thân, nhánh, tán cây và bụi thấp. So sánh khoảng trống giữa các lớp cây khi xoay góc nhìn.' },
-    { id: 'wall', name: 'Tường gạch & bê tông', animation: 'Idle', zone: 'wall', camera: 'wallArea', description: 'So sánh hai loại vật liệu, bề dày, chân tường và các cạnh bo nhẹ.' },
-    { id: 'sandbag', name: 'Khu bao cát', animation: 'LookAround', zone: 'sandbag', camera: 'sandbagArea', description: 'Quan sát hình dáng từng bao, nếp bo tròn và các hàng xếp so le.' },
-    { id: 'trench', name: 'Hào mô phỏng', animation: 'Idle', zone: 'trench', camera: 'trenchArea', description: 'Xoay góc nhìn để thấy đáy thấp, thành hào, đoạn đổi hướng và bờ đất hai bên.' },
-    { id: 'open', name: 'Vùng đất trống', animation: 'LookAround', zone: 'open', camera: 'openArea', description: 'Quan sát khoảng đất mở, mốc khu vực và thay đổi nhẹ của bề mặt địa hình.' },
-  ] },
-  { id: 'laban', title: 'La bàn', icon: Compass, actions: [
-    { id: 'monap', name: 'Mở nắp la bàn', description: 'Quan sát nắp mở và mặt chia độ từ góc nhìn phía trên.' },
-    { id: 'needle_demo', name: 'Kim chỉ hướng Bắc', description: 'Quan sát kim và các ký hiệu chỉ hướng trên mặt la bàn.' },
-    { id: 'dongnap', name: 'Đóng nắp bảo vệ', description: 'Quan sát chuyển động bản lề khi gập nắp bảo vệ mặt la bàn.' },
-    { id: 'dophuongvi', name: 'Đo góc phương vị', description: 'Quan sát khe ngắm và vòng chia độ bằng cách xoay hoặc phóng to mô hình.' },
-  ] },
+type ActionItem = {
+  id: string;
+  name: string;
+  description: string;
+  animation?: SoldierAnimationName;
+  zone?: GroundZone;
+  camera?: CameraPreset;
+  sgkBadge?: string;
+  sgkDetail?: string;
+};
+type CategoryItem = {
+  id: Category;
+  title: string;
+  icon: typeof Users;
+  sgkBadge: string;
+  sgkLesson: string;
+  sgkSection: string;
+  pdfFile: string;
+  pdfLabel: string;
+  actions: ActionItem[];
+};
+
+const CATEGORIES: CategoryItem[] = [
+  {
+    id: 'doingu',
+    title: 'Đội ngũ',
+    icon: Users,
+    sgkBadge: 'SGK 10 · Bài 9',
+    sgkLesson: 'Bài 9: Đội ngũ từng người không có súng',
+    sgkSection: 'Mục I & II: Động tác Nghiêm, Nghỉ, Quay tại chỗ và Động tác Chào',
+    pdfFile: '/books/gdqp10-kntt.pdf',
+    pdfLabel: 'SGK GDQP-AN 10 (Kết nối tri thức)',
+    actions: [
+      {
+        id: 'attention',
+        name: 'Đứng nghiêm',
+        animation: 'Attention',
+        description: 'Quan sát tư thế thẳng, vai cân bằng, tay dọc thân và hướng nhìn phía trước.',
+        sgkBadge: 'SGK 10 · Bài 9 (Mục I)',
+        sgkDetail: 'Động tác Nghiêm: Hai gót chân sát nhau trên đường thẳng, mũi bàn chân mở 45°, ngực nở, bụng thót, mắt nhìn thẳng.',
+      },
+      {
+        id: 'ease',
+        name: 'Đứng nghỉ',
+        animation: 'AtEase',
+        description: 'Quan sát chuyển trọng tâm nhẹ, tư thế thư giãn và nhịp thở tự nhiên.',
+        sgkBadge: 'SGK 10 · Bài 9 (Mục I)',
+        sgkDetail: 'Động tác Nghỉ: Trùng gối chân trái (hoặc chân phải), trọng lượng toàn thân dồn vào chân trụ còn lại, thân trên vẫn giữ ngay ngắn.',
+      },
+      {
+        id: 'salute',
+        name: 'Chào',
+        animation: 'Salute',
+        description: 'Quan sát nhịp nâng tay phải, giữ tư thế chào rồi hạ tay về cạnh thân.',
+        sgkBadge: 'SGK 10 · Bài 9 (Mục II)',
+        sgkDetail: 'Động tác Chào, Thôi chào: Tay phải nâng lên theo đường ngắn nhất, ngón tay khép sát, đầu ngón tay giữa chạm vào vành mũ bên phải.',
+      },
+      {
+        id: 'left',
+        name: 'Quay bên trái',
+        animation: 'TurnLeft',
+        description: 'Quan sát chuyển hướng 90° tại chỗ. Nhấn lại động tác để phát lại.',
+        sgkBadge: 'SGK 10 · Bài 9 (Mục I)',
+        sgkDetail: 'Quay bên trái: Lấy gót chân trái và mũi chân phải làm trụ, xoay người sang trái 90°, sau đó kéo chân phải lên thành thế nghiêm.',
+      },
+      {
+        id: 'right',
+        name: 'Quay bên phải',
+        animation: 'TurnRight',
+        description: 'Quan sát phối hợp thân, hông và chân khi chuyển hướng 90° sang phải.',
+        sgkBadge: 'SGK 10 · Bài 9 (Mục I)',
+        sgkDetail: 'Quay bên phải: Lấy gót chân phải và mũi chân trái làm trụ, xoay người sang phải 90°, sau đó thu chân trái lên sát chân phải.',
+      },
+      {
+        id: 'idle',
+        name: 'Tư thế tự nhiên',
+        animation: 'Idle',
+        description: 'Quan sát toàn thân, tỷ lệ nhân vật và chuyển động thở nhẹ.',
+        sgkBadge: 'SGK 10 · Bài 9',
+        sgkDetail: 'Tác phong quân nhân cơ bản khi đứng trong hàng ngũ và sinh hoạt điều lệnh.',
+      },
+    ],
+  },
+  {
+    id: 'vandong',
+    title: 'Vận động',
+    icon: Move,
+    sgkBadge: 'SGK 10 · Bài 11 & 9',
+    sgkLesson: 'Bài 11: Các tư thế, động tác cơ bản vận động trong chiến đấu & Bài 9: Đi đều',
+    sgkSection: 'Mục I: Đi khom, chạy khom, vọt tiến (Bài 11) & Động tác Đi đều, đứng lại (Bài 9)',
+    pdfFile: '/books/gdqp10-kntt.pdf',
+    pdfLabel: 'SGK GDQP-AN 10 (Kết nối tri thức)',
+    actions: [
+      {
+        id: 'walk',
+        name: 'Đi bộ',
+        animation: 'Walk',
+        description: 'Theo dõi nhịp bước, đánh tay đối bên và chuyển trọng tâm trên đường tập. Nhân vật di chuyển theo đường vòng khép kín.',
+        sgkBadge: 'SGK 10 · Bài 9 (Mục II)',
+        sgkDetail: 'Động tác Đi đều: Chân bước dứt khoát, tay đánh ra trước gập khuỷu, tay đánh về sau thẳng tự nhiên, nhịp bước đều đặn.',
+      },
+      {
+        id: 'run',
+        name: 'Chạy bộ',
+        animation: 'Run',
+        description: 'Quan sát nhịp vận động nhanh hơn, đầu gối, cánh tay và độ nghiêng thân.',
+        sgkBadge: 'SGK 10 · Bài 11 (Mục I)',
+        sgkDetail: 'Động tác Chạy khom / Vọt tiến: Thân hơi cúi, lợi dụng địa hình lướt nhanh qua bãi trống hỏa lực địch.',
+      },
+      {
+        id: 'sit',
+        name: 'Ngồi xuống',
+        animation: 'SitDown',
+        description: 'Quan sát chuyển từ đứng sang tư thế ngồi thấp. Tư thế cuối được giữ để quan sát.',
+        sgkBadge: 'SGK 10 · Bài 11',
+        sgkDetail: 'Tư thế ngồi sau vật che khuất, che đỡ: Hạ thấp độ cao thân thể tránh đạn thẳng trong khi vẫn quan sát trận địa.',
+      },
+      {
+        id: 'stand',
+        name: 'Đứng lên',
+        animation: 'StandUp',
+        description: 'Chuyển từ tư thế ngồi thấp về đứng; quan sát phối hợp đầu gối và thân.',
+        sgkBadge: 'SGK 10 · Bài 11',
+        sgkDetail: 'Động tác đứng dậy: Bật người nhanh, giữ vũ khí chắc chắn, sẵn sàng cơ động chuyển vị trí bắn.',
+      },
+      {
+        id: 'rest',
+        name: 'Dừng nghỉ',
+        animation: 'Idle',
+        description: 'Dừng tại vị trí hiện tại trên đường tập và quan sát nhịp thở.',
+        sgkBadge: 'SGK 10 · Bài 11',
+        sgkDetail: 'Dừng lại quan sát địa hình, chỉnh đốn trang bị và kiểm tra hướng tiến công.',
+      },
+    ],
+  },
+  {
+    id: 'diahinh',
+    title: 'Địa hình',
+    icon: MapPin,
+    sgkBadge: 'SGK 11 · Bài 8',
+    sgkLesson: 'Bài 8: Lợi dụng địa hình, địa vật',
+    sgkSection: 'Mục I & II: Khái niệm Vật che khuất, Vật che đỡ và cách lợi dụng trong chiến đấu',
+    pdfFile: '/books/giao-duc-quoc-phong-an-ninh-11-knttvcs.pdf',
+    pdfLabel: 'SGK GDQP-AN 11 (Kết nối tri thức)',
+    actions: [
+      {
+        id: 'vegetation',
+        name: 'Vật che khuất · Bụi cây',
+        animation: 'LookAround',
+        zone: 'vegetation',
+        camera: 'vegetationArea',
+        description: 'Quan sát thân, nhánh, tán cây và bụi thấp. So sánh khoảng trống giữa các lớp cây khi xoay góc nhìn.',
+        sgkBadge: 'SGK 11 · Bài 8 (Mục I)',
+        sgkDetail: 'Vật che khuất: Những vật chỉ có tác dụng che giấu hành động, không chống được đạn bắn thẳng (bụi cây, lùm cỏ, rặng tre).',
+      },
+      {
+        id: 'wall',
+        name: 'Tường gạch & bê tông',
+        animation: 'Idle',
+        zone: 'wall',
+        camera: 'wallArea',
+        description: 'So sánh hai loại vật liệu, bề dày, chân tường và các cạnh bo nhẹ.',
+        sgkBadge: 'SGK 11 · Bài 8 (Mục I)',
+        sgkDetail: 'Vật che đỡ kiên cố: Ngăn chặn được đạn bắn thẳng và mảnh bom mìn, làm điểm tỳ bắn súng vững chắc (tường gạch, bờ tường đá).',
+      },
+      {
+        id: 'sandbag',
+        name: 'Khu bao cát',
+        animation: 'LookAround',
+        zone: 'sandbag',
+        camera: 'sandbagArea',
+        description: 'Quan sát hình dáng từng bao, nếp bo tròn và các hàng xếp so le.',
+        sgkBadge: 'SGK 11 · Bài 8 (Mục I & II)',
+        sgkDetail: 'Công sự bao cát dã chiến: Hấp thụ tốt xung lực đạn bộ binh, vừa che đỡ vừa tạo bệ tì ổn định cho xạ thủ.',
+      },
+      {
+        id: 'trench',
+        name: 'Hào mô phỏng',
+        animation: 'Idle',
+        zone: 'trench',
+        camera: 'trenchArea',
+        description: 'Xoay góc nhìn để thấy đáy thấp, thành hào, đoạn đổi hướng và bờ đất hai bên.',
+        sgkBadge: 'SGK 11 · Bài 8 (Mục II)',
+        sgkDetail: 'Chiến hào dã chiến: Tuyến công sự giao thông hào kết hợp ụ chiến đấu giúp cơ động an toàn và giữ vững trận địa phòng ngự.',
+      },
+      {
+        id: 'open',
+        name: 'Vùng đất trống',
+        animation: 'LookAround',
+        zone: 'open',
+        camera: 'openArea',
+        description: 'Quan sát khoảng đất mở, mốc khu vực và thay đổi nhẹ của bề mặt địa hình.',
+        sgkBadge: 'SGK 11 · Bài 8 (Mục II)',
+        sgkDetail: 'Địa hình trống trải: Nơi không có vật che chở, đòi hỏi vận dụng động tác bò, trườn hoặc vọt tiến cực nhanh khi vượt qua.',
+      },
+    ],
+  },
+  {
+    id: 'laban',
+    title: 'La bàn',
+    icon: Compass,
+    sgkBadge: 'SGK 12 · Bài 7',
+    sgkLesson: 'Bài 7: Tìm và giữ phương hướng',
+    sgkSection: 'Mục I: Xác định phương hướng bằng địa bàn (la bàn quân sự)',
+    pdfFile: '/books/gdqpan-12-kntt.pdf',
+    pdfLabel: 'SGK GDQP-AN 12 (Kết nối tri thức)',
+    actions: [
+      {
+        id: 'monap',
+        name: 'Mở nắp la bàn',
+        description: 'Quan sát nắp mở và mặt chia độ từ góc nhìn phía trên.',
+        sgkBadge: 'SGK 12 · Bài 7 (Mục I)',
+        sgkDetail: 'Cấu tạo địa bàn: Vỏ ngoài bằng kim loại/nhựa cứng, có nắp gập bảo vệ mặt kính và hệ thống lăng kính ngắm đo.',
+      },
+      {
+        id: 'needle_demo',
+        name: 'Kim chỉ hướng Bắc',
+        description: 'Quan sát kim và các ký hiệu chỉ hướng trên mặt la bàn.',
+        sgkBadge: 'SGK 12 · Bài 7 (Mục I)',
+        sgkDetail: 'Nguyên lý định hướng: Kim nam châm tự do luôn chỉ hướng Bắc từ (N). Vòng chia độ 360° và 64 ly giác (vạch chia quân sự).',
+      },
+      {
+        id: 'dongnap',
+        name: 'Đóng nắp bảo vệ',
+        description: 'Quan sát chuyển động bản lề khi gập nắp bảo vệ mặt la bàn.',
+        sgkBadge: 'SGK 12 · Bài 7 (Mục I)',
+        sgkDetail: 'Quy tắc bảo quản địa bàn: Luôn đóng nắp hãm kim khi không đo đạc để tránh va đập làm hỏng trục chóp đá kim nam châm.',
+      },
+      {
+        id: 'dophuongvi',
+        name: 'Đo góc phương vị',
+        description: 'Quan sát khe ngắm và vòng chia độ bằng cách xoay hoặc phóng to mô hình.',
+        sgkBadge: 'SGK 12 · Bài 7 (Mục I)',
+        sgkDetail: 'Đo góc phương vị từ: Đặt địa bàn thăng bằng, hướng khe ngắm - dây sợi tóc vào mục tiêu, đọc số đo góc trên vành chia độ.',
+      },
+    ],
+  },
 ];
 const CAMERA_BUTTONS: [CameraPreset, string][] = [
   ['overview', 'Toàn cảnh'], ['formationArea', 'Sân đội ngũ'], ['movementArea', 'Đường tập'],
@@ -183,9 +390,14 @@ export default function Tactical3DSimulation() {
       <div><span className="block font-mono text-[10px] font-black uppercase tracking-widest text-red-600 dark:text-red-400">Thực hành trực quan 3D</span>
         <h1 className="text-xl font-black leading-tight text-slate-900 dark:text-white sm:text-2xl">Mô phỏng Thao trường & Điều lệnh quân sự</h1></div>
       <div aria-label="Nội dung thao trường" className="flex max-w-full gap-1 overflow-x-auto rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800/80">
-        {CATEGORIES.map(({ id, title, icon: Icon }) => <button key={id} onClick={() => selectCategory(id)} aria-pressed={category === id}
-          className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-2 py-2 text-xs font-bold transition-colors sm:px-3 ${category === id ? 'bg-red-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700'}`}>
-          <Icon className="h-3.5 w-3.5" />{title}</button>)}
+        {CATEGORIES.map((cat) => <button key={cat.id} onClick={() => selectCategory(cat.id)} aria-pressed={category === cat.id}
+          className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-2 text-xs font-bold transition-colors sm:px-3 ${category === cat.id ? 'bg-red-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700'}`}>
+          <cat.icon className="h-3.5 w-3.5" />
+          <span>{cat.title}</span>
+          <span className={`hidden sm:inline-block text-[9px] px-1.5 py-0.2 rounded font-mono font-bold ${category === cat.id ? 'bg-black/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'}`}>
+            {cat.sgkBadge}
+          </span>
+        </button>)}
       </div>
     </div>
 
@@ -193,10 +405,23 @@ export default function Tactical3DSimulation() {
       <div ref={viewportContainerRef} data-testid="training-viewport" data-animation={animation} data-camera={preset} data-paused={paused}
         className={`relative ${isFullscreen ? 'fixed inset-0 z-[99999] h-screen w-screen rounded-none border-none' : isExpanded ? 'h-[640px] sm:h-[720px] lg:h-[800px] rounded-3xl lg:col-span-12' : 'h-[480px] sm:h-[580px] lg:col-span-8 lg:h-[680px] xl:h-[720px] rounded-3xl'} min-w-0 overflow-hidden border border-slate-700 bg-[#b5c7ce] shadow-lg transition-all duration-300`}>
         <div className="absolute left-3 right-3 top-3 z-10 flex flex-wrap items-center justify-between gap-2">
-          {!isCompass ? <div className="flex gap-0.5 rounded-xl border border-white/15 bg-slate-950/85 p-1 text-[11px] font-bold text-white backdrop-blur-md">
-            <button aria-pressed={!squad} onClick={() => setSquad(false)} className={`rounded-lg px-2.5 py-1.5 ${!squad ? 'bg-red-600' : 'text-slate-300'}`}>1 chiến sĩ</button>
-            <button aria-pressed={squad} onClick={() => setSquad(true)} className={`rounded-lg px-2.5 py-1.5 ${squad ? 'bg-red-600' : 'text-slate-300'}`}>Đội hình 3</button>
-          </div> : <div className="rounded-xl bg-slate-950/85 px-3 py-2 text-xs font-bold text-amber-300">La bàn 3D</div>}
+          <div className="flex items-center gap-2 flex-wrap">
+            {!isCompass ? <div className="flex gap-0.5 rounded-xl border border-white/15 bg-slate-950/85 p-1 text-[11px] font-bold text-white backdrop-blur-md">
+              <button aria-pressed={!squad} onClick={() => setSquad(false)} className={`rounded-lg px-2.5 py-1.5 ${!squad ? 'bg-red-600' : 'text-slate-300'}`}>1 chiến sĩ</button>
+              <button aria-pressed={squad} onClick={() => setSquad(true)} className={`rounded-lg px-2.5 py-1.5 ${squad ? 'bg-red-600' : 'text-slate-300'}`}>Đội hình 3</button>
+            </div> : <div className="rounded-xl bg-slate-950/85 px-3 py-2 text-xs font-bold text-amber-300 border border-white/15 backdrop-blur-md">La bàn 3D</div>}
+
+            <a
+              href={current.pdfFile}
+              target="_blank"
+              rel="noreferrer"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-950/85 hover:bg-blue-900/90 text-blue-200 border border-blue-500/40 text-xs font-semibold backdrop-blur-md shadow-md transition-colors"
+              title={`Căn cứ SGK: ${current.sgkLesson} (${current.pdfLabel}) - Bấm để mở PDF`}
+            >
+              <BookOpen className="h-3.5 w-3.5 text-blue-400" />
+              <span>{action.sgkBadge || current.sgkBadge}</span>
+            </a>
+          </div>
           <div className="flex items-center gap-1.5 flex-wrap">
             <button aria-label="Đặt lại góc nhìn" onClick={() => focusCamera(isCompass ? 'compass' : 'formationArea')} className="rounded-xl border border-white/15 bg-slate-950/85 p-2.5 text-white cursor-pointer hover:bg-slate-800" title="Góc nhìn điều lệnh cận cảnh"><RotateCcw className="h-3.5 w-3.5" /></button>
             <button onClick={() => setPaused((value) => !value)} className="flex items-center gap-1.5 rounded-xl border border-white/15 bg-slate-950/85 px-3 py-2 text-[11px] font-bold text-white cursor-pointer hover:bg-slate-800">
@@ -251,12 +476,57 @@ export default function Tactical3DSimulation() {
             <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">Chọn nội dung để xem chuyển động và khám phá từng khu vực.</p></div>
           <div className="grid grid-cols-2 gap-2">
             {current.actions.map((item) => <button key={item.id} onClick={() => selectAction(item)} aria-pressed={action.id === item.id}
-              className={`flex items-center justify-between gap-1 rounded-2xl border p-3 text-left text-xs font-bold transition-colors ${action.id === item.id ? 'border-emerald-600 bg-emerald-700 text-white shadow-sm dark:bg-emerald-600' : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-emerald-400 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200'}`}>
-              {item.name}{action.id === item.id && <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />}</button>)}
+              className={`flex flex-col items-start justify-between gap-1 rounded-2xl border p-2.5 text-left transition-colors cursor-pointer ${action.id === item.id ? 'border-emerald-600 bg-emerald-700 text-white shadow-sm dark:bg-emerald-600' : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-emerald-400 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200'}`}>
+              <div className="flex w-full items-center justify-between">
+                <span className="text-xs font-bold">{item.name}</span>
+                {action.id === item.id && <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />}
+              </div>
+              {item.sgkBadge && (
+                <span className={`text-[9px] px-1.5 py-0.2 rounded font-mono font-medium ${action.id === item.id ? 'bg-black/20 text-emerald-100' : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'}`}>
+                  {item.sgkBadge}
+                </span>
+              )}
+            </button>)}
           </div>
           <div className="space-y-2 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 dark:border-emerald-900/60 dark:bg-slate-900/80">
             <h3 className="flex items-center gap-1.5 text-xs font-extrabold text-emerald-800 dark:text-emerald-400"><Eye className="h-4 w-4" />Điểm cần quan sát</h3>
             <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-200">{action.description}</p>
+          </div>
+
+          {/* Căn cứ bài học SGK (PDF nguồn) */}
+          <div className="space-y-2 rounded-2xl border border-blue-200 bg-blue-50/70 p-4 dark:border-blue-900/60 dark:bg-slate-900/90">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="flex items-center gap-1.5 text-xs font-black text-blue-800 dark:text-blue-400">
+                <BookOpen className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                CĂN CỨ BÀI HỌC SGK (PDF)
+              </h3>
+              <span className="text-[10px] px-2 py-0.5 rounded-md bg-blue-600 text-white font-bold font-mono">
+                {action.sgkBadge || current.sgkBadge}
+              </span>
+            </div>
+
+            <div className="text-xs font-extrabold text-slate-800 dark:text-slate-200 leading-snug">
+              {current.sgkLesson}
+            </div>
+
+            <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+              {action.sgkDetail || current.sgkSection}
+            </p>
+
+            <div className="pt-1 flex items-center justify-between">
+              <span className="text-[10px] text-blue-600/80 dark:text-blue-400/80 font-medium">
+                {current.pdfLabel}
+              </span>
+              <a
+                href={current.pdfFile}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold transition-colors shadow-xs cursor-pointer"
+              >
+                <span>Mở SGK PDF</span>
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
           </div>
           <button onClick={() => { setPaused(false); setReplay((value) => value + 1); }} className="flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-red-600 dark:text-slate-300"><RotateCcw className="h-3.5 w-3.5" />Phát lại động tác</button>
         </div>

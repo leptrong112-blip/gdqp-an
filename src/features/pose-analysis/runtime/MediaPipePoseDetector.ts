@@ -25,7 +25,7 @@ export class MediaPipePoseDetector implements PoseDetector {
         const presenceValue = (p as typeof p & { presence?: number }).presence;
         const presence = typeof presenceValue === 'number' ? presenceValue : null;
         const visibility = Number.isFinite(p.visibility) ? p.visibility : 0;
-        landmarks[LANDMARK_NAMES[i]] = { image: { x: p.x * aspectRatio, y: p.y, z: p.z * aspectRatio }, world: world ? { x: world.x, y: world.y, z: world.z } : undefined, visibility, presence, confidence: presence === null ? visibility : Math.min(visibility, presence) };
+        landmarks[LANDMARK_NAMES[i]] = { image: { x: p.x, y: p.y, z: p.z }, world: world ? { x: world.x, y: world.y, z: world.z } : undefined, visibility, presence, confidence: presence === null ? visibility : Math.min(visibility, presence) };
       });
       return { timestampMs, personCount: result.landmarks.length, aspectRatio, landmarks };
     } finally { result.close(); }

@@ -42,9 +42,11 @@ export function useRangeControls(container: RefObject<HTMLDivElement | null>, op
     const lockChange = () => {
       if (disposed) return;
       requesting.current = false;
-      setLocked(owned());
+      const isLocked = owned();
+      setLocked(isLocked);
       release();
-      if (owned()) { look.current.active = true; setError(''); }
+      look.current.active = isLocked;
+      if (isLocked) setError('');
     };
     const lockError = () => {
       requesting.current = false;
@@ -81,7 +83,7 @@ export function useRangeControls(container: RefObject<HTMLDivElement | null>, op
       Object.assign(look.current, moveLook(look.current, event.movementX, event.movementY));
     };
     const fullscreenChange = () => setFullscreen(document.fullscreenElement === element);
-    const blur = () => { release(); if (owned()) document.exitPointerLock(); };
+    const blur = () => { release(); look.current.active = false; if (owned()) document.exitPointerLock(); };
     const visibility = () => { if (document.hidden) blur(); };
     element.addEventListener('pointerdown', pointer, true);
     element.addEventListener('mousedown', down);

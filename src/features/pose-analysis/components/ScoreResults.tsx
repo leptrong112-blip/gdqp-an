@@ -15,6 +15,7 @@ import {
 import type { MovementId } from '../types';
 import type { ScoreResult } from '../scoring/scoringTypes';
 import { buildRequirementCards, extractTopCorrections } from '../scoring/postureFeedback';
+import { SequenceSummary } from './SequenceSummary';
 
 interface ScoreResultsProps {
   result: ScoreResult;
@@ -102,9 +103,20 @@ export function ScoreResults({
     tierColor = 'bg-teal-500/15 text-teal-700 dark:text-teal-300 border-teal-500/30';
   }
 
-  const exerciseName = movementId === 'atEase' ? 'Tư thế đứng nghỉ' : 'Tư thế đứng nghiêm';
+  const isTurn = movementId === 'turnLeft' || movementId === 'turnRight';
+  const exerciseName = isTurn
+    ? (movementId === 'turnLeft' ? 'Động tác quay trái' : 'Động tác quay phải')
+    : movementId === 'atEase'
+    ? 'Tư thế đứng nghỉ'
+    : movementId === 'salute'
+    ? 'Động tác chào / thôi chào'
+    : 'Tư thế đứng nghiêm';
   const exerciseSubtitle =
-    movementId === 'atEase'
+    isTurn
+      ? 'Phân tích hướng quay, tư thế và diễn biến chuyển động · Beta'
+      : movementId === 'salute'
+      ? 'Đánh giá tự động theo điều lệnh chào QĐNDVN · SGK 10 Bài 9'
+      : movementId === 'atEase'
       ? 'Đánh giá tự động theo điều lệnh đứng nghỉ QĐNDVN'
       : 'Đánh giá tự động dựa trên 4 yêu cầu điều lệnh Quân ngũ QĐNDVN';
 
@@ -129,10 +141,12 @@ export function ScoreResults({
 
         <div className="flex items-center gap-4">
           <div className="text-right">
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Mức đạt theo tiêu chí</p>
             <div className="text-3xl sm:text-5xl font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight">
               {total}
-              <span className="text-base sm:text-lg font-normal text-slate-400"> / 100</span>
+              <span className="text-xl sm:text-3xl">%</span>
             </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">Tương đương {total}/100 điểm · Điểm tham khảo</p>
             <div className="flex items-center justify-end gap-2 mt-1">
               <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-extrabold border ${tierColor}`}>
                 {tierLabel}
@@ -171,6 +185,8 @@ export function ScoreResults({
         </div>
       </div>
 
+      {result.sequence && <SequenceSummary report={result.sequence} />}
+
       {/* ══════════ CẦN CẢI THIỆN NHẤT (NẾU CÓ ĐIỂM TRỪ) ══════════ */}
       {topCorrections.length > 0 && (
         <div className="rounded-2xl p-4 bg-amber-500/10 border border-amber-500/30 text-xs space-y-2">
@@ -191,7 +207,7 @@ export function ScoreResults({
       {/* ══════════ 4 THẺ YÊU CẦU CỐT LÕI (TÁI SỬ DỤNG TỪ BƯỚC 2) ══════════ */}
       <div className="space-y-3">
         <h3 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center justify-between">
-          <span>Chi tiết 4 tiêu chuẩn đứng nghiêm:</span>
+          <span>Chi tiết yêu cầu bài tập:</span>
           <span className="text-[10px] font-normal text-slate-400">Thang điểm 100</span>
         </h3>
 
@@ -301,7 +317,7 @@ export function ScoreResults({
           onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
           className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 flex items-center gap-1 transition-colors cursor-pointer"
         >
-          <span>Xem chi tiết 6 thông số đo thuật toán</span>
+          <span>Xem chi tiết thông số phân tích</span>
           {showTechnicalDetails ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
         </button>
 

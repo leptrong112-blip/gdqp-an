@@ -1,6 +1,7 @@
 import { attentionMovement } from './attentionMovement';
 import { atEaseMovement } from './atEaseMovement';
 import { turnLeftMovement, turnRightMovement } from './turnMovements';
+import { saluteMovement } from './saluteMovement';
 import type { MovementDefinition } from './scoringTypes';
 import type { MovementId } from '../types';
 
@@ -9,6 +10,7 @@ export const MOVEMENTS: Partial<Record<MovementId, MovementDefinition>> = {
   atEase: atEaseMovement,
   turnLeft: turnLeftMovement,
   turnRight: turnRightMovement,
+  salute: saluteMovement,
 };
 
 export interface ExerciseInfo {
@@ -164,9 +166,31 @@ export const EXERCISE_CATALOG: ExerciseInfo[] = [
     id: 'salute',
     name: 'Động tác chào / thôi chào',
     shortDesc: 'Tay phải đưa lên, đầu ngón tay chạm vành mũ bên phải, mắt nhìn thẳng.',
-    badge: 'Sắp ra mắt',
+    badge: 'SGK 10 · Bài 9',
     icon: '🫡',
-    available: false,
-    guidelines: [],
+    available: true,
+    definition: saluteMovement,
+    guidelines: [
+      {
+        number: 1,
+        title: 'Tư thế chuẩn bị đứng nghiêm',
+        description: 'Đứng nghiêm nhìn thẳng camera, hai gót sát, mũi mở 45°, hai tay áp sát mép chỉ quần.',
+      },
+      {
+        number: 2,
+        title: 'Tay phải đưa lên chào chuẩn xác',
+        description: 'Tay phải đưa lên theo đường ngắn nhất, các ngón tay khép sát, đầu ngón tay chạm mép dưới vành mũ (hoặc đuôi lông mày phải).',
+      },
+      {
+        number: 3,
+        title: 'Tay trái giữ nghiêm & Thân người thẳng',
+        description: 'Tay trái buông thẳng tự nhiên dọc thân, ngón tay khép sát mép chỉ quần; thân người giữ thẳng, ngực nở, hai vai thăng bằng.',
+      },
+      {
+        number: 4,
+        title: 'Đầu ngay ngắn, mắt nhìn thẳng',
+        description: 'Đầu ngay ngắn, cằm thu nhẹ, mắt nhìn thẳng về phía trước; khi dứt động tác hạ tay xuống theo đường ngắn nhất về tư thế đứng nghiêm.',
+      },
+    ],
   },
 ];

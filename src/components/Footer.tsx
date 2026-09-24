@@ -88,7 +88,7 @@ export default function Footer({ onNavigate }: FooterProps) {
                   </div>
                   <div className="flex items-center gap-2 text-slate-200 font-bold">
                     <GraduationCap className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>Nguyễn Chí Toàn</span>
+                    <span>Nguyễn Anh Khôi</span>
                     <span className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-blue-600/30 text-blue-300 border border-blue-500/40 font-black">
                       Lớp 12C7
                     </span>
@@ -223,7 +223,7 @@ export default function Footer({ onNavigate }: FooterProps) {
         <div className="pt-8 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 font-sans">
           <div className="text-center sm:text-left space-y-1">
             <div className="text-slate-300 font-bold">
-              © 2026 Bản quyền thuộc về <strong className="text-white">Lê Trọng Phúc (12C3)</strong> &amp; <strong className="text-white">Nguyễn Chí Toàn (12C7)</strong> – Trường TH-THCS-THPT Tân Phú.
+              © 2026 Bản quyền thuộc về <strong className="text-white">Lê Trọng Phúc (12C3)</strong> &amp; <strong className="text-white">Nguyễn Anh Khôi (12C7)</strong> – Trường TH-THCS-THPT Tân Phú.
             </div>
             <div className="text-[11px] text-slate-500">
               Sản phẩm học tập số phi thương mại phục vụ đổi mới dạy và học môn Giáo dục Quốc phòng &amp; An ninh THPT.

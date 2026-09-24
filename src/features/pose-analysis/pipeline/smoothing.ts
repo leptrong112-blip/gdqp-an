@@ -2,8 +2,12 @@ import { POSE_CONFIG as C } from '../config';
 import type { CanonicalPoseFrame, Landmark, LandmarkName, Vec3 } from '../types';
 export class LandmarkSmoother {
   private points = new Map<LandmarkName, { point: Landmark; time: number }>();
-  reset() { this.points.clear(); }
+  private aspectRatio: number | null = null;
+  reset() { this.points.clear(); this.aspectRatio = null; }
+  discard(names: Iterable<LandmarkName>) { for (const name of names) this.points.delete(name); }
   apply(frame: CanonicalPoseFrame): CanonicalPoseFrame {
+    if (this.aspectRatio !== null && Math.abs(this.aspectRatio - frame.aspectRatio) > 1e-3) this.reset();
+    this.aspectRatio = frame.aspectRatio;
     const landmarks: CanonicalPoseFrame['landmarks'] = {};
     const names = new Set([...this.points.keys(), ...Object.keys(frame.landmarks) as LandmarkName[]]);
     for (const name of names) {

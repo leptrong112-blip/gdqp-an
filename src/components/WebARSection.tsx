@@ -28,6 +28,8 @@ import {
   Minimize2,
   ZoomIn,
   ZoomOut,
+  BookOpen,
+  ExternalLink,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -41,6 +43,15 @@ export interface ARPartDetail {
   id: string;
   name: string;
   detail: string;
+}
+
+export interface ARSgkReference {
+  grade: 10 | 11 | 12;
+  badge: string;
+  lesson: string;
+  section: string;
+  pdfFile: string;
+  pdfLabel: string;
 }
 
 export interface ARModelItem {
@@ -62,6 +73,7 @@ export interface ARModelItem {
   historicalEra?: string;
   specs: { label: string; value: string }[];
   parts?: ARPartDetail[];
+  sgkRef?: ARSgkReference;
 }
 
 const WEBAR_CATALOG: ARModelItem[] = [
@@ -88,6 +100,14 @@ const WEBAR_CATALOG: ARModelItem[] = [
       { label: "Tốc độ bắn lý thuyết", value: "600 phát/phút" },
       { label: "Khối lượng không đạn", value: "3,8 kg (AK thường) / 3,14 kg (AKM)" },
     ],
+    sgkRef: {
+      grade: 11,
+      badge: "SGK 11 · Bài 6",
+      lesson: "Bài 6: Giới thiệu súng bộ binh, thuốc nổ, vật cản và vũ khí tự tạo",
+      section: "Mục I: Súng tiểu liên AK (Cấu tạo 11 bộ phận chính, số liệu kỹ chiến thuật và quy tắc tháo lắp)",
+      pdfFile: "/books/giao-duc-quoc-phong-an-ninh-11-knttvcs.pdf",
+      pdfLabel: "SGK GDQP-AN 11 (Kết nối tri thức)",
+    },
     parts: [
       {
         id: "dulo",
@@ -140,6 +160,14 @@ const WEBAR_CATALOG: ARModelItem[] = [
       { label: "Tương tác", value: "Tách / thu gọn, chọn và phóng gần" },
       { label: "Tỉ lệ", value: "Quy ước để quan sát" },
     ],
+    sgkRef: {
+      grade: 11,
+      badge: "SGK 11 · Bài 10 & 6",
+      lesson: "Bài 10: Kĩ thuật sử dụng lựu đạn & Bài 6: Thuốc nổ, vật cản",
+      section: "Mục I: Giới thiệu lựu đạn F-1 (Cấu tạo vỏ gang khía rãnh, ngòi nổ, hạt lửa và chốt an toàn)",
+      pdfFile: "/books/giao-duc-quoc-phong-an-ninh-11-knttvcs.pdf",
+      pdfLabel: "SGK GDQP-AN 11 (Kết nối tri thức)",
+    },
     parts: F1_PARTS,
   },
 
@@ -172,6 +200,14 @@ const WEBAR_CATALOG: ARModelItem[] = [
       { label: "Địa hình áp dụng", value: "Nơi có vật che khuất, che đỡ cao từ 30cm - 40cm" },
       { label: "Yêu cầu kỹ thuật", value: "Đầu không ngẩng cao, mông không nhấp nhô, êm nhẹ" },
     ],
+    sgkRef: {
+      grade: 10,
+      badge: "SGK 10 · Bài 11",
+      lesson: "Bài 11: Các tư thế, động tác cơ bản vận động trong chiến đấu",
+      section: "Mục II: Bò cao, lê và trườn (Vận dụng áp sát mặt đất vượt qua bãi trống hỏa lực địch)",
+      pdfFile: "/books/gdqp10-kntt.pdf",
+      pdfLabel: "SGK GDQP-AN 10 (Kết nối tri thức)",
+    },
     parts: [
       {
         id: "apsat",
@@ -213,6 +249,14 @@ const WEBAR_CATALOG: ARModelItem[] = [
       { label: "Điểm tỳ khuỷu tay", value: "Tỳ trên đầu gối chân trước" },
       { label: "Độ vững kết cấu", value: "Tạo thành thế kiềng ba chân ổn định" },
     ],
+    sgkRef: {
+      grade: 12,
+      badge: "SGK 12 · Bài 6",
+      lesson: "Bài 6: Kĩ thuật bắn súng tiểu liên AK",
+      section: "Mục II: Yếu lĩnh động tác bắn súng AK (Tư thế quỳ bắn vững chãi sau vật che đỡ)",
+      pdfFile: "/books/gdqpan-12-kntt.pdf",
+      pdfLabel: "SGK GDQP-AN 12 (Kết nối tri thức)",
+    },
     parts: [
       {
         id: "diemtyvai",
@@ -254,6 +298,14 @@ const WEBAR_CATALOG: ARModelItem[] = [
       { label: "Độ chụm hai gót chân", value: "Hai chân mở rộng bằng vai, gót chân ép sát đất" },
       { label: "Điểm tỳ khuỷu tay", value: "Hai khuỷu tay chống đất tạo góc kiên cố" },
     ],
+    sgkRef: {
+      grade: 12,
+      badge: "SGK 12 · Bài 6",
+      lesson: "Bài 6: Kĩ thuật bắn súng tiểu liên AK",
+      section: "Mục II: Yếu lĩnh động tác bắn súng AK (Tư thế nằm bắn có bệ tì, góc thân người 30° so với hướng bắn)",
+      pdfFile: "/books/gdqpan-12-kntt.pdf",
+      pdfLabel: "SGK GDQP-AN 12 (Kết nối tri thức)",
+    },
     parts: [
       {
         id: "gocchienthuat",
@@ -300,6 +352,14 @@ const WEBAR_CATALOG: ARModelItem[] = [
       { label: "Tầm quan sát", value: "Góc quét 180° - 360°" },
       { label: "Tư thế súng", value: "Low Ready / Sẵn sàng tác chiến phản xạ nhanh" },
     ],
+    sgkRef: {
+      grade: 10,
+      badge: "SGK 10 · Bài 9 & 11",
+      lesson: "Bài 9: Đội ngũ từng người không có súng & Bài 11: Tư thế vận động cơ bản",
+      section: "Động tác đứng nghiêm, đi đều (Bài 9) và thế đứng cảnh giới cơ động trong chiến đấu (Bài 11)",
+      pdfFile: "/books/gdqp10-kntt.pdf",
+      pdfLabel: "SGK GDQP-AN 10 (Kết nối tri thức)",
+    },
     parts: [
       {
         id: "dangsansang",
@@ -336,6 +396,14 @@ const WEBAR_CATALOG: ARModelItem[] = [
       { label: "Cự ly ném đạt chuẩn", value: "Nam THPT: 35m - 40m" },
       { label: "Quy tắc an toàn", value: "Rút chốt dứt khoát, ném đúng hướng, ẩn nấp ngay" },
     ],
+    sgkRef: {
+      grade: 11,
+      badge: "SGK 11 · Bài 10",
+      lesson: "Bài 10: Kĩ thuật sử dụng lựu đạn",
+      section: "Mục II: Tư thế, động tác ném lựu đạn (Động tác đứng ném, quỳ ném, nằm ném lựu đạn F-1)",
+      pdfFile: "/books/giao-duc-quoc-phong-an-ninh-11-knttvcs.pdf",
+      pdfLabel: "SGK GDQP-AN 11 (Kết nối tri thức)",
+    },
     parts: [
       {
         id: "ruonnguoi",
@@ -372,6 +440,14 @@ const WEBAR_CATALOG: ARModelItem[] = [
       { label: "Độ cao thân người", value: "Dưới 20 - 25 cm so với mặt đất" },
       { label: "Đặc điểm cơ động", value: "Dùng lực cẳng tay và mũi chân đẩy thân trườn tiến vững vàng" },
     ],
+    sgkRef: {
+      grade: 10,
+      badge: "SGK 10 · Bài 11",
+      lesson: "Bài 11: Các tư thế, động tác cơ bản vận động trong chiến đấu",
+      section: "Mục II: Động tác bò cao và bò thấp ôm súng dã chiến luồn qua địa hình hỏa lực địch",
+      pdfFile: "/books/gdqp10-kntt.pdf",
+      pdfLabel: "SGK GDQP-AN 10 (Kết nối tri thức)",
+    },
     parts: [
       {
         id: "bothap_sung",
@@ -413,6 +489,14 @@ const WEBAR_CATALOG: ARModelItem[] = [
       { label: "Gót chân", value: "Hai gót chân chụm sát nhau trên một đường thẳng" },
       { label: "Tác phong thân người", value: "Ngực nở, bụng thót, vai thăng bằng, mắt nhìn thẳng" },
     ],
+    sgkRef: {
+      grade: 10,
+      badge: "SGK 10 · Bài 9",
+      lesson: "Bài 9: Đội ngũ từng người không có súng",
+      section: "Mục I: Động tác Nghiêm, Nghỉ (Tư thế đứng nghiêm hai bàn chân mở 45°, ngực nở, mắt nhìn thẳng)",
+      pdfFile: "/books/gdqp10-kntt.pdf",
+      pdfLabel: "SGK GDQP-AN 10 (Kết nối tri thức)",
+    },
     parts: [
       {
         id: "nghinghiem_chan",
@@ -454,6 +538,14 @@ const WEBAR_CATALOG: ARModelItem[] = [
       { label: "Kỹ thuật súng", value: "Đặt súng trên đất -> Trườn lên -> Nhấc súng đặt về trước -> Trườn tiếp" },
       { label: "Đặc điểm cơ động", value: "Áp sát mặt đất tối đa, bảo toàn hỏa lực cá nhân" },
     ],
+    sgkRef: {
+      grade: 10,
+      badge: "SGK 10 · Bài 11",
+      lesson: "Bài 11: Các tư thế, động tác cơ bản vận động trong chiến đấu",
+      section: "Mục II: Động tác trườn tiến có súng (Kỹ thuật áp sát mặt đất, trườn thân và nhấc chuyển súng về trước)",
+      pdfFile: "/books/gdqp10-kntt.pdf",
+      pdfLabel: "SGK GDQP-AN 10 (Kết nối tri thức)",
+    },
     parts: [
       {
         id: "tactical_dat_sung",
@@ -1016,6 +1108,20 @@ export default function WebARSection() {
                   </div>
                 )}
 
+                {/* Căn cứ bài học SGK (PDF) */}
+                {activeCategory !== "custom" && currentItem.sgkRef && (
+                  <a
+                    href={currentItem.sgkRef.pdfFile}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-950/85 hover:bg-blue-900/90 text-blue-200 border border-blue-500/40 text-xs font-semibold shadow-md transition-colors"
+                    title={`Căn cứ SGK: ${currentItem.sgkRef.lesson} (${currentItem.sgkRef.pdfLabel}) - Bấm để mở PDF`}
+                  >
+                    <BookOpen className="w-3.5 h-3.5 text-blue-400" />
+                    <span>{currentItem.sgkRef.badge}</span>
+                  </a>
+                )}
+
                 {/* Chuyển đổi các biến thể động tác nếu mô hình hỗ trợ (Trườn / Bò cao / Cảnh giới / Đi đều...) */}
                 {currentItem.alternativeAnimations && currentItem.alternativeAnimations.length > 0 && (
                   <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-950/85 backdrop-blur-md border border-red-500/30 shadow-md">
@@ -1351,8 +1457,13 @@ export default function WebARSection() {
                     }`}
                   >
                     <div>
-                      <div className="font-extrabold text-xs flex items-center gap-1.5">
+                      <div className="font-extrabold text-xs flex items-center gap-1.5 flex-wrap">
                         <span>{item.name}</span>
+                        {item.sgkRef && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 font-bold border border-blue-500/20">
+                            {item.sgkRef.badge}
+                          </span>
+                        )}
                         <span className="text-[9px] px-1.5 py-0.2 rounded bg-red-600/10 text-red-600 dark:text-red-400 font-mono font-bold">
                           3D GLB
                         </span>
@@ -1475,6 +1586,47 @@ export default function WebARSection() {
                   ))}
                 </div>
               </div>
+
+              {/* Căn cứ bài học SGK (PDF nguồn) */}
+              {currentItem.sgkRef && (
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <div className="p-3.5 rounded-2xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-900/50 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 text-xs font-black text-blue-700 dark:text-blue-400">
+                        <BookOpen className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                        <span>CĂN CỨ BÀI HỌC SGK (PDF)</span>
+                      </div>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-600 text-white font-bold font-mono">
+                        {currentItem.sgkRef.badge}
+                      </span>
+                    </div>
+
+                    <div>
+                      <div className="text-xs font-extrabold text-slate-800 dark:text-slate-200 leading-snug">
+                        {currentItem.sgkRef.lesson}
+                      </div>
+                      <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                        {currentItem.sgkRef.section}
+                      </p>
+                    </div>
+
+                    <div className="pt-1 flex items-center justify-between">
+                      <span className="text-[10px] text-blue-600/80 dark:text-blue-400/80 font-medium">
+                        {currentItem.sgkRef.pdfLabel}
+                      </span>
+                      <a
+                        href={currentItem.sgkRef.pdfFile}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold transition-all shadow-xs cursor-pointer"
+                      >
+                        <span>Mở SGK PDF</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

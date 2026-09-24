@@ -118,6 +118,36 @@ export function diagnoseMeasurements(
       break;
     }
 
+    case 'saluteArm': {
+      const wristHeadDist = measurementMap.get('rightWristHeadDistance');
+      const rightElbow = measurementMap.get('rightElbowAngle');
+
+      if (wristHeadDist !== undefined && wristHeadDist > 0.60) {
+        mistakes.push('Tay phải nên đưa lên gần sát đuôi lông mày phải hoặc vành mũ hơn.');
+      }
+      if (rightElbow !== undefined) {
+        if (rightElbow < 22) {
+          mistakes.push('Khuỷu tay phải gập hơi sâu, mở nhẹ sang bên một chút.');
+        } else if (rightElbow > 88) {
+          mistakes.push('Cánh tay hơi duỗi thẳng, gập khuỷu tay lại gần đầu hơn.');
+        }
+      }
+      break;
+    }
+
+    case 'leftArm': {
+      const leftWrist = measurementMap.get('leftWristHipDistance');
+      const leftElbow = measurementMap.get('leftElbowAngle');
+
+      if (leftWrist !== undefined && leftWrist > 0.70) {
+        mistakes.push('Tay trái nên buông xuôi tự nhiên sát bên thân người.');
+      }
+      if (leftElbow !== undefined && leftElbow < 145) {
+        mistakes.push('Tay trái thả lỏng duỗi thẳng tự nhiên.');
+      }
+      break;
+    }
+
     case 'head': {
       const headOffset = measurementMap.get('headOffset');
       if (headOffset !== undefined && headOffset > 0.12) {
@@ -140,10 +170,18 @@ export function diagnoseMeasurements(
         specificFeedback = 'Hai vai và hai bên hông thăng bằng ngang nhau.';
         break;
       case 'legs':
-        specificFeedback = 'Hai chân duỗi thẳng, đầu gối vững chắc.';
+        specificFeedback = measurementMap.has('minKneeAngle')
+          ? 'Một đầu gối chùng nhẹ, chân còn lại giữ thẳng làm chân trụ.'
+          : 'Hai chân duỗi thẳng, đầu gối vững chắc.';
         break;
       case 'arms':
         specificFeedback = 'Hai tay buông thẳng dọc thân, áp sát cạnh đùi tự nhiên.';
+        break;
+      case 'saluteArm':
+        specificFeedback = 'Tay phải giơ lên tự nhiên, vị trí chào rất tốt.';
+        break;
+      case 'leftArm':
+        specificFeedback = 'Tay trái buông tự nhiên dọc thân, đúng tư thế.';
         break;
       case 'head':
         specificFeedback = 'Đầu ngay ngắn ở giữa hai vai, mắt nhìn thẳng.';
@@ -354,6 +392,101 @@ export function buildRequirementCards(
         : (card4Mistakes[0] || 'Cần giữ yên ổn định 1.5 giây sau khi quay.'),
       mistakes: card4Mistakes,
       subCriteria: holdSub,
+    };
+
+    return [card1, card2, card3, card4];
+  }
+
+  if (movementId === 'salute') {
+    // ═══════════════════ BÀI TẬP: ĐỘNG TÁC CHÀO / THÔI CHÀO ═══════════════════
+    const saluteArm = getCriterion('saluteArm');
+    const leftArm = getCriterion('leftArm');
+
+    // Thẻ 1: Tay phải giơ lên chào tự nhiên (35 điểm)
+    const card1Status: CriterionStatusLevel = !saluteArm
+      ? 'NOT_SCORABLE'
+      : saluteArm.statusLevel ?? (saluteArm.status === 'good' ? 'PASS' : 'NEEDS_ADJUSTMENT');
+    const card1: RequirementCardResult = {
+      id: 'card-salute-arm',
+      number: 1,
+      title: 'Tay phải giơ lên chào tự nhiên',
+      points: saluteArm?.points ?? 0,
+      maximum: saluteArm?.maximum ?? 35,
+      statusLevel: card1Status,
+      feedback: card1Status === 'PASS'
+        ? 'Tay phải đưa lên tự nhiên, ngón tay đặt sát mép ngoài đuôi lông mày hoặc vành mũ bên phải.'
+        : (saluteArm?.specificFeedback || saluteArm?.feedback || 'Tay phải giơ lên tự nhiên, đầu ngón tay gần đuôi lông mày phải.'),
+      mistakes: saluteArm?.mistakes ?? [],
+      subCriteria: saluteArm ? [saluteArm] : [],
+    };
+
+    // Thẻ 2: Tay trái buông tự nhiên dọc thân (15 điểm)
+    const card2Status: CriterionStatusLevel = !leftArm
+      ? 'NOT_SCORABLE'
+      : leftArm.statusLevel ?? (leftArm.status === 'good' ? 'PASS' : 'NEEDS_ADJUSTMENT');
+    const card2: RequirementCardResult = {
+      id: 'card-left-arm',
+      number: 2,
+      title: 'Tay trái buông tự nhiên dọc thân',
+      points: leftArm?.points ?? 0,
+      maximum: leftArm?.maximum ?? 15,
+      statusLevel: card2Status,
+      feedback: card2Status === 'PASS'
+        ? 'Tay trái thả lỏng buông thẳng tự nhiên dọc thân người.'
+        : (leftArm?.specificFeedback || leftArm?.feedback || 'Tay trái buông thẳng tự nhiên dọc thân.'),
+      mistakes: leftArm?.mistakes ?? [],
+      subCriteria: leftArm ? [leftArm] : [],
+    };
+
+    // Thẻ 3: Thân người ngay ngắn & Đứng thẳng (torso 20đ + legs 15đ + feet 10đ = 45 điểm)
+    const bodySub = [torso, legs, feet].filter(Boolean) as CriterionResult[];
+    const bodyPoints = Math.round(bodySub.reduce((sum, c) => sum + c.points, 0) * 10) / 10;
+    const bodyMax = bodySub.reduce((sum, c) => sum + c.maximum, 0) || 45;
+    const bodyRatio = bodyMax > 0 ? bodyPoints / bodyMax : 0;
+    const card3Mistakes = [
+      ...(torso?.mistakes ?? []),
+      ...(legs?.mistakes ?? []),
+      ...(feet?.mistakes ?? []),
+    ];
+
+    let card3Status: CriterionStatusLevel = 'PASS';
+    if (bodySub.length < 3) card3Status = 'NOT_SCORABLE';
+    else if (bodyRatio >= 0.85) card3Status = 'PASS';
+    else if (bodyRatio >= 0.6) card3Status = 'NEEDS_ADJUSTMENT';
+    else card3Status = 'NOT_ACHIEVED';
+
+    const card3Feedback = card3Status === 'PASS'
+      ? 'Thân người giữ ngay ngắn tự nhiên, hai chân đứng vững vàng.'
+      : card3Mistakes[0] || 'Cần chú ý giữ thân ngay ngắn, đứng vững trên hai chân.';
+
+    const card3: RequirementCardResult = {
+      id: 'card-body-salute',
+      number: 3,
+      title: 'Thân người ngay ngắn & Đứng thẳng',
+      points: bodyPoints,
+      maximum: bodyMax,
+      statusLevel: card3Status,
+      feedback: card3Feedback,
+      mistakes: card3Mistakes,
+      subCriteria: bodySub,
+    };
+
+    // Thẻ 4: Đầu ngay ngắn, mắt nhìn thẳng (5 điểm)
+    const card4Status: CriterionStatusLevel = !head
+      ? 'NOT_SCORABLE'
+      : head.statusLevel ?? (head.status === 'good' ? 'PASS' : 'NEEDS_ADJUSTMENT');
+    const card4: RequirementCardResult = {
+      id: 'card-head-salute',
+      number: 4,
+      title: 'Đầu ngay ngắn, mắt nhìn thẳng',
+      points: head?.points ?? 0,
+      maximum: head?.maximum ?? 5,
+      statusLevel: card4Status,
+      feedback: card4Status === 'PASS'
+        ? 'Đầu ngay ngắn ở giữa hai vai, mắt nhìn thẳng về phía trước vào đối tượng chào.'
+        : (head?.specificFeedback || head?.feedback || 'Cằm thu nhẹ, mắt nhìn thẳng.'),
+      mistakes: head?.mistakes ?? [],
+      subCriteria: head ? [head] : [],
     };
 
     return [card1, card2, card3, card4];

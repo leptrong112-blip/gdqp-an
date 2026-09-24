@@ -19,6 +19,7 @@ import {
   Sliders,
   Wind,
   Play,
+  TrendingUp,
 } from "lucide-react";
 import {
   AK_TARGETS,
@@ -37,6 +38,7 @@ import { useRangeControls } from './useRangeControls';
 import RangeViewControls from './RangeViewControls';
 import ArcadeRangeSection from './ArcadeRangeSection';
 import { loadSightPreset } from "./rangeSightPresets";
+import AKBallisticsView from "./AKBallisticsView";
 
 interface ShotRecord {
   shotNumber: number;
@@ -54,7 +56,7 @@ export default function ShootingRangeSection() {
   const { fireXPToast, recordSkillCompletion } = useGamification();
 
   // Tab điều hướng chính
-  const [activeTab, setActiveTab] = useState<"simulator" | "handbook" | "sightLab" | "arcade">("simulator");
+  const [activeTab, setActiveTab] = useState<"simulator" | "handbook" | "sightLab" | "arcade" | "ballistics">("simulator");
 
   // State chọn bài bắn & bia
   const [selectedExerciseId, setSelectedExerciseId] = useState<ExerciseId>("tap_dong_tien");
@@ -561,6 +563,18 @@ export default function ShootingRangeSection() {
             >
               <Sliders className="w-4 h-4" />
               <span>Thí Nghiệm Sai Số Ngắm</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("ballistics")}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+                activeTab === "ballistics"
+                  ? "bg-red-600 text-white shadow-md shadow-red-600/25"
+                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+              }`}
+            >
+              <TrendingUp className="w-4 h-4" />
+              <span>Bảng Đạn Đạo GDQP</span>
             </button>
           </div>
         </div>
@@ -1281,6 +1295,9 @@ export default function ShootingRangeSection() {
 
         </div>
       )}
+
+      {/* ═══════════════════ TAB 4: BẢNG ĐẠN ĐẠO QUÂN SỰ CHÍNH QUY (GDQP) ═══════════════════ */}
+      {activeTab === "ballistics" && <AKBallisticsView />}
     </div>
   );
 }

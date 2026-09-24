@@ -26,6 +26,7 @@ export class TemporalMotionBuffer {
   }
 
   push(frame: MotionBufferFrame) {
+    if (!Number.isFinite(frame.timestampMs) || (this.buffer.length && frame.timestampMs <= this.buffer.at(-1)!.timestampMs)) return;
     this.buffer.push(frame);
     if (this.buffer.length > this.maxFrames) {
       this.buffer.shift();
@@ -117,6 +118,10 @@ export class TemporalMotionBuffer {
     const endT = this.buffer[this.buffer.length - 1].timestampMs;
     const holdFrames = this.buffer.filter(f => endT - f.timestampMs <= windowMs && f.isReliable);
     if (holdFrames.length < 8) return false;
+    if (endT - holdFrames[0].timestampMs < windowMs - 100) return false;
+    for (let i = 1; i < holdFrames.length; i++) {
+      if (holdFrames[i].timestampMs - holdFrames[i - 1].timestampMs > 250) return false;
+    }
     const yaws = holdFrames.map(f => f.bodyYawDeg);
     const jitter = mad(yaws);
     return Number.isFinite(jitter) && jitter <= maxYawMad;

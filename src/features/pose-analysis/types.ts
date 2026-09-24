@@ -2,7 +2,7 @@ export const LANDMARK_NAMES = ['nose', 'leftEyeInner', 'leftEye', 'leftEyeOuter'
 export type LandmarkName = typeof LANDMARK_NAMES[number];
 export type Vec3 = { x: number; y: number; z: number };
 export interface Landmark {
-  /** x uses image-height units (xNormalized * aspectRatio); never display pixels. */
+  /** MediaPipe image coordinates normalized to the source frame (x/y in 0..1). */
   image: Vec3;
   world?: Vec3;
   visibility: number;
@@ -52,6 +52,7 @@ export type FeatureId =
   | 'rightElbowAngle'
   | 'leftWristHipDistance'
   | 'rightWristHipDistance'
+  | 'rightWristHeadDistance'
   | 'headOffset'
   | 'bodyYaw'
   | 'yawVelocity'

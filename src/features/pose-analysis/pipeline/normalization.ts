@@ -1,11 +1,19 @@
-import type { CalibrationProfile, CanonicalPoseFrame, LandmarkName, NormalizedPoseFrame } from '../types';
+import type { CalibrationProfile, CanonicalPoseFrame, Landmark, LandmarkName, NormalizedPoseFrame, Vec3 } from '../types';
 import { distance, flat, mad, median, midpoint, scale, subtract, variation } from './geometry';
+
+/** Converts normalized image coordinates to isotropic image-height units for geometry. */
+export function aspectCorrectedImage(frame: CanonicalPoseFrame, landmark: Landmark): Vec3 {
+  return { x: landmark.image.x * frame.aspectRatio, y: landmark.image.y, z: landmark.image.z * frame.aspectRatio };
+}
+
 export function measurements(frame: CanonicalPoseFrame) {
   const p = frame.landmarks, ls = p.leftShoulder, rs = p.rightShoulder, lh = p.leftHip, rh = p.rightHip;
   if (!ls || !rs || !lh || !rh || !p.leftAnkle || !p.rightAnkle) return null;
-  const shoulders = midpoint(flat(ls.image), flat(rs.image)), root = midpoint(flat(lh.image), flat(rh.image));
-  const shoulderWidth = distance(flat(ls.image), flat(rs.image)), hipWidth = distance(flat(lh.image), flat(rh.image));
-  const torsoLength = distance(shoulders, root), legLength = (distance(flat(lh.image), flat(p.leftAnkle.image)) + distance(flat(rh.image), flat(p.rightAnkle.image))) / 2;
+  const lsImage = aspectCorrectedImage(frame, ls), rsImage = aspectCorrectedImage(frame, rs);
+  const lhImage = aspectCorrectedImage(frame, lh), rhImage = aspectCorrectedImage(frame, rh);
+  const shoulders = midpoint(flat(lsImage), flat(rsImage)), root = midpoint(flat(lhImage), flat(rhImage));
+  const shoulderWidth = distance(flat(lsImage), flat(rsImage)), hipWidth = distance(flat(lhImage), flat(rhImage));
+  const torsoLength = distance(shoulders, root), legLength = (distance(flat(lhImage), flat(aspectCorrectedImage(frame, p.leftAnkle))) + distance(flat(rhImage), flat(aspectCorrectedImage(frame, p.rightAnkle)))) / 2;
   const worldScale = ls.world && rs.world ? distance(ls.world, rs.world) : NaN;
   return { root, shoulderWidth, hipWidth, torsoLength, legLength, bodyScale: median([shoulderWidth, hipWidth * 1.15, torsoLength * 0.85]), worldScale };
 }
@@ -24,7 +32,7 @@ export function normalizePose(frame: CanonicalPoseFrame, profile: CalibrationPro
   const root = midpoint(lh, rh), body: NormalizedPoseFrame['body'] = {}, worldBody: NormalizedPoseFrame['worldBody'] = {};
   for (const [key, p] of Object.entries(frame.landmarks)) {
     const name = key as LandmarkName;
-    body[name] = scale(subtract(flat(p.image), m.root), profile.bodyScale);
+    body[name] = scale(subtract(flat(aspectCorrectedImage(frame, p)), m.root), profile.bodyScale);
     if (p.world) worldBody[name] = scale(subtract(p.world, root), profile.worldScale);
   }
   return { ...frame, body, worldBody };

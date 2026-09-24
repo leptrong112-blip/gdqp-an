@@ -7,6 +7,9 @@ import { arcadeFlightSeconds, arcadeTargetX } from './arcadeRangeLogic';
 import { DEFAULT_ADS_ALIGNMENT, MAX_LOOK_PITCH, type AdsVisualAlignment } from './rangeVisualConfig';
 import { getSightPreset, DEFAULT_PRESET_ID } from './rangeSightPresets';
 import { bindRearSight } from './rearSightTransform';
+import { createArcadeFlight, type Flight, type Vec3, type TrajectorySnapshot } from '../features/physics/projectile';
+import { usePhysicsEngine } from '../features/physics/usePhysicsEngine';
+
 
 // Coordinates measured from this GLB, after its authored node transforms.
 // Keep the imported scale: one world unit is one metre.
@@ -22,7 +25,16 @@ const ADS_EYE = new THREE.Vector3(0, .03, .32);
 const FREE_EYE = new THREE.Vector3(-0.18, 0.12, 0.46);
 const LOOK = new THREE.Vector3(0, 0, -10);
 
-export interface RangeImpact { x: number; y: number; score: number; isHit: boolean; screenX: number; screenY: number; targetIndex?: number }
+export interface RangeImpact {
+  x: number;
+  y: number;
+  score: number;
+  isHit: boolean;
+  screenX: number;
+  screenY: number;
+  targetIndex?: number;
+  snapshot?: TrajectorySnapshot;
+}
 export interface ArcadeSceneOptions {
   moving: boolean; running: boolean; targets: number; reloading: boolean;
   fireRef: React.MutableRefObject<((aim?: { x: number; y: number }) => Promise<RangeImpact | null>) | null>;
@@ -49,7 +61,7 @@ const TARGET_DISPLAY_SCALE: Record<TargetId, number> = {
   bia_8: 11,
 };
 
-function targetSize(id: TargetId) {
+export function targetSize(id: TargetId) {
   const target = AK_TARGETS.find(t => t.id === id)!;
   const scale = TARGET_DISPLAY_SCALE[id];
   const width = target.dimensions.widthCm / 100 * scale;
@@ -115,6 +127,10 @@ function TargetBoard({ id, active, shots, arcade, lane = 1, time }: { id: Target
 }
 
 function Scene(props: Props) {
+  const physics = usePhysicsEngine();
+  const physicsRef = useRef(physics);
+  physicsRef.current = physics;
+  const flightPoint = useRef<Vec3>([0, 0, 0]);
   const { scene } = useGLTF('/models/ak47_adjustable.glb');
   const weapon = useMemo(() => scene.clone(true), [scene]);
   const rig = useRef<THREE.Group>(null!);
@@ -128,7 +144,7 @@ function Scene(props: Props) {
   latestProps.current = props;
   const gameTime = useRef(0);
   const orb = useRef<THREE.Mesh>(null!);
-  const pending = useRef<{ start: THREE.Vector3; end: THREE.Vector3; born: number; duration: number; resolve: (impact: RangeImpact | null) => void } | null>(null);
+  const pending = useRef<{ end: THREE.Vector3; path: Flight; born: number; resolve: (impact: RangeImpact | null) => void } | null>(null);
   const arcadeRef = useRef(props.arcade);
   arcadeRef.current = props.arcade;
   const arcadeFireRef = props.arcade?.fireRef;
@@ -154,12 +170,14 @@ function Scene(props: Props) {
       const travel = (EYE_RELIEF - target.standardDistance - eyeOrigin.z) / direction.z;
       if (travel <= 0) return Promise.resolve(null);
       const end = eyeOrigin.addScaledVector(direction, travel);
+      const path = createArcadeFlight(physicsRef.current, start.toArray(), end.toArray(), arcadeFlightSeconds(target.standardDistance));
       return new Promise<RangeImpact | null>(resolve => {
-        pending.current = { start, end, born: gameTime.current, duration: arcadeFlightSeconds(target.standardDistance), resolve };
+        pending.current = { end, path, born: gameTime.current, resolve };
       });
     };
     return () => { arcadeFireRef.current = null; pending.current?.resolve(null); pending.current = null; };
   }, [arcadeFireRef, target.standardDistance]);
+
   useEffect(() => {
     props.fireRef.current = () => {
       if (!rig.current) return null;
@@ -186,13 +204,13 @@ function Scene(props: Props) {
     const projectile = pending.current;
     if (orb.current) orb.current.visible = !!projectile;
     if (projectile) {
-      const t = Math.min(1, (gameTime.current - projectile.born) / projectile.duration);
-      orb.current.position.lerpVectors(projectile.start, projectile.end, t);
+      const elapsed = gameTime.current - projectile.born;
+      orb.current.position.fromArray(projectile.path.sample(elapsed, flightPoint.current));
       // A compact stylized tracer. Timing is tuned for the game, not a weapon.
       orb.current.lookAt(projectile.end);
       const thickness = Math.max(.009, target.standardDistance * .00025);
       orb.current.scale.set(thickness, thickness, Math.min(1.5, target.standardDistance * .025));
-      if (t >= 1) {
+      if (elapsed >= projectile.path.duration) {
         const { width, height, centerY } = targetLayout;
         const y = projectile.end.y - centerY;
         let hitLane = -1, x = projectile.end.x;
@@ -203,9 +221,19 @@ function Scene(props: Props) {
         const isHit = hitLane >= 0;
         const score = isHit ? Math.max(5, 11 - Math.ceil(Math.max(Math.hypot(x, y), .000001) / (Math.min(width, height) * .085))) : 0;
         vectors.projected.copy(projectile.end).project(camera);
+        const resolvedSnapshot = projectile.path.snapshot;
         pending.current = null;
         orb.current.visible = false;
-        projectile.resolve({ x: x * 1000, y: y * 1000, score, isHit, targetIndex: hitLane, screenX: (vectors.projected.x + 1) * size.width / 2, screenY: (1 - vectors.projected.y) * size.height / 2 });
+        projectile.resolve({
+          x: x * 1000,
+          y: y * 1000,
+          score,
+          isHit,
+          targetIndex: hitLane,
+          screenX: (vectors.projected.x + 1) * size.width / 2,
+          screenY: (1 - vectors.projected.y) * size.height / 2,
+          snapshot: resolvedSnapshot,
+        });
       }
     }
     const blend = 1 - Math.exp(-14 * Math.min(delta, .05));
@@ -285,6 +313,8 @@ function Scene(props: Props) {
     {props.arcade ? Array.from({ length: props.arcade.targets }, (_, lane) => <TargetBoard key={lane} id={props.targetId} active shots={props.shots} arcade={props.arcade} lane={lane} time={gameTime} />)
       : AK_TARGETS.map(t => <TargetBoard key={t.id} id={t.id} active={props.targetId === t.id} shots={props.shots} />)}
   </>;
+
+
 }
 
 class SceneBoundary extends React.Component<{ children: React.ReactNode }, { failed: boolean }> {

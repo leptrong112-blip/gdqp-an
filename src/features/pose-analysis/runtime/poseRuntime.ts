@@ -1,9 +1,11 @@
 import type { LightingMetrics } from '../types';
 import type { PoseDetector, SessionCommand, WorkerCommand, WorkerEvent } from './workerProtocol';
 import { SessionProcessor } from './sessionProcessor';
+import type { SequenceEngine } from '../scoring/sequenceEngine';
 export interface PoseRuntime {
   mode: string;
   fallback: boolean;
+  sequenceEngine: SequenceEngine['kind'];
   analyze(source: HTMLVideoElement, timestamp: number, lighting: LightingMetrics): Promise<void>;
   command(command: SessionCommand): void;
   dispose(): void;
@@ -14,15 +16,20 @@ export async function createPoseRuntime(signal: AbortSignal, emit: (event: Worke
     catch (error) { if (signal.aborted) throw error; /* Unsupported worker runtimes fall back to the same local pipeline. */ }
   }
   const { MediaPipePoseDetector } = await import('./MediaPipePoseDetector');
+  const { loadSequenceEngine } = await import('./loadSequenceEngine');
   if (signal.aborted) throw new Error('Phiên đã dừng.');
-  const detector: PoseDetector = new MediaPipePoseDetector(), processor = new SessionProcessor();
+  const detector: PoseDetector = new MediaPipePoseDetector();
+  const sequenceReady = loadSequenceEngine();
   const dispose = () => detector.dispose();
   signal.addEventListener('abort', dispose, { once: true });
   try { await detector.initialize('CPU'); }
   catch (error) { dispose(); signal.removeEventListener('abort', dispose); throw error; }
+  const sequenceEngine = await sequenceReady;
+  const processor = new SessionProcessor(sequenceEngine);
   if (signal.aborted) { dispose(); throw new Error('Phiên đã dừng.'); }
   return {
     mode: 'CPU · chế độ tương thích', fallback: true,
+    sequenceEngine: sequenceEngine.kind,
     async analyze(video, timestamp, lighting) {
       if (signal.aborted) return;
       const start = performance.now(), frame = detector.detect(video, timestamp, video.videoWidth, video.videoHeight);
@@ -64,6 +71,7 @@ function workerRuntime(signal: AbortSignal, emit: (event: WorkerEvent) => void, 
         ready = true; clearTimeout(timeout);
         resolve({
           mode: `${data.delegate} · Web Worker`, fallback: false,
+          sequenceEngine: data.sequenceEngine,
           async analyze(video, timestampMs, lighting) {
             if (closed || pending || capturing) return;
             capturing = true;
@@ -72,7 +80,7 @@ function workerRuntime(signal: AbortSignal, emit: (event: WorkerEvent) => void, 
             if (closed) { frame.close(); return; }
             return new Promise<void>((done, failed) => {
               pending = { resolve: done, reject: failed };
-              try { send({ type: 'analyzeFrame', frame, timestampMs, width: video.videoWidth, height: video.videoHeight, lighting }, [frame]); }
+              try { send({ type: 'analyzeFrame', frame, timestampMs, width: frame.width, height: frame.height, lighting }, [frame]); }
               catch (error) { frame.close(); pending = null; failed(error instanceof Error ? error : new Error('Không thể gửi hình ảnh.')); }
             });
           },

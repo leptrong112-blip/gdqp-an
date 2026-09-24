@@ -1,6 +1,7 @@
 import { MediaPipePoseDetector } from './MediaPipePoseDetector';
 import { SessionProcessor } from './sessionProcessor';
 import type { WorkerCommand, WorkerEvent } from './workerProtocol';
+import { loadSequenceEngine } from './loadSequenceEngine';
 const scope = self as unknown as { onmessage: ((event: MessageEvent<WorkerCommand>) => void) | null; postMessage: (event: WorkerEvent) => void; close: () => void };
 let detector = new MediaPipePoseDetector(), processor = new SessionProcessor(), ready = false, disposed = false;
 scope.onmessage = async ({ data }) => {
@@ -8,10 +9,12 @@ scope.onmessage = async ({ data }) => {
     if (data.type === 'dispose') { disposed = true; ready = false; detector.dispose(); scope.postMessage({ type: 'disposed' }); scope.close(); return; }
     if (disposed) { if (data.type === 'analyzeFrame') data.frame.close(); return; }
     if (data.type === 'initialize') {
+      const sequenceReady = loadSequenceEngine();
       let delegate = data.delegate ?? 'CPU';
       try { await detector.initialize(delegate); }
       catch (error) { if (delegate !== 'GPU' || disposed) throw error; detector.dispose(); detector = new MediaPipePoseDetector(); delegate = 'CPU'; await detector.initialize(delegate); }
-      if (!disposed) { ready = true; scope.postMessage({ type: 'ready', delegate }); }
+      const sequenceEngine = await sequenceReady;
+      if (!disposed) { processor = new SessionProcessor(sequenceEngine); ready = true; scope.postMessage({ type: 'ready', delegate, sequenceEngine: sequenceEngine.kind }); }
     } else if (data.type === 'analyzeFrame') {
       try {
         if (!ready) throw new Error('Mô hình chưa sẵn sàng.');

@@ -350,3 +350,97 @@ export const AIMING_ERROR_CASES: AimingErrorCase[] = [
     correction: "Luôn giữ mặt súng thăng bằng vuông góc với mặt đất, ốp chặt báng súng vào hõm vai.",
   },
 ];
+
+// ═════════════════════ 4. BẢNG ĐẠN ĐẠO QUÂN SỰ CHÍNH QUY SÚNG TIỂU LIÊN AK ═════════════════════
+// (Đạn 7,62 x 39 mm M43 - Sách giáo trình Huấn luyện Bắn súng QĐNDVN & GDQP-AN THPT)
+export interface BallisticsPoint {
+  distanceMeters: number;
+  flightTimeSec: number;
+  remainingVelocityMs: number;
+  heightWithSight1Cm: number;
+  heightWithSight3Cm: number;
+  heightWithSight4Cm: number;
+  heightWithSight5Cm: number;
+  dispersionRadiusR50Cm: number;
+  recommendedAimPoint: string;
+}
+
+export const AK_BALLISTICS_DATA: BallisticsPoint[] = [
+  {
+    distanceMeters: 100,
+    flightTimeSec: 0.15,
+    remainingVelocityMs: 647,
+    heightWithSight1Cm: 0,
+    heightWithSight3Cm: 28,
+    heightWithSight4Cm: 52,
+    heightWithSight5Cm: 85,
+    dispersionRadiusR50Cm: 3.5,
+    recommendedAimPoint: "Thước 1: Ngắm chính tâm vòng 10. Thước 3: Ngắm chính giữa mép dưới bia 4 (đạn bay cao 28cm rơi trúng tâm vòng 10).",
+  },
+  {
+    distanceMeters: 150,
+    flightTimeSec: 0.23,
+    remainingVelocityMs: 605,
+    heightWithSight1Cm: -8,
+    heightWithSight3Cm: 38, // Đỉnh đường đạn (Thước 3)
+    heightWithSight4Cm: 72,
+    heightWithSight5Cm: 118,
+    dispersionRadiusR50Cm: 5.5,
+    recommendedAimPoint: "Đỉnh cao nhất của đường đạn Thước 3. Ngắm chính giữa mép dưới hoặc thắt lưng bia số 6.",
+  },
+  {
+    distanceMeters: 200,
+    flightTimeSec: 0.33,
+    remainingVelocityMs: 564,
+    heightWithSight1Cm: -22,
+    heightWithSight3Cm: 32,
+    heightWithSight4Cm: 76,
+    heightWithSight5Cm: 134,
+    dispersionRadiusR50Cm: 7.5,
+    recommendedAimPoint: "Thước 3: Ngắm chính giữa rốn (thắt lưng) bia số 8. Đạn ăn cao 32cm trúng ngực đối phương.",
+  },
+  {
+    distanceMeters: 250,
+    flightTimeSec: 0.42,
+    remainingVelocityMs: 524,
+    heightWithSight1Cm: -48,
+    heightWithSight3Cm: 18,
+    heightWithSight4Cm: 65,
+    heightWithSight5Cm: 135,
+    dispersionRadiusR50Cm: 10.0,
+    recommendedAimPoint: "Thước 3: Ngắm chính giữa ngực bia số 8. Đạn đi gần thẳng tâm.",
+  },
+  {
+    distanceMeters: 300,
+    flightTimeSec: 0.52,
+    remainingVelocityMs: 485,
+    heightWithSight1Cm: -86,
+    heightWithSight3Cm: 0, // Điểm giao thứ 2 của Thước 3
+    heightWithSight4Cm: 42,
+    heightWithSight5Cm: 118,
+    dispersionRadiusR50Cm: 13.0,
+    recommendedAimPoint: "Thước 3: Điểm chạm trùng điểm ngắm ở 300m. Ngắm chính tâm mục tiêu.",
+  },
+  {
+    distanceMeters: 400,
+    flightTimeSec: 0.74,
+    remainingVelocityMs: 412,
+    heightWithSight1Cm: -202,
+    heightWithSight3Cm: -72,
+    heightWithSight4Cm: 0, // Giao điểm Thước 4
+    heightWithSight5Cm: 70,
+    dispersionRadiusR50Cm: 19.0,
+    recommendedAimPoint: "Thước 4: Ngắm chính giữa thân người mục tiêu ở 400m.",
+  },
+  {
+    distanceMeters: 500,
+    flightTimeSec: 1.00,
+    remainingVelocityMs: 348,
+    heightWithSight1Cm: -385,
+    heightWithSight3Cm: -198,
+    heightWithSight4Cm: -98,
+    heightWithSight5Cm: 0, // Giao điểm Thước 5
+    dispersionRadiusR50Cm: 26.0,
+    recommendedAimPoint: "Thước 5: Ngắm chính giữa thân người mục tiêu cự ly xa.",
+  },
+];

@@ -396,3 +396,41 @@ export const AK_SAFETY_RULES = [
   { title: "Thao tác đúng thứ tự", desc: "Thực hiện đúng thứ tự từ bước 1 đến bước 6. Không dùng lực cưỡng bức hoặc búa gõ đập làm biến dạng chi tiết súng." },
   { title: "Bảo quản linh kiện", desc: "Xếp các bộ phận đã tháo theo thứ tự từ phải qua trái trên bàn sạch hoặc bạt dã chiến sạch sẽ." },
 ];
+
+/**
+ * Ánh xạ chính xác tên node/mesh trong file 3D ak47.glb sang ID bộ phận chuẩn
+ */
+export function getAKPartIdFromMeshName(meshName: string): string | null {
+  const n = meshName.toLowerCase();
+  if (n.startsWith('mag')) return 'mag';
+  if (n.startsWith('crishk')) return 'cover';
+  if (n.startsWith('2_low')) return 'return_spring';
+  if (n.startsWith('3_low')) return 'receiver_box';
+  if (n.startsWith('spusk')) return 'bolt_carrier';
+  if (n.startsWith('vtulk')) return 'bolt';
+  // Nòng súng: nòng chính (dulo) và khâu truyền khí thuốc gắn trên nòng (pd2)
+  if (n.startsWith('dulo') || n.startsWith('pd2')) return 'barrel';
+  if (n.startsWith('pricel')) return 'sight_front';
+  if (n.startsWith('dop')) return 'sight_rear';
+  if (n.startsWith('prikl')) return 'stock'; // Priklad: Báng súng gỗ phía sau
+  // Ốp lót tay trên: pd3_low.001_Mat2_0 (phần gỗ ốp bọc ngoài ống dẫn thoi)
+  if (n.includes('pd3') && n.includes('mat2')) return 'handguard';
+  // Ốp lót tay dưới: prik_low.001 (gồm ốp gỗ dưới và khâu kim loại giữ ốp)
+  if (n.startsWith('prik')) return 'handguard';
+  // Ống dẫn thoi: pd3 phần ống kim loại (mat1) và cụm ống dẫn khí nối tiếp (pd1)
+  if (n.startsWith('pd3') || n.startsWith('pd1')) return 'gas_tube';
+  if (n.startsWith('ruch')) return 'grip';
+  if (n.startsWith('d4_low') || n.startsWith('per_low')) return 'trigger';
+  if (n.startsWith('shompol')) return 'rod';
+  if (n.startsWith('knife')) return 'bayonet';
+  return null;
+}
+
+/**
+ * Tìm chi tiết AKPartDetail dựa trên tên mesh 3D được click/hover
+ */
+export function matchMeshToPart(meshName: string): AKPartDetail | undefined {
+  const partId = getAKPartIdFromMeshName(meshName);
+  if (!partId) return undefined;
+  return AK_STRUCTURE_PARTS.find((p) => p.id === partId);
+}

@@ -39,13 +39,14 @@ export default function SimulationSection({ siteTheme = "light" }: SimulationSec
   // ── Main Section Mode: "structure" (Cấu tạo 11 bộ phận) | "procedure" (Quy trình tháo lắp)
   const [section, setSection] = useState<"structure" | "procedure">("structure");
 
-  // ── Cấu tạo súng states
-  const [selectedPart, setSelectedPart] = useState<AKPartDetail>(AK_STRUCTURE_PARTS[0]);
+  // ── Cấu tạo súng states (mặc định ban đầu không chọn bộ phận nào để súng hiển thị màu thật)
+  const [selectedPart, setSelectedPart] = useState<AKPartDetail | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [highlightEnabled, setHighlightEnabled] = useState(true);
 
-  // ── Quy trình tháo lắp states
+  // ── Quy trình tháo lắp states (mặc định -1: súng nguyên vẹn, chưa chạy tháo lắp)
   const [procedureMode, setProcedureMode] = useState<"thao" | "lap">("thao");
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(-1);
   const [isPlayingAuto, setIsPlayingAuto] = useState(false);
 
   // ── Camera reset trigger
@@ -62,7 +63,7 @@ export default function SimulationSection({ siteTheme = "light" }: SimulationSec
   const isLight = siteTheme === "light";
   const steps = procedureMode === "thao" ? AK_STEPS_THAO : AK_STEPS_LAP;
   const totalSteps = steps.length;
-  const progress = Math.round(((currentStep + 1) / totalSteps) * 100);
+  const progress = currentStep === -1 ? 0 : Math.round(((currentStep + 1) / totalSteps) * 100);
 
   // ── Auto-play effect cho quy trình tháo lắp ──────────────────────────────
   const autoPlayTimerRef = useRef<any>(null);
@@ -70,6 +71,7 @@ export default function SimulationSection({ siteTheme = "light" }: SimulationSec
     if (isPlayingAuto && section === "procedure") {
       autoPlayTimerRef.current = setInterval(() => {
         setCurrentStep((prev) => {
+          if (prev === -1) return 0;
           if (prev >= totalSteps - 1) {
             setIsPlayingAuto(false);
             return prev;
@@ -90,18 +92,24 @@ export default function SimulationSection({ siteTheme = "light" }: SimulationSec
     setSection(newSec);
     setIsPlayingAuto(false);
     setCameraResetKey((k) => k + 1);
+    if (newSec === "structure") {
+      setSelectedPart(null);
+    } else {
+      setCurrentStep(-1); // Trạng thái chờ, súng nguyên vẹn, không tự động chạy tháo
+    }
   };
 
   // Đổi chế độ tháo / lắp
   const handleProcedureModeChange = (m: "thao" | "lap") => {
     setProcedureMode(m);
-    setCurrentStep(0);
+    setCurrentStep(-1); // Reset về trạng thái chờ súng nguyên vẹn
     setIsPlayingAuto(false);
+    setCameraResetKey((k) => k + 1);
   };
 
   // Nhấp chọn bước từ danh sách hoặc click trên mô hình 3D
   const handleStepJump = (idx: number) => {
-    if (idx >= 0 && idx < totalSteps) {
+    if (idx >= -1 && idx < totalSteps) {
       setCurrentStep(idx);
     }
   };
@@ -374,13 +382,18 @@ export default function SimulationSection({ siteTheme = "light" }: SimulationSec
               {/* Danh sách 11 bộ phận chính - Mỗi bộ phận riêng biệt không gộp chung */}
               <div className="flex-1 overflow-y-auto py-1.5 space-y-0.5">
                 {filteredParts.map((part) => {
-                  const isActive = selectedPart.id === part.id;
+                  const isActive = selectedPart?.id === part.id;
                   return (
                     <button
                       key={part.id}
                       onClick={() => {
-                        setSelectedPart(part);
-                        if (mobileTab === "leftPanel") setMobileTab("rightPanel");
+                        if (selectedPart?.id === part.id) {
+                          // Bấm lại chính bộ phận đang chọn: Hủy chọn (Tắt highlight)
+                          setSelectedPart(null);
+                        } else {
+                          setSelectedPart(part);
+                          if (mobileTab === "leftPanel") setMobileTab("rightPanel");
+                        }
                       }}
                       className="w-full flex items-center gap-2.5 px-3.5 py-2 text-left cursor-pointer group relative transition-colors duration-100"
                       style={{
@@ -492,60 +505,72 @@ export default function SimulationSection({ siteTheme = "light" }: SimulationSec
             mobileTab === "viewport" ? "flex w-full h-full" : "hidden lg:flex"
           }`}
         >
-          {/* Sub-bar điều khiển quy trình tháo lắp ở giữa màn hình */}
+          {/* Sub-bar điều khiển quy trình tháo lắp ở ĐÁY KHUNG 3D (BOTTOM CENTER) - KHÔNG BAO GIỜ BỊ ĐÈ */}
           {section === "procedure" && (
-            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 p-1 rounded-2xl bg-slate-950/85 backdrop-blur-md border border-white/20 shadow-2xl">
-              <button
-                onClick={() => handleStepJump(0)}
-                disabled={currentStep === 0}
-                className="p-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer"
-                title="Về bước đầu tiên"
-              >
-                <SkipBack className="w-3.5 h-3.5" />
-              </button>
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 pointer-events-auto">
+              {currentStep === -1 ? (
+                <button
+                  onClick={() => handleStepJump(0)}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-black bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-2xl shadow-emerald-950/70 active:scale-95 transition-all cursor-pointer border border-emerald-400/40"
+                >
+                  <Play className="w-4 h-4 fill-current" />
+                  <span>Bắt đầu {procedureMode === "thao" ? "tháo súng" : "lắp súng"} (Bước 1)</span>
+                </button>
+              ) : (
+                <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-slate-950/90 backdrop-blur-xl border border-white/20 shadow-2xl">
+                  <button
+                    onClick={() => {
+                      setIsPlayingAuto(false);
+                      setCurrentStep(-1);
+                    }}
+                    className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-white/10 flex items-center gap-1 cursor-pointer transition-colors"
+                    title="Đặt lại về súng nguyên vẹn ban đầu"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="hidden sm:inline">Về ban đầu</span>
+                  </button>
 
-              <button
-                onClick={() => handleStepJump(currentStep - 1)}
-                disabled={currentStep === 0}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold bg-white/10 text-slate-200 hover:bg-white/20 disabled:opacity-30 disabled:hover:bg-white/10 cursor-pointer"
-                title="Bước trước đó"
-              >
-                <ChevronLeft className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Trước</span>
-              </button>
+                  <div className="h-4 w-px bg-white/10 mx-0.5" />
 
-              {/* Nút Tự động chạy toàn bộ quy trình */}
-              <button
-                onClick={() => setIsPlayingAuto(!isPlayingAuto)}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold cursor-pointer transition-all shadow-md ${
-                  isPlayingAuto
-                    ? "bg-amber-500 text-white animate-pulse"
-                    : "bg-emerald-600 hover:bg-emerald-500 text-white"
-                }`}
-                title={isPlayingAuto ? "Tạm dừng tự động" : "Tự động trình chiếu quy trình"}
-              >
-                {isPlayingAuto ? <Pause className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current" />}
-                <span>{isPlayingAuto ? "Tạm dừng" : "Tự động chạy"}</span>
-              </button>
+                  <button
+                    onClick={() => handleStepJump(currentStep - 1)}
+                    disabled={currentStep <= 0}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-white/10 text-slate-200 hover:bg-white/20 disabled:opacity-30 disabled:hover:bg-white/10 cursor-pointer"
+                    title="Bước trước đó"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Trước</span>
+                  </button>
 
-              <button
-                onClick={() => handleStepJump(currentStep + 1)}
-                disabled={currentStep === totalSteps - 1}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold bg-emerald-600/80 text-white hover:bg-emerald-600 disabled:opacity-30 disabled:hover:bg-emerald-600/80 cursor-pointer"
-                title="Bước tiếp theo"
-              >
-                <span className="hidden sm:inline">Tiếp</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
+                  <span className="px-2.5 py-1 text-xs font-black text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 rounded-lg">
+                    {currentStep + 1} / {totalSteps}
+                  </span>
 
-              <button
-                onClick={() => handleStepJump(totalSteps - 1)}
-                disabled={currentStep === totalSteps - 1}
-                className="p-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer"
-                title="Đến bước cuối cùng"
-              >
-                <SkipForward className="w-3.5 h-3.5" />
-              </button>
+                  {/* Nút Tự động chạy toàn bộ quy trình */}
+                  <button
+                    onClick={() => setIsPlayingAuto(!isPlayingAuto)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-all shadow-md ${
+                      isPlayingAuto
+                        ? "bg-amber-500 text-white animate-pulse"
+                        : "bg-emerald-600 hover:bg-emerald-500 text-white"
+                    }`}
+                    title={isPlayingAuto ? "Tạm dừng tự động" : "Tự động trình chiếu quy trình"}
+                  >
+                    {isPlayingAuto ? <Pause className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current" />}
+                    <span>{isPlayingAuto ? "Tạm dừng" : "Tự động"}</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleStepJump(currentStep + 1)}
+                    disabled={currentStep >= totalSteps - 1}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-30 disabled:hover:bg-emerald-600 cursor-pointer"
+                    title="Bước tiếp theo"
+                  >
+                    <span className="hidden sm:inline">Tiếp</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -555,9 +580,17 @@ export default function SimulationSection({ siteTheme = "light" }: SimulationSec
             section={section}
             mode={procedureMode}
             stepIndex={currentStep}
-            activePartId={section === "structure" ? selectedPart.id : steps[currentStep]?.meshPrefix}
+            activePartId={
+              section === "structure"
+                ? selectedPart?.id ?? null
+                : currentStep >= 0 && highlightEnabled
+                ? steps[currentStep]?.meshPrefix
+                : null
+            }
+            highlightEnabled={highlightEnabled}
+            onToggleHighlight={() => setHighlightEnabled((prev) => !prev)}
             onPartSelect={(part) => {
-              if (part) setSelectedPart(part);
+              setSelectedPart(part);
             }}
             onStepSelect={(stepIdx) => {
               setCurrentStep(stepIdx);
@@ -634,77 +667,105 @@ export default function SimulationSection({ siteTheme = "light" }: SimulationSec
 
           {/* ── NỘI DUNG CỘT PHẢI - MỤC 1: CHÚ THÍCH CẤU TẠO (CHỈ 1 BỘ PHẬN ĐỘC LẬP) ── */}
           {section === "structure" ? (
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {/* Card tiêu đề bộ phận */}
-              <div
-                className={`p-3.5 rounded-2xl border ${
-                  isLight
-                    ? "bg-red-50/60 border-red-200"
-                    : "bg-red-950/30 border-red-900/50"
-                }`}
-              >
-                <div className="flex items-center gap-2 mb-1.5">
-                  <span className="text-xl">{selectedPart.emoji}</span>
-                  <div>
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-red-600 dark:text-red-400">
-                      {selectedPart.groupName}
-                    </span>
-                    <h3 className="text-base font-black text-slate-900 dark:text-white leading-tight">
-                      {selectedPart.name}
-                    </h3>
+            selectedPart ? (
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {/* Card tiêu đề bộ phận */}
+                <div
+                  className={`p-3.5 rounded-2xl border ${
+                    isLight
+                      ? "bg-red-50/60 border-red-200"
+                      : "bg-red-950/30 border-red-900/50"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-xl">{selectedPart.emoji}</span>
+                    <div>
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-red-600 dark:text-red-400">
+                        {selectedPart.groupName}
+                      </span>
+                      <h3 className="text-base font-black text-slate-900 dark:text-white leading-tight">
+                        {selectedPart.name}
+                      </h3>
+                    </div>
+                  </div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-2 pt-2 border-t border-red-200/50 dark:border-red-900/40">
+                    <span className="font-semibold text-slate-700 dark:text-slate-300">Vị trí:</span>
+                    <span>{selectedPart.location}</span>
                   </div>
                 </div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-2 pt-2 border-t border-red-200/50 dark:border-red-900/40">
-                  <span className="font-semibold text-slate-700 dark:text-slate-300">Vị trí:</span>
-                  <span>{selectedPart.location}</span>
-                </div>
-              </div>
 
-              {/* Tác dụng chiến thuật */}
-              <div
-                className={`p-3.5 rounded-2xl border ${
-                  isLight ? "bg-slate-50 border-slate-200" : "bg-slate-900/80 border-slate-800"
-                }`}
-              >
-                <div className="flex items-center gap-1.5 text-red-600 dark:text-red-400 font-extrabold text-[11px] uppercase tracking-wider mb-2">
-                  <Crosshair className="w-3.5 h-3.5" />
-                  <span>Tác dụng chiến thuật</span>
+                {/* Tác dụng chiến thuật */}
+                <div
+                  className={`p-3.5 rounded-2xl border ${
+                    isLight ? "bg-slate-50 border-slate-200" : "bg-slate-900/80 border-slate-800"
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5 text-red-600 dark:text-red-400 font-extrabold text-[11px] uppercase tracking-wider mb-2">
+                    <Crosshair className="w-3.5 h-3.5" />
+                    <span>Tác dụng chiến thuật</span>
+                  </div>
+                  <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-200 font-sans">
+                    {selectedPart.purpose}
+                  </p>
                 </div>
-                <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-200 font-sans">
-                  {selectedPart.purpose}
-                </p>
-              </div>
 
-              {/* Cấu tạo chi tiết của riêng 1 bộ phận này (Đáp ứng đúng: không gộp chung) */}
-              <div
-                className={`p-3.5 rounded-2xl border ${
-                  isLight ? "bg-slate-50 border-slate-200" : "bg-slate-900/80 border-slate-800"
-                }`}
-              >
-                <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-extrabold text-[11px] uppercase tracking-wider mb-2">
-                  <Wrench className="w-3.5 h-3.5" />
-                  <span>Cấu tạo chi tiết</span>
+                {/* Cấu tạo chi tiết của riêng 1 bộ phận này (Đáp ứng đúng: không gộp chung) */}
+                <div
+                  className={`p-3.5 rounded-2xl border ${
+                    isLight ? "bg-slate-50 border-slate-200" : "bg-slate-900/80 border-slate-800"
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-extrabold text-[11px] uppercase tracking-wider mb-2">
+                    <Wrench className="w-3.5 h-3.5" />
+                    <span>Cấu tạo chi tiết</span>
+                  </div>
+                  <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-200 font-sans">
+                    {selectedPart.structure}
+                  </p>
                 </div>
-                <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-200 font-sans">
-                  {selectedPart.structure}
-                </p>
-              </div>
 
-              {/* Mẹo ghi nhớ & Kiến thức thi cử */}
-              <div
-                className={`p-3.5 rounded-2xl border ${
-                  isLight ? "bg-blue-50/60 border-blue-200" : "bg-blue-950/30 border-blue-900/50"
-                }`}
-              >
-                <div className="flex items-center gap-1.5 text-blue-700 dark:text-blue-400 font-extrabold text-[11px] uppercase tracking-wider mb-1.5">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Ghi nhớ thi cử GDQP</span>
+                {/* Mẹo ghi nhớ & Kiến thức thi cử */}
+                <div
+                  className={`p-3.5 rounded-2xl border ${
+                    isLight ? "bg-blue-50/60 border-blue-200" : "bg-blue-950/30 border-blue-900/50"
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5 text-blue-700 dark:text-blue-400 font-extrabold text-[11px] uppercase tracking-wider mb-1.5">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Ghi nhớ thi cử GDQP</span>
+                  </div>
+                  <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 font-sans">
+                    {selectedPart.learningTips}
+                  </p>
                 </div>
-                <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 font-sans">
-                  {selectedPart.learningTips}
-                </p>
               </div>
-            </div>
+            ) : (
+              <div className="flex-1 overflow-y-auto p-6 flex flex-col items-center justify-center text-center">
+                <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-2xl mb-3 shadow-inner">
+                  🎯
+                </div>
+                <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-1.5">
+                  Chưa chọn bộ phận nào
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-[240px] leading-relaxed mb-5">
+                  Nhấp trực tiếp vào bộ phận trên súng 3D hoặc chọn trong danh mục 11 bộ phận bên trái để xem chi tiết.
+                </p>
+                <div className="w-full space-y-2 text-left bg-slate-900/40 p-3.5 rounded-xl border border-white/5 text-[11px] text-slate-400">
+                  <div className="font-bold text-slate-300 uppercase tracking-wider text-[10px] mb-1">
+                    💡 Hướng dẫn thao tác 3D:
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-emerald-400 font-bold">🖱️ Chuột trái:</span> Kéo để xoay súng 360°
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-emerald-400 font-bold">🔍 Cuộn chuột:</span> Phóng to / Thu nhỏ
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-emerald-400 font-bold">🖱️ Chuột phải:</span> Di chuyển góc súng
+                  </div>
+                </div>
+              </div>
+            )
           ) : (
             /* ── NỘI DUNG CỘT PHẢI - MỤC 2: QUY TRÌNH THÁO LẮP ĐỒNG BỘ ── */
             <div className="flex-1 overflow-y-auto flex flex-col">
@@ -719,7 +780,7 @@ export default function SimulationSection({ siteTheme = "light" }: SimulationSec
                     {procedureMode === "thao" ? "Quy trình tháo súng" : "Quy trình lắp súng"}
                   </span>
                   <span className="font-mono font-bold text-slate-500">
-                    Bước {currentStep + 1} / {totalSteps}
+                    {currentStep === -1 ? "Chưa bắt đầu" : `Bước ${currentStep + 1} / ${totalSteps}`}
                   </span>
                 </div>
                 <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
@@ -731,28 +792,57 @@ export default function SimulationSection({ siteTheme = "light" }: SimulationSec
               </div>
 
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {/* Thẻ bước hiện tại */}
-                <div
-                  className={`p-3.5 rounded-2xl border shadow-sm ${
-                    isLight
-                      ? "bg-emerald-50/70 border-emerald-200 text-slate-800"
-                      : "bg-emerald-950/40 border-emerald-800/60 text-slate-100"
-                  }`}
-                >
-                  <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 text-[10px] font-extrabold uppercase tracking-wider mb-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Bước hiện tại ({currentStep + 1}/{totalSteps})</span>
+                {currentStep === -1 ? (
+                  <div
+                    className={`p-4 rounded-2xl border text-center shadow-sm ${
+                      isLight
+                        ? "bg-emerald-50/70 border-emerald-200 text-slate-800"
+                        : "bg-emerald-950/40 border-emerald-800/60 text-slate-100"
+                    }`}
+                  >
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 mx-auto flex items-center justify-center text-xl mb-2.5">
+                      {procedureMode === "thao" ? "🔧" : "🔩"}
+                    </div>
+                    <h4 className="text-sm font-black mb-1 text-slate-900 dark:text-white">
+                      Sẵn sàng {procedureMode === "thao" ? "tháo súng" : "lắp súng"} AK-47
+                    </h4>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
+                      {procedureMode === "thao"
+                        ? "Khẩu súng đang ở trạng thái nguyên vẹn trên bàn. Bấm nút bên dưới hoặc chọn một bước để bắt đầu quy trình."
+                        : "Các bộ phận súng đã được tháo rời trên bàn. Bấm nút bên dưới để bắt đầu quy trình lắp lại."}
+                    </p>
+                    <button
+                      onClick={() => handleStepJump(0)}
+                      className="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/40 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <Play className="w-3.5 h-3.5 fill-current" />
+                      <span>Bắt đầu {procedureMode === "thao" ? "tháo súng" : "lắp súng"} (Bước 1)</span>
+                    </button>
                   </div>
-                  <h4 className="text-sm font-black mb-2 text-slate-900 dark:text-white">
-                    {steps[currentStep]?.title}
-                  </h4>
-                  <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-200 font-sans mb-3">
-                    {steps[currentStep]?.actionDescription}
-                  </p>
-                  <div className="p-2.5 rounded-xl bg-white/70 dark:bg-slate-900/70 border border-emerald-200/60 dark:border-emerald-800/50 text-[11px] leading-relaxed text-amber-700 dark:text-amber-300 font-medium">
-                    ⚠️ {steps[currentStep]?.keyPoints}
+                ) : (
+                  /* Thẻ bước hiện tại */
+                  <div
+                    className={`p-3.5 rounded-2xl border shadow-sm ${
+                      isLight
+                        ? "bg-emerald-50/70 border-emerald-200 text-slate-800"
+                        : "bg-emerald-950/40 border-emerald-800/60 text-slate-100"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 text-[10px] font-extrabold uppercase tracking-wider mb-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Bước hiện tại ({currentStep + 1}/{totalSteps})</span>
+                    </div>
+                    <h4 className="text-sm font-black mb-2 text-slate-900 dark:text-white">
+                      {steps[currentStep]?.title}
+                    </h4>
+                    <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-200 font-sans mb-3">
+                      {steps[currentStep]?.actionDescription}
+                    </p>
+                    <div className="p-2.5 rounded-xl bg-white/70 dark:bg-slate-900/70 border border-emerald-200/60 dark:border-emerald-800/50 text-[11px] leading-relaxed text-amber-700 dark:text-amber-300 font-medium">
+                      ⚠️ {steps[currentStep]?.keyPoints}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Danh sách các bước dạng checklist trực quan */}
                 <div className="space-y-1.5">

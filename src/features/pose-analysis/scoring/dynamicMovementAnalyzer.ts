@@ -2,6 +2,8 @@ import type { CriterionResult, CriterionStatusLevel, MovementDefinition, ScoreRe
 import type { DynamicPhase, DynamicProgress } from '../types';
 import type { TemporalMotionBuffer } from '../pipeline/motionBuffer';
 import { mean, median } from '../pipeline/geometry';
+import { analyzeTurnSequence } from './sequenceAnalysis';
+import { javascriptSequenceEngine, type SequenceEngine } from './sequenceEngine';
 
 export class DynamicTurnTracker {
   private phase: DynamicPhase = 'WAITING_FOR_START';
@@ -10,6 +12,14 @@ export class DynamicTurnTracker {
   private holdStartMs: number | null = null;
   private attemptStartMs: number | null = null;
   private completed = false;
+  private timedOut = false;
+
+  pause() {
+    this.startReadySince = null;
+    this.holdStartMs = null;
+    if (this.phase === 'START_READY') this.phase = 'WAITING_FOR_START';
+    if (this.phase === 'FINAL_HOLD') this.phase = 'MOVING';
+  }
 
   reset() {
     this.phase = 'WAITING_FOR_START';
@@ -18,6 +28,7 @@ export class DynamicTurnTracker {
     this.holdStartMs = null;
     this.attemptStartMs = null;
     this.completed = false;
+    this.timedOut = false;
   }
 
   update(
@@ -46,6 +57,7 @@ export class DynamicTurnTracker {
 
     // Timeout check
     if (elapsedTotal >= config.maxAttemptDurationMs && !this.completed) {
+      this.timedOut = true;
       this.completed = true;
       this.phase = 'COMPLETE';
     }
@@ -56,13 +68,13 @@ export class DynamicTurnTracker {
         progressRatio: 1,
         isComplete: true,
         currentDeltaYaw: this.baselineYaw !== null ? buffer.getCurrentDeltaYaw(this.baselineYaw) : 0,
-        message: 'Hoàn thành động tác!',
+        message: this.timedOut ? 'Hết thời gian theo dõi; xem các bước còn thiếu trong kết quả.' : 'Hoàn thành động tác!',
         dynamicProgress: {
           phase: 'COMPLETE',
           currentYawDeg: this.baselineYaw !== null ? buffer.getCurrentDeltaYaw(this.baselineYaw) : 0,
           targetYawDeg: config.targetYawDeg,
           progressRatio: 1,
-          message: 'Hoàn thành động tác!',
+          message: this.timedOut ? 'Hết thời gian theo dõi.' : 'Hoàn thành động tác!',
         },
       };
     }
@@ -84,7 +96,7 @@ export class DynamicTurnTracker {
         this.phase = 'WAITING_FOR_START';
       }
 
-      const readyElapsed = this.startReadySince ? timestampMs - this.startReadySince : 0;
+      const readyElapsed = this.startReadySince !== null ? timestampMs - this.startReadySince : 0;
       const progress = Math.min(1, readyElapsed / config.startReadyDurationMs) * 0.2;
       return {
         phase: this.phase,
@@ -112,8 +124,7 @@ export class DynamicTurnTracker {
     // 2. Giai đoạn: MOVING
     if (this.phase === 'MOVING') {
       // Kiểm tra xem góc quay đã chạm ngưỡng kết thúc (tối thiểu 68° trong 90°)
-      const isTargetReached = (config.direction === 'left' && currentDelta >= 68) ||
-                              (config.direction === 'right' && currentDelta <= -68);
+      const isTargetReached = Math.abs(currentDelta - config.targetYawDeg) <= config.yawToleranceDeg;
 
       if (isTargetReached) {
         this.phase = 'FINAL_HOLD';
@@ -125,13 +136,13 @@ export class DynamicTurnTracker {
       const targetText = config.direction === 'left' ? 'trái' : 'phải';
 
       return {
-        phase: 'MOVING',
+        phase: this.phase,
         progressRatio: overallProgress,
         isComplete: false,
         currentDeltaYaw: currentDelta,
         message: `Đang quay ${targetText}: ${Math.round(currentRotMag)}° / 90°`,
         dynamicProgress: {
-          phase: 'MOVING',
+          phase: this.phase,
           currentYawDeg: currentDelta,
           targetYawDeg: config.targetYawDeg,
           progressRatio: overallProgress,
@@ -147,8 +158,8 @@ export class DynamicTurnTracker {
       const holdRemaining = Math.max(0, config.finalHoldDurationMs - holdDuration);
 
       // Nếu góc quay bị tụt ngược lại quá nhiều (> 30° so với mục tiêu), quay lại trạng thái MOVING
-      const isStillNearTarget = Math.abs(currentRotMag - targetAbs) <= (config.yawToleranceDeg + 15);
-      if (!isStillNearTarget && holdDuration < 600) {
+      const isStillNearTarget = Math.abs(currentDelta - config.targetYawDeg) <= config.yawToleranceDeg;
+      if (!isStillNearTarget) {
         this.phase = 'MOVING';
         this.holdStartMs = null;
       } else if (holdDuration >= config.finalHoldDurationMs) {
@@ -200,7 +211,8 @@ export class DynamicTurnTracker {
  */
 export function evaluateDynamicAttempt(
   definition: MovementDefinition,
-  buffer: TemporalMotionBuffer
+  buffer: TemporalMotionBuffer,
+  sequenceEngine: SequenceEngine = javascriptSequenceEngine
 ): ScoreResult {
   const refuse = (reason: string): ScoreResult => ({ status: 'notScorable', reasons: [reason] });
 
@@ -217,12 +229,19 @@ export function evaluateDynamicAttempt(
     maxAttemptDurationMs: 8000,
   };
 
-  const baseline = buffer.getBaselineYaw(800);
+  const reliable = buffer.frames.filter(f => f.isReliable && Number.isFinite(f.bodyYawDeg) && Number.isFinite(f.confidence) && f.confidence >= 0.6);
+  if (reliable.length < 10 || reliable.length < buffer.length * 0.85) return refuse('Không đủ góc quay đáng tin cậy để phân tích chuỗi.');
+
+  const baseline = buffer.getBaselineYaw(config.startReadyDurationMs);
   if (baseline === null) {
     return refuse('Không xác định được tư thế xuất phát ban đầu. Hãy đứng nhìn thẳng camera trước khi quay.');
   }
 
   const detectedDir = buffer.detectDirection(baseline, 25);
+  const sequence = analyzeTurnSequence(buffer.frames, config, sequenceEngine);
+  if (sequence.status === 'unavailable') return refuse(sequence.reason);
+  if (!sequence.startReady) return refuse('Chưa ghi nhận đủ tư thế xuất phát nhìn thẳng camera trước khi quay. Vui lòng thử lại.');
+  if (!sequence.motionObserved) return refuse('Camera chưa ghi nhận đủ chuyển động trung gian để chấm bài quay. Hãy quay liên tục từ tư thế nhìn thẳng; không chỉ giữ tư thế cuối.');
   const finalDelta = buffer.getCurrentDeltaYaw(baseline, 600);
   const finalAngleMag = Math.abs(finalDelta);
 
@@ -240,6 +259,12 @@ export function evaluateDynamicAttempt(
       points = 25;
       statusLevel = 'PASS';
       specificFeedback = `Bạn đã thực hiện đúng hướng quay sang ${expected === 'left' ? 'trái' : 'phải'}.`;
+      if (sequence.maxReversalDeg > 15) {
+        points = 12;
+        statusLevel = 'NEEDS_ADJUSTMENT';
+        mistakes.push('Có đoạn quay ngược hoặc quay trở lại trong lượt thực hiện. Hãy quay một lần liên tục theo hướng đã chọn.');
+        specificFeedback = mistakes[0];
+      }
     } else if (detectedDir === 'none') {
       points = Math.max(0, Math.round(finalAngleMag / 90 * 12));
       statusLevel = 'NEEDS_ADJUSTMENT';
@@ -367,7 +392,8 @@ export function evaluateDynamicAttempt(
 
   // 4. TIÊU CHÍ: GIỮ THẾ KẾT THÚC ỔN ĐỊNH (Final Hold - 20 điểm)
   {
-    const isStable = buffer.isHoldingStable(1200, 8);
+    const isStable = buffer.isHoldingStable(config.finalHoldDurationMs, 8) &&
+      Math.abs(finalDelta - config.targetYawDeg) <= config.yawToleranceDeg;
     let points = 0;
     let statusLevel: CriterionStatusLevel = 'PASS';
     const mistakes: string[] = [];
@@ -456,5 +482,6 @@ export function evaluateDynamicAttempt(
       .sort((a, b) => (b.maximum - b.points) - (a.maximum - a.points))
       .slice(0, 2)
       .map(c => c.feedback),
+    sequence,
   };
 }

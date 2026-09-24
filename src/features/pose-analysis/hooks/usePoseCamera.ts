@@ -28,9 +28,7 @@ export function usePoseCamera() {
     if (token !== generation.current) throw new Error('Phiên đã dừng.');
     return video;
   }, [stop]);
-  const reduceResolution = useCallback(async (width: number, height: number) => {
-    const track = stream.current?.getVideoTracks()[0];
-    if (track) await track.applyConstraints({ width: { ideal: width }, height: { ideal: height }, frameRate: { ideal: 15, max: 24 } }).catch(() => undefined);
-  }, []);
-  return { videoRef, start, stop, reduceResolution };
+  // Keep capture geometry fixed for the lifetime of the detector session.
+  // Performance adaptation belongs to the analysis scheduler, not the camera.
+  return { videoRef, start, stop };
 }
