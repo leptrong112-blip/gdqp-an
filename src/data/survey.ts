@@ -1,8 +1,11 @@
 export type SurveyRole = 'student' | 'teacher';
 export type SurveyPhase = 'before' | 'after';
+export type SurveyRound = { id: string; name: string; notes: string; createdAt: string; deletedAt?: string | null; responseCount?: number };
+export const LEGACY_ROUND_ID = 'legacy';
 export type SurveyQuestion = { id: string; text: string; options: string[]; multiple?: boolean; exclusiveLast?: boolean };
 export type SurveyResponse = {
   id: string;
+  roundId?: string;
   code: string;
   username?: string;
   name?: string;
@@ -101,12 +104,16 @@ export function surveyQuestions(role: SurveyRole, phase: SurveyPhase): SurveyQue
 export const roleLabel = { student: 'Học sinh', teacher: 'Giáo viên' };
 export const phaseLabel = { before: 'Trước trải nghiệm', after: 'Sau trải nghiệm' };
 export function pairedResponses(rows: SurveyResponse[]) {
+  const used = new Set<string>();
   return rows.filter(r => r.phase === 'before').flatMap(before => {
     const after = rows.find(r => 
       r.phase === 'after' && 
+      !used.has(r.id) &&
+      (r.roundId || LEGACY_ROUND_ID) === (before.roundId || LEGACY_ROUND_ID) &&
       r.role === before.role && 
-      (r.code === before.code || (Boolean(r.name && before.name) && r.name!.trim().toLowerCase() === before.name!.trim().toLowerCase() && (r.className || r.position || '') === (before.className || before.position || '')))
+      ((Boolean(r.code && before.code) && r.code === before.code) || ((!r.code || !before.code) && Boolean(r.name && before.name) && r.name!.trim().toLowerCase() === before.name!.trim().toLowerCase() && (r.school || '') === (before.school || '') && (r.className || r.position || '') === (before.className || before.position || '')))
     );
+    if (after) used.add(after.id);
     return after ? [{ before, after }] : [];
   });
 }

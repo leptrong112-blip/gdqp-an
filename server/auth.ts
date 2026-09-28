@@ -118,8 +118,10 @@ export function createAuth(directory: string) {
       }
       const account = accounts[accountIndex];
 
-      // Khi người dùng đổi mật khẩu của chính mình (hoặc admin tự đổi), bắt buộc phải có mật khẩu cũ
-      if (targetUsername === user.username || !oldPassword) {
+      // Khi người dùng đổi mật khẩu của chính mình (kể cả admin tự đổi), bắt buộc phải có mật khẩu cũ.
+      // Admin đặt lại mật khẩu cho tài khoản khác thì không yêu cầu mật khẩu cũ.
+      const isSelfChange = targetUsername === user.username;
+      if (isSelfChange) {
         if (!oldPassword) {
           return res.status(400).json({ error: 'Vui lòng nhập mật khẩu hiện tại.' });
         }

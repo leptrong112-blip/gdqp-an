@@ -27,7 +27,7 @@ export const atEaseMovement: MovementDefinition = {
       required: true,
       rules: [
         { ...above('maxKneeAngle', 165, 145), essential: true }, // Chân trụ thẳng tự nhiên
-        { feature: 'minKneeAngle', ideal: [145, 175], zero: [120, 179], essential: true },
+        { feature: 'minKneeAngle', ideal: [140, 175], zero: [120, 179], essential: true },
         // A small but consistent asymmetry is enough; identical straight knees are not nghỉ.
         { feature: 'kneeAngleDiff', ideal: [5, 35], zero: [1, 55], essential: true },
       ],

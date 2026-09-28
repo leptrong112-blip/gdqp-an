@@ -1,7 +1,8 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, useGLTF, useAnimations, Center, Html, useProgress } from '@react-three/drei';
-import { Suspense, useEffect, useState, useRef, useMemo } from 'react';
+import { Component, Suspense, useEffect, useState, useRef, useMemo, type ReactNode, type MutableRefObject } from 'react';
 import * as THREE from 'three';
+import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { Maximize2, Minimize2, Eye, EyeOff, RotateCcw, Sparkles } from 'lucide-react';
 import {
   AKPartDetail,
@@ -11,6 +12,35 @@ import {
   getAKPartIdFromMeshName,
   matchMeshToPart,
 } from '../data/ak47StructureData';
+
+import { getAKModelPath, getAKClipTime } from '../data/ak47ProcedureAsset';
+
+// Keep asset failures inside the viewport so the step navigation remains usable.
+class AKModelBoundary extends Component<
+  { modelPath: string; children: ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  componentDidCatch(error: Error) {
+    console.error(`[AK47Simulation] Không tải được model: ${this.props.modelPath}`, error);
+  }
+
+  render() {
+    if (this.state.failed) {
+      return <Html center><div role="alert" className="rounded-xl bg-slate-950/95 p-4 text-center text-white min-w-[260px]">
+        <p>Không tải được mô hình của bước này.</p>
+        <p className="mt-2 text-xs break-all text-slate-300">{this.props.modelPath}</p>
+        <p className="mt-2 text-xs">Bạn vẫn có thể chọn bước khác.</p>
+      </div></Html>;
+    }
+    return this.props.children;
+  }
+}
 
 // Component "CameraRig" - Điều khiển Smooth Camera Lerp khi focus vào từng bộ phận
 function CameraRig({ targetMesh }: { targetMesh: THREE.Object3D | null }) {
@@ -56,6 +86,8 @@ function CameraRig({ targetMesh }: { targetMesh: THREE.Object3D | null }) {
 }
 
 interface AK47ModelProps {
+  modelPath: string;
+  currentAnimTime: MutableRefObject<number>;
   section: "structure" | "procedure";
   mode: "thao" | "lap";
   stepIndex: number;
@@ -92,6 +124,8 @@ function Model3DLoader() {
 
 // AK47 Model Renderer với cơ chế Scrubbing, Highlight phát sáng và chế độ X-Ray xuyên thấu
 function AK47Model({
+  modelPath,
+  currentAnimTime,
   section,
   mode,
   stepIndex,
@@ -102,10 +136,25 @@ function AK47Model({
   onStepSelect,
 }: AK47ModelProps) {
   const group = useRef<THREE.Group>(null);
-  const { scene, animations } = useGLTF('/models/ak47.glb');
+  const { scene: sourceScene, animations } = useGLTF(modelPath);
+  // Asset switches must not leave poses or highlight materials in the shared cache.
+  const scene = useMemo(() => clone(sourceScene), [sourceScene]);
   const { actions, names } = useAnimations(animations, group);
-  const currentAnimTime = useRef<number>(0);
   const [hoveredPartId, setHoveredPartId] = useState<string | null>(null);
+
+  // Resume the same procedure time when crossing the step-specific asset boundary.
+  useEffect(() => {
+    onMeshSelect(null);
+    const action = actions[names[0]];
+    if (action) {
+      action.play();
+      action.paused = true;
+      action.time = Math.min(action.getClip().duration, getAKClipTime(modelPath, currentAnimTime.current));
+      action.getMixer().update(0);
+    } else {
+      console.warn(`[AK47Simulation] Model không có animation, hiển thị tĩnh: ${modelPath}`);
+    }
+  }, [actions, names, modelPath, currentAnimTime, onMeshSelect]);
 
   const meshMap = useRef<{
     mesh: THREE.Mesh;
@@ -137,6 +186,14 @@ function AK47Model({
           m.transparent = false;
           m.opacity = 1.0;
           m.depthWrite = true;
+
+          if (m instanceof THREE.MeshStandardMaterial) {
+            // Tinh chỉnh metalness & roughness để thân kim loại đón sáng rõ ràng:
+            // Cân bằng metalness ~0.35 để phần kim loại đen không bị triệt tiêu ánh sáng diffuse,
+            // giúp nhìn rõ từng chi tiết cơ khí (nắp hộp khóa nòng, thân súng, nòng, thước ngắm...)
+            m.metalness = 0.35;
+            m.roughness = 0.55;
+          }
         });
 
         const primaryMat = mats[0] as THREE.MeshStandardMaterial;
@@ -154,6 +211,14 @@ function AK47Model({
       }
     });
     meshMap.current = list;
+    return () => {
+      list.forEach(({ mesh }) => {
+        const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        materials.forEach(material => material.dispose());
+      });
+      meshMap.current = [];
+      document.body.style.cursor = 'auto';
+    };
   }, [scene]);
 
   // Cập nhật hiệu ứng phát sáng (Highlight) và X-Ray xuyên thấu chuẩn xác 100%
@@ -214,7 +279,7 @@ function AK47Model({
         mat.needsUpdate = true;
       });
     }
-  }, [activePartId, hoveredPartId, xrayMode]);
+  }, [activePartId, hoveredPartId, xrayMode, scene]);
 
   // Tính toán mốc thời gian mục tiêu của hoạt ảnh
   const targetTime = useMemo(() => {
@@ -243,11 +308,11 @@ function AK47Model({
     }
 
     const diff = targetTime - currentAnimTime.current;
-    if (Math.abs(diff) > 0.02) {
+    if (Math.abs(diff) > 0) {
       const speed = 2.4; // Tốc độ trượt chuyển động
       const deltaMove = Math.sign(diff) * Math.min(Math.abs(diff), delta * speed);
       currentAnimTime.current += deltaMove;
-      action.time = currentAnimTime.current;
+      action.time = Math.min(action.getClip().duration, getAKClipTime(modelPath, currentAnimTime.current));
       action.getMixer().update(0);
     }
   });
@@ -353,6 +418,8 @@ export default function AK47Simulation({
   onStepSelect,
   cameraResetKey,
 }: AK47SimulationProps) {
+  const modelPath = getAKModelPath(section, mode, stepIndex);
+  const currentAnimTime = useRef(0);
   const [targetMesh, setTargetMesh] = useState<THREE.Object3D | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [xrayMode, setXrayMode] = useState(false);
@@ -387,32 +454,32 @@ export default function AK47Simulation({
 
   return (
     <div className="w-full h-full flex-1 min-h-0 relative flex flex-col select-none overflow-hidden bg-slate-950">
-      {/* Background Image with Blur */}
+      {/* Background Image with Blur - Cân bằng trung hòa, dịu mắt */}
       <div
         className="absolute inset-0 pointer-events-none z-0 transform scale-105 transition-all duration-300"
         style={{
           backgroundImage: 'url(/military_range_bg.jpg)',
           backgroundSize: 'cover',
           backgroundPosition: 'center 45%',
-          filter: 'blur(5px)',
+          filter: 'blur(5px) brightness(0.92) contrast(0.98)',
         }}
       />
 
-      {/* Dimmed Overlay */}
+      {/* Dimmed Overlay - Lớp phủ trung hòa dịu nhẹ giúp tôn vinh cây súng ở tiền cảnh */}
       <div
         className="absolute inset-0 pointer-events-none z-0"
         style={{
           background: isLight
-            ? 'rgba(15, 23, 42, 0.45)'
-            : 'rgba(5, 12, 22, 0.65)',
+            ? 'rgba(255, 255, 255, 0.08)'
+            : 'rgba(10, 18, 30, 0.25)',
         }}
       />
 
-      {/* Radial Vignette */}
+      {/* Radial Vignette - Giữ tâm sáng và viền êm ái */}
       <div
         className="absolute inset-0 pointer-events-none z-0"
         style={{
-          background: 'radial-gradient(ellipse 80% 80% at 50% 50%, transparent 25%, rgba(2,6,14,0.75) 100%)',
+          background: 'radial-gradient(ellipse 85% 85% at 50% 50%, transparent 45%, rgba(10, 20, 32, 0.42) 100%)',
         }}
       />
 
@@ -541,26 +608,49 @@ export default function AK47Simulation({
           }}
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
         >
-          <ambientLight intensity={1.3} />
-          <directionalLight position={[10, 20, 10]} intensity={2.5} castShadow />
-          <directionalLight position={[-10, 10, -15]} intensity={1.2} />
-          <pointLight position={[0, 5, 0]} intensity={1.5} />
-          <pointLight position={[0, -2, 4]} intensity={0.6} color="#f5c842" />
+          {/* Hệ thống chiếu sáng đa hướng studio cho súng AK - Trung hòa và làm nổi bật chi tiết */}
+          {/* 1. Ánh sáng môi trường dịu nhẹ toàn diện */}
+          <ambientLight intensity={1.9} />
 
-          <Suspense fallback={<Model3DLoader />}>
-            <group rotation={[0, Math.PI / 2, 0]}>
-              <AK47Model
-                section={section}
-                mode={mode}
-                stepIndex={stepIndex}
-                activePartId={activePartId}
-                xrayMode={xrayMode}
-                onPartSelect={onPartSelect}
-                onMeshSelect={setTargetMesh}
-                onStepSelect={onStepSelect}
-              />
-            </group>
-          </Suspense>
+          {/* 2. Đèn chính trực diện từ phía camera (Front Key Light): Chiếu thẳng vào mặt súng đối diện người xem */}
+          <directionalLight position={[0, 1.5, 6]} intensity={2.8} />
+
+          {/* 3. Đèn chiếu góc trên bên phải (Top-Right Sunlight): Tạo khối nổi và bóng đổ chiều sâu */}
+          <directionalLight position={[8, 12, 6]} intensity={2.2} />
+
+          {/* 4. Đèn hắt sáng từ bên trái (Left Fill Light): Chiếu sáng nòng súng, lưỡi lê và thước ngắm */}
+          <directionalLight position={[-8, 3, 5]} intensity={2.0} />
+
+          {/* 5. Đèn hắt từ bên phải (Right Fill Light): Chiếu sáng báng súng và báng cầm */}
+          <directionalLight position={[8, 2, 5]} intensity={1.8} />
+
+          {/* 6. Đèn hắt gầm (Ground Bounce Light): Chiếu sáng đáy hộp tiếp đạn và vòng cò súng */}
+          <directionalLight position={[0, -5, 3]} intensity={1.2} color="#e2e8f0" />
+
+          {/* 7. Đèn viền sau (Rim Backlight): Tách biệt đường viền súng khỏi nền */}
+          <directionalLight position={[0, 4, -8]} intensity={1.5} />
+
+          {/* 8. Điểm sáng vàng ấm kim loại nhẹ */}
+          <pointLight position={[0, 0, 3]} intensity={1.0} color="#fff8e7" />
+
+          <AKModelBoundary key={modelPath} modelPath={modelPath}>
+            <Suspense fallback={<Model3DLoader />}>
+              <group rotation={[0, Math.PI / 2, 0]}>
+                <AK47Model
+                  modelPath={modelPath}
+                  currentAnimTime={currentAnimTime}
+                  section={section}
+                  mode={mode}
+                  stepIndex={stepIndex}
+                  activePartId={activePartId}
+                  xrayMode={xrayMode}
+                  onPartSelect={onPartSelect}
+                  onMeshSelect={setTargetMesh}
+                  onStepSelect={onStepSelect}
+                />
+              </group>
+            </Suspense>
+          </AKModelBoundary>
 
           <CameraRig targetMesh={targetMesh} />
           <OrbitControls makeDefault enablePan={true} enableZoom={true} minDistance={1} maxDistance={20} />

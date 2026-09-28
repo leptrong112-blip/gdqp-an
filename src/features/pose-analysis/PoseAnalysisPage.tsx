@@ -5,10 +5,11 @@ import { PoseStepDashboard } from './components/PoseStepDashboard';
 import { SessionControls } from './components/SessionControls';
 import { PoseResultDialog } from './components/PoseResultDialog';
 import { ExerciseDropdown } from './components/ExerciseDropdown';
+import type { MovementId } from './types';
 import { EXERCISE_CATALOG } from './scoring/movements';
 import { Minimize2, LayoutDashboard } from 'lucide-react';
 import { playCountdownBeep } from './utils/audioFeedback';
-import type { MovementId } from './types';
+import { PoseDiagnosticOverlay } from './components/PoseDiagnosticOverlay';
 import WasmCompatibilityNotice from '../../components/WasmCompatibilityNotice';
 
 export default function PoseAnalysisPage() {
@@ -23,6 +24,26 @@ export default function PoseAnalysisPage() {
 
   // activeStep: 1 = Kiểm tra vị trí/camera, 2 = Hướng dẫn động tác & thực hiện
   const [activeStep, setActiveStep] = useState<1 | 2>(1);
+
+  // Chế độ chẩn đoán AI dành cho lập trình viên/giáo viên kiểm tra số đo khớp thực tế (?poseDebug=1 hoặc ?debug=1)
+  const [debugMode, setDebugMode] = useState(() => {
+    try {
+      const search = window.location.search;
+      if (search.includes('poseDebug=1') || search.includes('debug=1')) {
+        return true;
+      }
+      return localStorage.getItem('pose_debug_mode') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const handleToggleDebugMode = (enabled: boolean) => {
+    setDebugMode(enabled);
+    try {
+      localStorage.setItem('pose_debug_mode', enabled ? 'true' : 'false');
+    } catch {}
+  };
 
   // Chế độ tự động hiệu chuẩn khi đứng đúng vị trí (dành cho học sinh tự quay 1 mình)
   const [autoCalibrate, setAutoCalibrate] = useState(() => {
@@ -223,6 +244,14 @@ export default function PoseAnalysisPage() {
             qualityPassed={ready}
             pauseReason={session.snapshot?.quality.reasons[0] ?? session.snapshot?.message}
             drillProgress={session.snapshot?.drillProgress}
+            diagnosticOverlay={debugMode ? (
+              <PoseDiagnosticOverlay
+                snapshot={session.snapshot}
+                stage={session.stage}
+                movementId={activeMovementId}
+                onClose={() => handleToggleDebugMode(false)}
+              />
+            ) : undefined}
           />
 
           {session.sequenceEngine === 'javascript' && <WasmCompatibilityNotice feature="pose-sequence" />}
@@ -291,6 +320,23 @@ export default function PoseAnalysisPage() {
                   />
                   Thử GPU trong Worker (tự về CPU nếu không hỗ trợ)
                 </label>
+
+                <div className="pt-3 mt-3 border-t border-slate-200 dark:border-slate-700">
+                  <label className="flex items-center justify-between cursor-pointer text-slate-700 dark:text-slate-300">
+                    <span className="font-semibold text-xs flex items-center gap-1.5">
+                      🛠️ Chế độ Chẩn đoán AI (Developer HUD)
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={debugMode}
+                      onChange={e => handleToggleDebugMode(e.target.checked)}
+                      className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                    />
+                  </label>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                    Bật HUD trực tiếp trên camera hiển thị: Số đo thực tế → Dải chuẩn → Đóng góp điểm → Độ tin cậy (Hỗ trợ URL <code className="text-amber-500">?poseDebug=1</code>).
+                  </p>
+                </div>
               </details>
             </>
           )}

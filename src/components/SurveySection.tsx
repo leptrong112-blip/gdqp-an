@@ -106,7 +106,9 @@ export default function SurveySection() {
   const [error, setError] = useState('');
 
   // Trạng thái đợt khảo sát
-  const [isOpen, setIsOpen] = useState<boolean>(true);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [roundId, setRoundId] = useState('');
+  const [roundName, setRoundName] = useState('Đang tải đợt khảo sát…');
 
   useEffect(() => {
     if (user) {
@@ -119,8 +121,10 @@ export default function SurveySection() {
       .then(res => res.json())
       .then(data => {
         if (typeof data.isOpen === 'boolean') setIsOpen(data.isOpen);
+        setRoundId(data.activeRoundId || '');
+        setRoundName(data.activeRoundName || 'Chưa có đợt khảo sát');
       })
-      .catch(() => {});
+      .catch(() => { setError('Không tải được đợt khảo sát. Vui lòng tải lại trang.'); });
   }, [user]);
 
   const beforeQuestions = surveyQuestions(role, 'before');
@@ -146,6 +150,7 @@ export default function SurveySection() {
         <h2 className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white">Đã ghi nhận toàn bộ phản hồi khảo sát!</h2>
         <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-sm space-y-1.5 text-left">
           <p><strong>Người khảo sát:</strong> {name} ({roleLabel[role]})</p>
+          <p><strong>Đợt khảo sát:</strong> {roundName}</p>
           <p><strong>Đơn vị:</strong> {role === 'student' ? `Lớp ${className}` : position} · {school}</p>
           <p className="text-emerald-700 dark:text-emerald-300 font-semibold flex items-center gap-1.5 pt-1">
             <CheckCircle className="w-4 h-4 shrink-0" />
@@ -180,6 +185,7 @@ export default function SurveySection() {
               <ClipboardCheck className="w-4 h-4" /> Phiếu khảo sát thực nghiệm GDQP-AN
             </div>
             <h2 className="text-2xl sm:text-3xl font-black">Khảo sát trải nghiệm phần mềm</h2>
+            <p className="mt-2 font-bold text-amber-200">{roundName}</p>
             <p className="mt-2 text-red-50 text-sm max-w-xl leading-relaxed">
               Dành cho Thầy Cô và các em học sinh. <strong>Không cần tạo tài khoản hay đăng nhập</strong> — phiếu được thiết kế liền mạch theo hàng dọc, chỉ cần điền thông tin và hoàn thành 1 lần duy nhất để phục vụ đề tài nghiên cứu.
             </p>
@@ -260,31 +266,18 @@ export default function SurveySection() {
           setBusy(true);
           setError('');
           try {
-            // 1. Gửi dữ liệu TRƯỚC trải nghiệm
-            await surveyApi('responses', {
+            // Save both phases together, pinned to the round displayed on this form.
+            await surveyApi('submissions', {
               method: 'POST',
               body: JSON.stringify({
+                roundId,
                 role,
-                phase: 'before',
                 name: name.trim(),
                 school: school.trim(),
                 className: role === 'student' ? className.trim() : undefined,
                 position: role === 'teacher' ? position.trim() : undefined,
-                answers: beforeAnswers,
-              })
-            });
-
-            // 2. Gửi dữ liệu SAU trải nghiệm (kèm góp ý tự luận)
-            await surveyApi('responses', {
-              method: 'POST',
-              body: JSON.stringify({
-                role,
-                phase: 'after',
-                name: name.trim(),
-                school: school.trim(),
-                className: role === 'student' ? className.trim() : undefined,
-                position: role === 'teacher' ? position.trim() : undefined,
-                answers: afterAnswers,
+                beforeAnswers,
+                afterAnswers,
                 feedback: feedback.trim()
               })
             });
@@ -526,7 +519,7 @@ export default function SurveySection() {
               : `Còn ${totalQuestions - totalCompleted} câu hỏi bắt buộc chưa chọn.`}
           </span>
           <button
-            disabled={busy || totalCompleted !== totalQuestions}
+            disabled={busy || !isOpen || !roundId || totalCompleted !== totalQuestions}
             className={`${surveyButton} flex items-center gap-2 text-base px-7 py-3.5 shadow-lg shadow-red-600/30`}
           >
             {busy ? 'Đang gửi phản hồi…' : 'Gửi phiếu khảo sát'}

@@ -11,15 +11,20 @@ import { useAccount } from './AccountGate';
 import { surveyQuestions, roleLabel, phaseLabel, pairedResponses, type SurveyResponse, type SurveyRole, type SurveyPhase } from '../data/survey';
 import { surveyApi, surveyButton, surveyInput, surveyPanel } from './SurveySection';
 import { exportSurveyReportToExcel } from '../utils/excelExport';
+import SurveyRoundsPanel from './SurveyRoundsPanel';
+import { type SurveyRound } from '../data/survey';
+import { filterRound, responseRound } from '../data/surveyRounds';
 
 const average = (values: number[]) => values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
 const display = (value: number | null) => value === null ? 'Chưa có dữ liệu' : `${value.toFixed(2)}/5`;
 type FeedbackInsight = { id: string; label: string; description: string; kind: 'positive' | 'improvement'; mentions: number; percentage: number; examples: string[] };
 type FeedbackAnalysis = { generatedAt: string; source: 'ai' | 'local'; model?: string; analyzedCount: number; summary: string; positives: FeedbackInsight[]; priorities: FeedbackInsight[]; suggestions: string[] };
 
-function downloadCsv(rows: SurveyResponse[], prefix: string = 'bao-cao-khao-sat') {
-  const header = ['Mã phản hồi', 'Mã người làm', 'Họ tên', 'Đơn vị / Lớp', 'Trường', 'Đối tượng', 'Giai đoạn', 'Thời gian', 'Ý kiến đóng góp (Tự luận)', 'Câu hỏi', 'Trả lời'];
+function downloadCsv(rows: SurveyResponse[], prefix: string = 'bao-cao-khao-sat', rounds: SurveyRound[] = []) {
+  const header = ['Mã đợt', 'Tên đợt', 'Mã phản hồi', 'Mã người làm', 'Họ tên', 'Đơn vị / Lớp', 'Trường', 'Đối tượng', 'Giai đoạn', 'Thời gian', 'Ý kiến đóng góp (Tự luận)', 'Câu hỏi', 'Trả lời'];
   const lines = rows.flatMap(r => surveyQuestions(r.role, r.phase).map(q => [
+    responseRound(r),
+    rounds.find(round => round.id === responseRound(r))?.name || responseRound(r),
     r.id,
     r.code,
     r.name || r.username || '',
@@ -175,7 +180,12 @@ function CompetencyRadarChart({
 // ════════════════════════════════════════════════════════════════════════════
 export default function SurveyAdminSection({ onBack }: { onBack?: () => void }) {
   const { user, openLogin } = useAccount();
-  const [rows, setRows] = useState<SurveyResponse[] | null>(null);
+  const [allRows, setRows] = useState<SurveyResponse[] | null>(null);
+  const [rounds, setRounds] = useState<SurveyRound[]>([]);
+  const [roundId, setRoundId] = useState('legacy');
+  const [activeRoundId, setActiveRoundId] = useState('');
+  const rows = useMemo(() => allRows ? filterRound(allRows, roundId) : null, [allRows, roundId]);
+  const roundLabel = roundId === 'all' ? 'Tất cả các đợt' : rounds.find(r => r.id === roundId)?.name || roundId;
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(true);
 
@@ -190,7 +200,6 @@ export default function SurveyAdminSection({ onBack }: { onBack?: () => void }) 
   const [selectedGradeFilter, setSelectedGradeFilter] = useState<'all' | '10' | '11' | '12'>('all');
 
   const [isOpen, setIsOpen] = useState<boolean>(true);
-  const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [feedbackAnalysis, setFeedbackAnalysis] = useState<FeedbackAnalysis | null>(null);
   const [feedbackAiBusy, setFeedbackAiBusy] = useState(false);
   const [feedbackAiError, setFeedbackAiError] = useState('');
@@ -207,8 +216,11 @@ export default function SurveyAdminSection({ onBack }: { onBack?: () => void }) 
     setBusy(true);
     setError('');
     try {
-      const res = await surveyApi('responses');
+      const [res, roundsResult, config] = await Promise.all([surveyApi('responses'), surveyApi('rounds'), surveyApi('config')]);
       setRows(res.responses);
+      setRounds(roundsResult.rounds);
+      setActiveRoundId(roundsResult.activeRoundId);
+      setIsOpen(config.isOpen);
     } catch (e) {
       setRows(null);
       setError((e as Error).message);
@@ -218,22 +230,24 @@ export default function SurveyAdminSection({ onBack }: { onBack?: () => void }) 
   }
 
   async function loadFeedbackAnalysis(force = false) {
+    const key = feedbackAutoRequestKey.current;
+    const endpoint = `feedback-analysis?roundId=${encodeURIComponent(roundId)}`;
     setFeedbackAiBusy(true);
     setFeedbackAiError('');
     try {
       if (!force) {
-        const cached = await surveyApi('feedback-analysis');
+        const cached = await surveyApi(endpoint);
         if (cached.analysis) {
-          setFeedbackAnalysis(cached.analysis);
+          if (key === feedbackAutoRequestKey.current) setFeedbackAnalysis(cached.analysis);
           return;
         }
       }
-      const result = await surveyApi('feedback-analysis', { method: 'POST', body: JSON.stringify({ force }) });
-      setFeedbackAnalysis(result.analysis);
+      const result = await surveyApi(endpoint, { method: 'POST', body: JSON.stringify({ force }) });
+      if (key === feedbackAutoRequestKey.current) setFeedbackAnalysis(result.analysis);
     } catch (e) {
-      setFeedbackAiError((e as Error).message);
+      if (key === feedbackAutoRequestKey.current) setFeedbackAiError((e as Error).message);
     } finally {
-      setFeedbackAiBusy(false);
+      if (key === feedbackAutoRequestKey.current) setFeedbackAiBusy(false);
     }
   }
 
@@ -248,11 +262,12 @@ export default function SurveyAdminSection({ onBack }: { onBack?: () => void }) 
 
   useEffect(() => {
     if (user?.role !== 'admin' || !rows) return;
-    const nextKey = rows.filter(row => row.feedback?.trim()).map(row => `${row.id}:${row.feedback}`).join('|');
+    const nextKey = roundId + ':' + rows.filter(row => row.feedback?.trim()).map(row => `${row.id}:${row.feedback}`).join('|');
     if (feedbackAutoRequestKey.current === nextKey) return;
     feedbackAutoRequestKey.current = nextKey;
+    setFeedbackAnalysis(null);
     void loadFeedbackAnalysis();
-  }, [user?.role, rows]);
+  }, [user?.role, rows, roundId]);
 
   const toggleSurveyBatch = async () => {
     const next = !isOpen;
@@ -261,24 +276,6 @@ export default function SurveyAdminSection({ onBack }: { onBack?: () => void }) 
       setIsOpen(next);
     } catch (e) {
       alert((e as Error).message);
-    }
-  };
-
-  // Xóa toàn bộ phiếu khảo sát
-  const handleClearAll = async () => {
-    if (!window.confirm('CẢNH BÁO: Thao tác này sẽ xóa toàn bộ các phản hồi khảo sát hiện có trong hệ thống. Bạn có chắc chắn muốn xóa không?')) return;
-    setBusy(true);
-    setActionMessage('Đang dọn sạch dữ liệu…');
-    try {
-      await surveyApi('responses/all', { method: 'DELETE' });
-      setActionMessage('✅ Đã xóa sạch toàn bộ phản hồi khảo sát.');
-      await refresh();
-      setTimeout(() => setActionMessage(null), 4000);
-    } catch (err: any) {
-      alert(err.message || 'Không thể xóa dữ liệu.');
-      setActionMessage(null);
-    } finally {
-      setBusy(false);
     }
   };
 
@@ -682,23 +679,19 @@ export default function SurveyAdminSection({ onBack }: { onBack?: () => void }) 
             {isOpen ? 'Đợt khảo sát: Đang Mở' : 'Đợt khảo sát: Đang Đóng'}
           </button>
           
-          <button
-            onClick={handleClearAll}
-            disabled={busy}
-            title="Xóa toàn bộ phản hồi khảo sát"
-            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 border border-slate-200 dark:border-slate-700 transition-all cursor-pointer disabled:opacity-50"
-          >
-            <Trash2 className="w-4 h-4" />
-            Dọn sạch
-          </button>
 
-          <button className={`${surveyButton} flex items-center gap-1.5 cursor-pointer`} disabled={busy} onClick={refresh}>
+          <button 
+            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 transition-all cursor-pointer disabled:opacity-50" 
+            disabled={busy} 
+            onClick={refresh}
+            title="Tải lại số liệu mới nhất từ máy chủ"
+          >
             <RefreshCw className={`w-4 h-4 ${busy ? 'animate-spin' : ''}`} />
             Làm mới
           </button>
 
           <button
-            onClick={() => exportSurveyReportToExcel(rows, { role, mode, grade: selectedGradeFilter })}
+            onClick={() => exportSurveyReportToExcel(rows, { role, mode, grade: selectedGradeFilter, roundLabel, rounds })}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs shadow-md shadow-emerald-600/20 cursor-pointer transition-all"
             title="Xuất toàn bộ báo cáo phân tích và dữ liệu chi tiết ra file Excel chuẩn (.xlsx)"
           >
@@ -708,19 +701,64 @@ export default function SurveyAdminSection({ onBack }: { onBack?: () => void }) 
         </div>
       </div>
 
-      {actionMessage && (
-        <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-2 animate-fade-in">
-          <CheckCircle2 className="w-4 h-4 shrink-0" />
-          {actionMessage}
+      <SurveyRoundsPanel rounds={rounds} allRows={allRows || []} selected={roundId} activeId={activeRoundId} onSelect={setRoundId} onRefresh={refresh} />
+      
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-2">
+        <div>
+          <h3 className="font-black text-xl text-slate-900 dark:text-white flex items-center gap-2">
+            <span>Dữ liệu báo cáo:</span>
+            <span className="text-red-600 dark:text-red-400">{roundLabel}</span>
+          </h3>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Thống kê tổng hợp số liệu khảo sát học sinh và giáo viên trong đợt đã chọn
+          </p>
         </div>
-      )}
+      </div>
 
       {error && <p role="alert" className="text-red-600 text-sm font-bold bg-red-50 p-3 rounded-xl border border-red-200">{error}</p>}
+
+      {/* KPI Cards (Hỗ trợ bấm trực tiếp để chuyển xem Học sinh / Giáo viên) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className={surveyPanel}>
+          <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Tổng phản hồi khảo sát</p>
+          <p className="text-3xl font-black mt-2 text-slate-900 dark:text-white font-mono">{rows.length}</p>
+          <p className="text-[11px] text-slate-400 mt-1">Trong đợt {roundLabel}</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => handleTabChange('student')}
+          className={`${surveyPanel} text-left cursor-pointer transition-all hover:border-blue-500 ${role === 'student' && activeTab === 'student' ? 'ring-2 ring-blue-500 border-blue-500 bg-blue-50/50 dark:bg-blue-950/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">🎓 Học sinh THPT</p>
+            {role === 'student' && activeTab === 'student' && <span className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">Đang xem</span>}
+          </div>
+          <p className="text-3xl font-black mt-2 text-slate-900 dark:text-white font-mono">{rows.filter(r => r.role === 'student').length}</p>
+          <p className="text-[11px] text-slate-400 mt-1">Bấm để xem phân tích học sinh</p>
+        </button>
+        <button
+          type="button"
+          onClick={() => handleTabChange('teacher')}
+          className={`${surveyPanel} text-left cursor-pointer transition-all hover:border-purple-500 ${role === 'teacher' && activeTab === 'teacher' ? 'ring-2 ring-purple-500 border-purple-500 bg-purple-50/50 dark:bg-purple-950/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">👨‍🏫 Giáo viên GDQP</p>
+            {role === 'teacher' && activeTab === 'teacher' && <span className="text-[10px] bg-purple-600 text-white px-2 py-0.5 rounded-full font-bold">Đang xem</span>}
+          </div>
+          <p className="text-3xl font-black mt-2 text-slate-900 dark:text-white font-mono">{rows.filter(r => r.role === 'teacher').length}</p>
+          <p className="text-[11px] text-slate-400 mt-1">Bấm để xem đánh giá giáo viên</p>
+        </button>
+        <div className={surveyPanel}>
+          <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Cặp trước–sau ghép</p>
+          <p className="text-3xl font-black mt-2 text-slate-900 dark:text-white font-mono">{pairedResponses(rows).length}</p>
+          <p className="text-[11px] text-slate-400 mt-1">Đủ cả 2 phần khảo sát</p>
+        </div>
+      </div>
 
       {/* ════════════════════════════════════════════════════════════════════════
           HỆ THỐNG BIỂU ĐỒ PHÂN TÍCH TỰ ĐỘNG DỰA TRÊN KẾT QUẢ CÂU HỎI KHẢO SÁT
          ════════════════════════════════════════════════════════════════════════ */}
-      <div className="order-1 bg-gradient-to-br from-slate-900 via-slate-900 to-[#0b0f19] text-white p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-2xl space-y-8 relative overflow-hidden">
+      <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-[#0b0f19] text-white p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-2xl space-y-8 relative overflow-hidden">
         {/* Background Ambient Glow */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-red-600/10 rounded-full blur-3xl pointer-events-none -z-0" />
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl pointer-events-none -z-0" />
@@ -1363,39 +1401,87 @@ export default function SurveyAdminSection({ onBack }: { onBack?: () => void }) 
         </div>
       </div>
 
-      {/* KPI Cards (Hỗ trợ bấm trực tiếp để chuyển xem Học sinh / Giáo viên) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className={surveyPanel}>
-          <p className="text-sm text-slate-500">Tổng phản hồi khảo sát</p>
-          <p className="text-3xl font-black mt-2 text-slate-900 dark:text-white">{rows.length}</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => handleTabChange('student')}
-          className={`${surveyPanel} text-left cursor-pointer transition-all hover:border-blue-500 ${role === 'student' ? 'ring-2 ring-blue-500 border-blue-500 bg-blue-50/50 dark:bg-blue-950/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-        >
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-bold text-blue-600 dark:text-blue-400">🎓 Học sinh THPT</p>
-            {role === 'student' && <span className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">Đang xem</span>}
+      {/* AI tổng hợp toàn bộ góp ý thật từ học sinh & giáo viên */}
+      <section className="rounded-3xl border border-violet-200 bg-gradient-to-br from-violet-50 via-white to-blue-50 p-5 sm:p-7 shadow-sm dark:border-violet-900/60 dark:from-violet-950/30 dark:via-slate-900 dark:to-blue-950/30">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 text-violet-700 dark:text-violet-300">
+              <Sparkles className="h-5 w-5" />
+              <h3 className="text-lg font-black">AI tổng hợp góp ý tự luận</h3>
+            </div>
+            <p className="mt-1 max-w-2xl text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+              Tự động gom nhóm toàn bộ phản hồi tự luận, tìm vấn đề được nhắc nhiều nhất và đề xuất thứ tự ưu tiên cải thiện. Tên, tài khoản, email và số điện thoại không được đưa vào nội dung phân tích.
+            </p>
           </div>
-          <p className="text-3xl font-black mt-2 text-slate-900 dark:text-white">{rows.filter(r => r.role === 'student').length}</p>
-        </button>
-        <button
-          type="button"
-          onClick={() => handleTabChange('teacher')}
-          className={`${surveyPanel} text-left cursor-pointer transition-all hover:border-purple-500 ${role === 'teacher' ? 'ring-2 ring-purple-500 border-purple-500 bg-purple-50/50 dark:bg-purple-950/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-        >
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-bold text-purple-600 dark:text-purple-400">👨‍🏫 Giáo viên GDQP</p>
-            {role === 'teacher' && <span className="text-[10px] bg-purple-600 text-white px-2 py-0.5 rounded-full font-bold">Đang xem</span>}
-          </div>
-          <p className="text-3xl font-black mt-2 text-slate-900 dark:text-white">{rows.filter(r => r.role === 'teacher').length}</p>
-        </button>
-        <div className={surveyPanel}>
-          <p className="text-sm text-slate-500">Cặp trước–sau ghép</p>
-          <p className="text-3xl font-black mt-2 text-slate-900 dark:text-white">{pairedResponses(rows).length}</p>
+          <button
+            type="button"
+            disabled={feedbackAiBusy}
+            onClick={() => void loadFeedbackAnalysis(true)}
+            className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-violet-700 disabled:cursor-wait disabled:opacity-60 cursor-pointer"
+          >
+            <RefreshCw className={`h-4 w-4 ${feedbackAiBusy ? 'animate-spin' : ''}`} />
+            {feedbackAiBusy ? 'Đang đọc và tổng hợp…' : 'Phân tích lại bằng AI'}
+          </button>
         </div>
-      </div>
+
+        {feedbackAiError && <p role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700">{feedbackAiError}</p>}
+        {feedbackAiBusy && !feedbackAnalysis && (
+          <div className="mt-5 flex items-center gap-3 rounded-2xl border border-violet-200 bg-white/70 p-5 text-sm text-slate-600 dark:border-violet-900 dark:bg-slate-950/40 dark:text-slate-300">
+            <RefreshCw className="h-5 w-5 animate-spin text-violet-500" /> AI đang phân loại các phản hồi và tính tần suất chủ đề…
+          </div>
+        )}
+        {!feedbackAiBusy && !feedbackAnalysis && !feedbackAiError && (
+          <p className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500 dark:border-slate-700">Chưa có góp ý tự luận để tổng hợp.</p>
+        )}
+
+        {feedbackAnalysis && (
+          <div className="mt-5 space-y-5">
+            <div className="rounded-2xl border border-violet-200 bg-white/80 p-4 dark:border-violet-900/60 dark:bg-slate-950/50">
+              <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-bold">
+                <span className="rounded-full bg-violet-100 px-2.5 py-1 text-violet-700 dark:bg-violet-950 dark:text-violet-300">{feedbackAnalysis.analyzedCount} góp ý đã phân tích</span>
+                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600 dark:bg-slate-800 dark:text-slate-300">{feedbackAnalysis.source === 'ai' ? `Google Gemini · ${feedbackAnalysis.model || 'gemini-3.5-flash'}` : 'Thống kê dự phòng cục bộ'}</span>
+                <time className="text-slate-400">{new Date(feedbackAnalysis.generatedAt).toLocaleString('vi-VN')}</time>
+              </div>
+              <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-200">{feedbackAnalysis.summary}</p>
+            </div>
+
+            <div className="grid gap-5 lg:grid-cols-2">
+              <div>
+                <h4 className="mb-3 flex items-center gap-2 text-sm font-black text-rose-700 dark:text-rose-300"><Target className="h-4 w-4" /> Vấn đề cần ưu tiên cải thiện</h4>
+                <div className="space-y-3">
+                  {feedbackAnalysis.priorities.length ? feedbackAnalysis.priorities.map((topic, index) => (
+                    <div key={topic.id} className="rounded-2xl border border-rose-100 bg-white/80 p-4 dark:border-rose-950 dark:bg-slate-950/50">
+                      <div className="flex items-start justify-between gap-3">
+                        <div><span className="mr-2 text-xs font-black text-rose-500">#{index + 1}</span><strong className="text-sm text-slate-800 dark:text-white">{topic.label}</strong><p className="mt-1 text-xs text-slate-500">{topic.description}</p></div>
+                        <span className="shrink-0 rounded-lg bg-rose-100 px-2 py-1 text-xs font-black text-rose-700 dark:bg-rose-950 dark:text-rose-300">{topic.mentions} lượt · {topic.percentage}%</span>
+                      </div>
+                      <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div className="h-full rounded-full bg-gradient-to-r from-rose-500 to-orange-400" style={{ width: `${Math.min(100, topic.percentage)}%` }} /></div>
+                      {topic.examples[0] && <p className="mt-2 line-clamp-2 text-[11px] italic text-slate-500">“{topic.examples[0]}”</p>}
+                    </div>
+                  )) : <p className="rounded-xl border border-dashed p-4 text-xs text-slate-500">Chưa phát hiện vấn đề cải thiện nổi bật.</p>}
+                </div>
+              </div>
+
+              <div className="space-y-5">
+                <div>
+                  <h4 className="mb-3 flex items-center gap-2 text-sm font-black text-emerald-700 dark:text-emerald-300"><ThumbsUp className="h-4 w-4" /> Điểm tích cực được nhắc đến</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {feedbackAnalysis.positives.length ? feedbackAnalysis.positives.map(topic => (
+                      <span key={topic.id} className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">{topic.label} · {topic.mentions} lượt ({topic.percentage}%)</span>
+                    )) : <span className="text-xs text-slate-500">Chưa đủ dữ liệu để xác định điểm tích cực nổi bật.</span>}
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-blue-200 bg-blue-50/70 p-4 dark:border-blue-900 dark:bg-blue-950/30">
+                  <h4 className="mb-3 text-sm font-black text-blue-800 dark:text-blue-300">Đề xuất hành động</h4>
+                  {feedbackAnalysis.suggestions.length ? <ol className="space-y-2 text-xs leading-relaxed text-slate-700 dark:text-slate-300">
+                    {feedbackAnalysis.suggestions.map((suggestion, index) => <li key={`${index}-${suggestion}`} className="flex gap-2"><span className="font-black text-blue-600">{index + 1}.</span><span>{suggestion}</span></li>)}
+                  </ol> : <p className="text-xs text-slate-500">Chưa có đề xuất vì dữ liệu hiện còn ít.</p>}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
 
       {/* Bộ lọc và xuất file */}
       <div className={`${surveyPanel} flex flex-wrap items-end gap-4`}>
@@ -1418,7 +1504,7 @@ export default function SurveyAdminSection({ onBack }: { onBack?: () => void }) 
         </label>
         <button
           className="flex items-center gap-2 border border-emerald-600/30 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 rounded-xl px-4 py-3 text-sm font-bold hover:bg-emerald-100 dark:hover:bg-emerald-900/60 print:hidden cursor-pointer shadow-xs transition-all active:scale-95"
-          onClick={() => exportSurveyReportToExcel(rows, { role, mode, grade: selectedGradeFilter })}
+          onClick={() => exportSurveyReportToExcel(rows, { role, mode, grade: selectedGradeFilter, roundLabel, rounds })}
           title="Xuất toàn bộ báo cáo tổng hợp và chi tiết ra file Excel (.xlsx)"
         >
           <FileSpreadsheet size={18} className="text-emerald-600 dark:text-emerald-400" />
@@ -1426,7 +1512,7 @@ export default function SurveyAdminSection({ onBack }: { onBack?: () => void }) 
         </button>
         <button
           className="flex items-center gap-1.5 border rounded-xl px-3.5 py-3 text-xs font-semibold text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 print:hidden cursor-pointer"
-          onClick={() => downloadCsv(group, `bao-cao-khao-sat-${role}`)}
+          onClick={() => downloadCsv(group, `bao-cao-khao-sat-${role}`, rounds)}
           title="Tải tệp định dạng CSV"
         >
           <Download size={15} /> CSV
@@ -1577,92 +1663,12 @@ export default function SurveyAdminSection({ onBack }: { onBack?: () => void }) 
         )}
       </div>
 
-      {/* AI tổng hợp toàn bộ góp ý thật, đặt ngay trước khu biểu đồ phân tích. */}
-      <section className="rounded-3xl border border-violet-200 bg-gradient-to-br from-violet-50 via-white to-blue-50 p-5 sm:p-7 shadow-sm dark:border-violet-900/60 dark:from-violet-950/30 dark:via-slate-900 dark:to-blue-950/30">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 text-violet-700 dark:text-violet-300">
-              <Sparkles className="h-5 w-5" />
-              <h3 className="text-lg font-black">AI tổng hợp góp ý</h3>
-            </div>
-            <p className="mt-1 max-w-2xl text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-              Tự động gom nhóm toàn bộ phản hồi tự luận, tìm vấn đề được nhắc nhiều nhất và đề xuất thứ tự ưu tiên cải thiện. Tên, tài khoản, email và số điện thoại không được đưa vào nội dung phân tích.
-            </p>
-          </div>
-          <button
-            type="button"
-            disabled={feedbackAiBusy}
-            onClick={() => void loadFeedbackAnalysis(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-violet-700 disabled:cursor-wait disabled:opacity-60"
-          >
-            <RefreshCw className={`h-4 w-4 ${feedbackAiBusy ? 'animate-spin' : ''}`} />
-            {feedbackAiBusy ? 'Đang đọc và tổng hợp…' : 'Phân tích lại bằng AI'}
-          </button>
-        </div>
-
-        {feedbackAiError && <p role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700">{feedbackAiError}</p>}
-        {feedbackAiBusy && !feedbackAnalysis && (
-          <div className="mt-5 flex items-center gap-3 rounded-2xl border border-violet-200 bg-white/70 p-5 text-sm text-slate-600 dark:border-violet-900 dark:bg-slate-950/40 dark:text-slate-300">
-            <RefreshCw className="h-5 w-5 animate-spin text-violet-500" /> AI đang phân loại các phản hồi và tính tần suất chủ đề…
-          </div>
-        )}
-        {!feedbackAiBusy && !feedbackAnalysis && !feedbackAiError && (
-          <p className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500 dark:border-slate-700">Chưa có góp ý tự luận để tổng hợp.</p>
-        )}
-
-        {feedbackAnalysis && (
-          <div className="mt-5 space-y-5">
-            <div className="rounded-2xl border border-violet-200 bg-white/80 p-4 dark:border-violet-900/60 dark:bg-slate-950/50">
-              <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-bold">
-                <span className="rounded-full bg-violet-100 px-2.5 py-1 text-violet-700 dark:bg-violet-950 dark:text-violet-300">{feedbackAnalysis.analyzedCount} góp ý đã phân tích</span>
-                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600 dark:bg-slate-800 dark:text-slate-300">{feedbackAnalysis.source === 'ai' ? `Google Gemini · ${feedbackAnalysis.model || 'gemini-3.5-flash'}` : 'Thống kê dự phòng cục bộ'}</span>
-                <time className="text-slate-400">{new Date(feedbackAnalysis.generatedAt).toLocaleString('vi-VN')}</time>
-              </div>
-              <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-200">{feedbackAnalysis.summary}</p>
-            </div>
-
-            <div className="grid gap-5 lg:grid-cols-2">
-              <div>
-                <h4 className="mb-3 flex items-center gap-2 text-sm font-black text-rose-700 dark:text-rose-300"><Target className="h-4 w-4" /> Vấn đề cần ưu tiên cải thiện</h4>
-                <div className="space-y-3">
-                  {feedbackAnalysis.priorities.length ? feedbackAnalysis.priorities.map((topic, index) => (
-                    <div key={topic.id} className="rounded-2xl border border-rose-100 bg-white/80 p-4 dark:border-rose-950 dark:bg-slate-950/50">
-                      <div className="flex items-start justify-between gap-3">
-                        <div><span className="mr-2 text-xs font-black text-rose-500">#{index + 1}</span><strong className="text-sm text-slate-800 dark:text-white">{topic.label}</strong><p className="mt-1 text-xs text-slate-500">{topic.description}</p></div>
-                        <span className="shrink-0 rounded-lg bg-rose-100 px-2 py-1 text-xs font-black text-rose-700 dark:bg-rose-950 dark:text-rose-300">{topic.mentions} lượt · {topic.percentage}%</span>
-                      </div>
-                      <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div className="h-full rounded-full bg-gradient-to-r from-rose-500 to-orange-400" style={{ width: `${Math.min(100, topic.percentage)}%` }} /></div>
-                      {topic.examples[0] && <p className="mt-2 line-clamp-2 text-[11px] italic text-slate-500">“{topic.examples[0]}”</p>}
-                    </div>
-                  )) : <p className="rounded-xl border border-dashed p-4 text-xs text-slate-500">Chưa phát hiện vấn đề cải thiện nổi bật.</p>}
-                </div>
-              </div>
-
-              <div className="space-y-5">
-                <div>
-                  <h4 className="mb-3 flex items-center gap-2 text-sm font-black text-emerald-700 dark:text-emerald-300"><ThumbsUp className="h-4 w-4" /> Điểm tích cực được nhắc đến</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {feedbackAnalysis.positives.length ? feedbackAnalysis.positives.map(topic => (
-                      <span key={topic.id} className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">{topic.label} · {topic.mentions} lượt ({topic.percentage}%)</span>
-                    )) : <span className="text-xs text-slate-500">Chưa đủ dữ liệu để xác định điểm tích cực nổi bật.</span>}
-                  </div>
-                </div>
-                <div className="rounded-2xl border border-blue-200 bg-blue-50/70 p-4 dark:border-blue-900 dark:bg-blue-950/30">
-                  <h4 className="mb-3 text-sm font-black text-blue-800 dark:text-blue-300">Đề xuất hành động</h4>
-                  {feedbackAnalysis.suggestions.length ? <ol className="space-y-2 text-xs leading-relaxed text-slate-700 dark:text-slate-300">
-                    {feedbackAnalysis.suggestions.map((suggestion, index) => <li key={`${index}-${suggestion}`} className="flex gap-2"><span className="font-black text-blue-600">{index + 1}.</span><span>{suggestion}</span></li>)}
-                  </ol> : <p className="text-xs text-slate-500">Chưa có đề xuất vì dữ liệu hiện còn ít.</p>}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </section>
-
-      <div className="order-2"><AccountManagement /></div>
+      <div>
+        <AccountManagement />
+      </div>
 
       {/* Bảng chi tiết toàn bộ phản hồi */}
-      <details className={`${surveyPanel} order-2`}>
+      <details className={surveyPanel}>
         <summary className="font-bold cursor-pointer text-slate-900 dark:text-white">
           Danh sách phản hồi chi tiết ({selected.length})
         </summary>

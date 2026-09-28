@@ -35,134 +35,10 @@ export function diagnoseMeasurements(
     statusLevel = 'NOT_ACHIEVED';
   }
 
-  switch (criterionId) {
-    case 'feet': {
-      const heelGap = measurementMap.get('heelGapRatio');
-      const angle = measurementMap.get('footOpeningAngle');
-
-      if (heelGap !== undefined && heelGap > 0.18) {
-        mistakes.push('Hai gót chân chưa đủ gần nhau.');
-      }
-      if (angle !== undefined) {
-        if (angle < 35) {
-          mistakes.push('Hai mũi chân mở hơi hẹp (dưới 45°).');
-        } else if (angle > 55) {
-          mistakes.push('Hai mũi chân mở hơi rộng (quá 45°).');
-        }
-      }
-      break;
-    }
-
-    case 'torso': {
-      const tilt = measurementMap.get('torsoTilt');
-      if (tilt !== undefined && tilt > 7) {
-        mistakes.push('Thân người đang hơi nghiêng.');
-      }
-      break;
-    }
-
-    case 'balance': {
-      const shoulderTilt = measurementMap.get('shoulderTilt');
-      const hipTilt = measurementMap.get('hipTilt');
-
-      if (shoulderTilt !== undefined && shoulderTilt > 5) {
-        mistakes.push('Vai trái và vai phải chưa cân bằng.');
-      }
-      if (hipTilt !== undefined && hipTilt > 5) {
-        mistakes.push('Hai bên hông chưa thăng bằng.');
-      }
-      break;
-    }
-
-    case 'legs': {
-      const maxKnee = measurementMap.get('maxKneeAngle');
-      const minKnee = measurementMap.get('minKneeAngle');
-
-      if (maxKnee !== undefined && minKnee !== undefined) {
-        if (maxKnee < 170) {
-          mistakes.push('Chưa giữ một chân thẳng làm chân trụ vững chắc.');
-        }
-        if (minKnee > 168) {
-          mistakes.push('Chưa chùng một đầu gối ở tư thế đứng nghỉ.');
-        } else if (minKnee < 145) {
-          mistakes.push('Đầu gối chùng quá sâu, tránh khụy gối quá mức.');
-        }
-      } else {
-        const leftKnee = measurementMap.get('leftKneeAngle');
-        const rightKnee = measurementMap.get('rightKneeAngle');
-
-        if (leftKnee !== undefined && leftKnee < 170) {
-          mistakes.push('Đầu gối trái chưa duỗi thẳng.');
-        }
-        if (rightKnee !== undefined && rightKnee < 170) {
-          mistakes.push('Đầu gối phải chưa duỗi thẳng.');
-        }
-      }
-      break;
-    }
-
-    case 'arms': {
-      const leftElbow = measurementMap.get('leftElbowAngle');
-      const rightElbow = measurementMap.get('rightElbowAngle');
-      const leftWrist = measurementMap.get('leftWristHipDistance');
-      const rightWrist = measurementMap.get('rightWristHipDistance');
-
-      if (leftWrist !== undefined && leftWrist > 0.55) {
-        mistakes.push('Tay trái đang hơi cách thân.');
-      }
-      if (rightWrist !== undefined && rightWrist > 0.55) {
-        mistakes.push('Tay phải đang hơi cách thân.');
-      }
-      if ((leftElbow !== undefined && leftElbow < 165) || (rightElbow !== undefined && rightElbow < 165)) {
-        mistakes.push('Cánh tay chưa buông thẳng tự nhiên.');
-      }
-      break;
-    }
-
-    case 'saluteArm': {
-      const wristHeadDist = measurementMap.get('rightWristHeadDistance');
-      const rightElbow = measurementMap.get('rightElbowAngle');
-
-      if (wristHeadDist !== undefined && wristHeadDist > 0.60) {
-        mistakes.push('Tay phải nên đưa lên gần sát đuôi lông mày phải hoặc vành mũ hơn.');
-      }
-      if (rightElbow !== undefined) {
-        if (rightElbow < 22) {
-          mistakes.push('Khuỷu tay phải gập hơi sâu, mở nhẹ sang bên một chút.');
-        } else if (rightElbow > 88) {
-          mistakes.push('Cánh tay hơi duỗi thẳng, gập khuỷu tay lại gần đầu hơn.');
-        }
-      }
-      break;
-    }
-
-    case 'leftArm': {
-      const leftWrist = measurementMap.get('leftWristHipDistance');
-      const leftElbow = measurementMap.get('leftElbowAngle');
-
-      if (leftWrist !== undefined && leftWrist > 0.70) {
-        mistakes.push('Tay trái nên buông xuôi tự nhiên sát bên thân người.');
-      }
-      if (leftElbow !== undefined && leftElbow < 145) {
-        mistakes.push('Tay trái thả lỏng duỗi thẳng tự nhiên.');
-      }
-      break;
-    }
-
-    case 'head': {
-      const headOffset = measurementMap.get('headOffset');
-      if (headOffset !== undefined && headOffset > 0.12) {
-        mistakes.push('Đầu đang lệch nhẹ sang một bên.');
-      }
-      break;
-    }
-  }
-
-  let specificFeedback = defaultFeedback;
-  // Nghiêm/nghỉ feedback must use the exact rubric, not the older hard-coded bands.
-  if (rules) {
-    mistakes.length = 0;
-    if (statusLevel !== 'PASS') for (const rule of rules) {
+  if (statusLevel === 'PASS') {
+    // When a criterion achieves PASS, do not report any critical mistakes.
+  } else if (rules) {
+    for (const rule of rules) {
       const value = measurementMap.get(rule.feature);
       if (value === undefined || (value >= rule.ideal[0] && value <= rule.ideal[1])) continue;
       const messages: Partial<Record<FeatureId, string>> = {
@@ -182,8 +58,135 @@ export function diagnoseMeasurements(
       const message = messages[rule.feature] ?? defaultFeedback;
       if (!mistakes.includes(message)) mistakes.push(message);
     }
+  } else {
+    // Fallback when rules are not provided
+    switch (criterionId) {
+      case 'feet': {
+        const heelGap = measurementMap.get('heelGapRatio');
+        const angle = measurementMap.get('footOpeningAngle');
+
+        if (heelGap !== undefined && heelGap > 0.25) {
+          mistakes.push('Hai gót chân chưa đủ gần nhau.');
+        }
+        if (angle !== undefined) {
+          if (angle < 25) {
+            mistakes.push('Hai mũi chân mở hơi hẹp (dưới 45°).');
+          } else if (angle > 65) {
+            mistakes.push('Hai mũi chân mở hơi rộng (quá 45°).');
+          }
+        }
+        break;
+      }
+
+      case 'torso': {
+        const tilt = measurementMap.get('torsoTilt');
+        if (tilt !== undefined && tilt > 7) {
+          mistakes.push('Thân người đang hơi nghiêng.');
+        }
+        break;
+      }
+
+      case 'balance': {
+        const shoulderTilt = measurementMap.get('shoulderTilt');
+        const hipTilt = measurementMap.get('hipTilt');
+
+        if (shoulderTilt !== undefined && shoulderTilt > 5) {
+          mistakes.push('Vai trái và vai phải chưa cân bằng.');
+        }
+        if (hipTilt !== undefined && hipTilt > 7) {
+          mistakes.push('Hai bên hông chưa thăng bằng.');
+        }
+        break;
+      }
+
+      case 'legs': {
+        const maxKnee = measurementMap.get('maxKneeAngle');
+        const minKnee = measurementMap.get('minKneeAngle');
+
+        if (maxKnee !== undefined && minKnee !== undefined) {
+          if (maxKnee < 162) {
+            mistakes.push('Chưa giữ một chân thẳng làm chân trụ vững chắc.');
+          }
+          if (minKnee > 175) {
+            mistakes.push('Chưa chùng một đầu gối ở tư thế đứng nghỉ.');
+          } else if (minKnee < 135) {
+            mistakes.push('Đầu gối chùng quá sâu, tránh khụy gối quá mức.');
+          }
+        } else {
+          const leftKnee = measurementMap.get('leftKneeAngle');
+          const rightKnee = measurementMap.get('rightKneeAngle');
+
+          if (leftKnee !== undefined && leftKnee < 162) {
+            mistakes.push('Đầu gối trái chưa duỗi thẳng.');
+          }
+          if (rightKnee !== undefined && rightKnee < 162) {
+            mistakes.push('Đầu gối phải chưa duỗi thẳng.');
+          }
+        }
+        break;
+      }
+
+      case 'arms': {
+        const leftElbow = measurementMap.get('leftElbowAngle');
+        const rightElbow = measurementMap.get('rightElbowAngle');
+        const leftWrist = measurementMap.get('leftWristHipDistance');
+        const rightWrist = measurementMap.get('rightWristHipDistance');
+
+        if (leftWrist !== undefined && leftWrist > 0.65) {
+          mistakes.push('Tay trái đang hơi cách thân.');
+        }
+        if (rightWrist !== undefined && rightWrist > 0.65) {
+          mistakes.push('Tay phải đang hơi cách thân.');
+        }
+        if ((leftElbow !== undefined && leftElbow < 155) || (rightElbow !== undefined && rightElbow < 155)) {
+          mistakes.push('Cánh tay chưa buông thẳng tự nhiên.');
+        }
+        break;
+      }
+
+      case 'saluteArm': {
+        const wristHeadDist = measurementMap.get('rightWristHeadDistance');
+        const rightElbow = measurementMap.get('rightElbowAngle');
+
+        if (wristHeadDist !== undefined && wristHeadDist > 0.60) {
+          mistakes.push('Tay phải nên đưa lên gần sát đuôi lông mày phải hoặc vành mũ hơn.');
+        }
+        if (rightElbow !== undefined) {
+          if (rightElbow < 22) {
+            mistakes.push('Khuỷu tay phải gập hơi sâu, mở nhẹ sang bên một chút.');
+          } else if (rightElbow > 88) {
+            mistakes.push('Cánh tay hơi duỗi thẳng, gập khuỷu tay lại gần đầu hơn.');
+          }
+        }
+        break;
+      }
+
+      case 'leftArm': {
+        const leftWrist = measurementMap.get('leftWristHipDistance');
+        const leftElbow = measurementMap.get('leftElbowAngle');
+
+        if (leftWrist !== undefined && leftWrist > 0.70) {
+          mistakes.push('Tay trái nên buông xuôi tự nhiên sát bên thân người.');
+        }
+        if (leftElbow !== undefined && leftElbow < 145) {
+          mistakes.push('Tay trái thả lỏng duỗi thẳng tự nhiên.');
+        }
+        break;
+      }
+
+      case 'head': {
+        const headOffset = measurementMap.get('headOffset');
+        if (headOffset !== undefined && headOffset > 0.12) {
+          mistakes.push('Đầu đang lệch nhẹ sang một bên.');
+        }
+        break;
+      }
+    }
   }
+
+  let specificFeedback = defaultFeedback;
   if (statusLevel === 'PASS') {
+    mistakes.length = 0;
     switch (criterionId) {
       case 'feet':
         specificFeedback = 'Gót chân khép sát, hai mũi chân mở hình chữ V chuẩn ~45°.';

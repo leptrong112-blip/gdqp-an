@@ -1,11 +1,12 @@
 import { POSE_CONFIG as C } from '../config';
-import type { CalibrationProfile, CanonicalPoseFrame, DynamicProgress, FeatureSample, LightingMetrics, PoseStage } from '../types';
+import type { CalibrationProfile, CanonicalPoseFrame, DualMeasurement, DynamicProgress, FeatureSample, LightingMetrics, PoseStage } from '../types';
 import { filterLandmarks } from '../pipeline/confidenceFilter';
 import { LandmarkSmoother } from '../pipeline/smoothing';
 import { LandmarkOutlierFilter } from '../pipeline/outlierFilter';
 import { QualityChecker } from '../pipeline/qualityChecks';
-import { createCalibration, normalizePose } from '../pipeline/normalization';
+import { createCalibration, normalizePose, measurements } from '../pipeline/normalization';
 import { extractFeatures } from '../pipeline/featureExtraction';
+import { extractDualMeasurements } from '../diagnostics/dualMeasurement';
 import { evaluate } from '../scoring/scoringEngine';
 import { attentionMovement } from '../scoring/attentionMovement';
 import { atEaseMovement } from '../scoring/atEaseMovement';
@@ -81,7 +82,7 @@ export class SessionProcessor {
     if (command === 'reset') { this.quality.reset(); this.smoother.reset(); this.profile = undefined; this.stage = 'quality-check'; }
     if (command === 'startCalibration') { this.profile = undefined; this.smoother.reset(); this.stage = 'calibrating'; }
     if (command === 'startAttempt' && this.profile) this.stage = 'countdown';
-    this.calibration = []; this.samples = []; this.motionBuffer.clear(); this.dynamicTracker.reset(); this.elapsed = 0; this.lastGood = false; this.failureSince = null;
+    this.calibration = []; this.samples = []; this.motionBuffer.clear(); this.dynamicTracker.reset(); this.elapsed = 0; this.lastGood = false; this.failureSince = null; this.lastTime = -1;
   }
 
   process(raw: CanonicalPoseFrame, lighting: LightingMetrics, inferenceMs: number): WorkerEvent[] {
@@ -147,6 +148,8 @@ export class SessionProcessor {
 
     let dynamicProgress: DynamicProgress | undefined;
     let dynamicRatio = 0;
+    let liveSample: FeatureSample | undefined;
+    let liveDualMeasurements: DualMeasurement[] | undefined;
 
     if (this.stage === 'scoring' && good && this.profile) {
       // The interval ending at countdown completion belongs to preparation, not scoring.
@@ -158,6 +161,8 @@ export class SessionProcessor {
       const normalized = normalizePose(observed, this.profile);
       if (normalized) {
         const sample = extractFeatures(normalized);
+        liveSample = sample;
+        liveDualMeasurements = extractDualMeasurements(normalized);
         this.samples.push(sample);
         if (this.movement.type !== 'DYNAMIC' && !stableStaticHold(this.samples)) {
           this.samples = []; this.elapsed = 0;
@@ -208,6 +213,33 @@ export class SessionProcessor {
       }
     }
 
+    // Telemetry fallback: compute live measurements in any stage for developer HUD
+    if (!liveSample) {
+      const provisional = this.profile ?? (() => {
+        const m = measurements(smoothed);
+        if (!m || m.bodyScale <= 0 || m.worldScale <= 0) return null;
+        return {
+          bodyScale: m.bodyScale,
+          worldScale: m.worldScale,
+          shoulderWidth: m.shoulderWidth,
+          hipWidth: m.hipWidth,
+          torsoLength: m.torsoLength,
+          legLength: m.legLength,
+          baselineJitter: 0.01,
+          coverage: 1,
+          frontFacing: true,
+          sampleCount: 1,
+        };
+      })();
+      if (provisional) {
+        const norm = normalizePose(smoothed, provisional);
+        if (norm) {
+          liveSample = extractFeatures(norm);
+          liveDualMeasurements = extractDualMeasurements(norm);
+        }
+      }
+    }
+
     this.lastGood = good;
     const target = this.stage === 'calibrating' ? C.calibrationMs : this.stage === 'countdown' ? C.countdownMs : C.attemptMs;
     const progress = (this.stage === 'scoring' && this.movement.type === 'DYNAMIC')
@@ -226,6 +258,8 @@ export class SessionProcessor {
         dynamicProgress,
         message,
         drillProgress: this.drill ? { index: this.drillIndex, completed: this.drillSteps.filter(s => s.result.status === 'scored').length, total: 3, movementId: DRILL_IDS[this.drillIndex] } : undefined,
+        features: liveSample?.values,
+        dualMeasurements: liveDualMeasurements,
       },
     });
 

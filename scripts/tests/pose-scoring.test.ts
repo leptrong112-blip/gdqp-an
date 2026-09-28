@@ -172,3 +172,106 @@ test('saluteMovement: hand not raised to head loses points with specific Vietnam
   }
 });
 
+test('real-world webcam attention: natural arm hang (158°) and jacket/body wrist distance (0.62) earns 100 points with 0 mistakes', async () => {
+  const { buildRequirementCards } = await import('../../src/features/pose-analysis/scoring/postureFeedback');
+  const data = window();
+  data.samples.forEach(s => {
+    // Natural human relaxed arm hang (not stiffened backward)
+    s.values.leftElbowAngle = { value: 158, confidence: 0.95 };
+    s.values.rightElbowAngle = { value: 161, confidence: 0.95 };
+    // Normal body proportions / military jacket fabric width
+    s.values.leftWristHipDistance = { value: 0.62, confidence: 0.95 };
+    s.values.rightWristHipDistance = { value: 0.60, confidence: 0.95 };
+  });
+
+  const result = evaluate(attentionMovement, data);
+  assert.equal(result.status, 'scored');
+  if (result.status === 'scored') {
+    assert.equal(result.total, 100);
+    assert.equal(result.passed, true);
+    const cards = buildRequirementCards(result.criteria, 'attention');
+    const armCard = cards.find(c => c.id === 'card-arms')!;
+    assert.equal(armCard.statusLevel, 'PASS');
+    assert.deepEqual(armCard.mistakes, []);
+  }
+});
+
+test('real-world 3D ground plane foot angle extracts correctly when depth is present', () => {
+  const frame = attentionFrame();
+  const profile = createCalibration(Array(20).fill(frame))!;
+  // Simulate 3D metric world landmarks on floor plane with depth (Z)
+  frame.landmarks.leftHeel!.world = { x: -0.05, y: 0.8, z: 0.0 };
+  frame.landmarks.rightHeel!.world = { x: 0.05, y: 0.8, z: 0.0 };
+  // Both feet point forward into -Z with 45° total opening (22.5° each)
+  // tan(22.5°) ~ 0.414. If dZ = -0.20, dX = 0.414 * 0.20 = 0.0828
+  frame.landmarks.leftFootIndex!.world = { x: -0.05 - 0.0828, y: 0.8, z: -0.20 };
+  frame.landmarks.rightFootIndex!.world = { x: 0.05 + 0.0828, y: 0.8, z: -0.20 };
+
+  const norm = normalizePose(frame, profile)!;
+  const sample = extractFeatures(norm);
+  assert.ok(sample.values.footOpeningAngle);
+  const angle = sample.values.footOpeningAngle!.value;
+  // Should measure close to 45°
+  assert.ok(angle >= 40 && angle <= 50, `Expected ~45° but got ${angle}`);
+});
+
+test('atEase discrimination: strict separation between Nghiêm, slumped/squat, and genuine Nghỉ', async () => {
+  const { atEaseMovement } = await import('../../src/features/pose-analysis/scoring/atEaseMovement');
+  const { buildRequirementCards } = await import('../../src/features/pose-analysis/scoring/postureFeedback');
+
+  // Case 1: Đứng Nghiêm (both legs straight, e.g. 175° & 175°) fails atEase
+  const dataNghiem = window();
+  dataNghiem.samples.forEach(s => {
+    s.values.leftKneeAngle = { value: 175, confidence: 0.95 };
+    s.values.rightKneeAngle = { value: 175, confidence: 0.95 };
+    s.values.minKneeAngle = { value: 175, confidence: 0.95 };
+    s.values.maxKneeAngle = { value: 175, confidence: 0.95 };
+    s.values.kneeAngleDiff = { value: 0, confidence: 0.95 };
+  });
+  const resNghiem = evaluate(atEaseMovement, dataNghiem);
+  assert.equal(resNghiem.status, 'scored');
+  if (resNghiem.status === 'scored') {
+    assert.equal(resNghiem.passed, false);
+    const legs = resNghiem.criteria.find(c => c.id === 'legs')!;
+    assert.ok(legs.points < 25);
+    const cards = buildRequirementCards(resNghiem.criteria, 'atEase');
+    assert.notEqual(cards[1].statusLevel, 'PASS');
+  }
+
+  // Case 2: Slumping / Squatting (both legs bent, e.g. 150° & 145°) fails atEase
+  const dataSlump = window();
+  dataSlump.samples.forEach(s => {
+    s.values.leftKneeAngle = { value: 145, confidence: 0.95 };
+    s.values.rightKneeAngle = { value: 150, confidence: 0.95 };
+    s.values.minKneeAngle = { value: 145, confidence: 0.95 };
+    s.values.maxKneeAngle = { value: 150, confidence: 0.95 };
+    s.values.kneeAngleDiff = { value: 5, confidence: 0.95 };
+  });
+  const resSlump = evaluate(atEaseMovement, dataSlump);
+  assert.equal(resSlump.status, 'scored');
+  if (resSlump.status === 'scored') {
+    assert.equal(resSlump.passed, false);
+  }
+
+  // Case 3: Genuine Nghỉ (support straight 173°, resting bent 150°, diff 23°) passes 100% with 0 mistakes
+  const dataNghi = window();
+  dataNghi.samples.forEach(s => {
+    s.values.leftKneeAngle = { value: 150, confidence: 0.95 };
+    s.values.rightKneeAngle = { value: 173, confidence: 0.95 };
+    s.values.minKneeAngle = { value: 150, confidence: 0.95 };
+    s.values.maxKneeAngle = { value: 173, confidence: 0.95 };
+    s.values.kneeAngleDiff = { value: 23, confidence: 0.95 };
+  });
+  const resNghi = evaluate(atEaseMovement, dataNghi);
+  assert.equal(resNghi.status, 'scored');
+  if (resNghi.status === 'scored') {
+    assert.equal(resNghi.total, 100);
+    assert.equal(resNghi.passed, true);
+    const cards = buildRequirementCards(resNghi.criteria, 'atEase');
+    const legCard = cards.find(c => c.id === 'card-legs')!;
+    assert.equal(legCard.statusLevel, 'PASS');
+    assert.deepEqual(legCard.mistakes, []);
+  }
+});
+
+

@@ -16,6 +16,7 @@ export function PoseViewport({
   qualityPassed = true,
   pauseReason,
   drillProgress,
+  diagnosticOverlay,
 }: {
   videoRef: RefObject<HTMLVideoElement>;
   canvasRef: RefObject<HTMLCanvasElement>;
@@ -29,6 +30,7 @@ export function PoseViewport({
   qualityPassed?: boolean;
   pauseReason?: string;
   drillProgress?: AnalysisSnapshot['drillProgress'];
+  diagnosticOverlay?: React.ReactNode;
 }) {
   const container = useRef<HTMLDivElement>(null), [localExpanded, setLocalExpanded] = useState(false);
   const active = ['quality-check', 'calibrating', 'countdown', 'scoring', 'completed', 'blocked'].includes(stage);
@@ -186,6 +188,7 @@ export function PoseViewport({
           </div>
         </div>
       )}
+      {diagnosticOverlay}
     </div>
   );
 }

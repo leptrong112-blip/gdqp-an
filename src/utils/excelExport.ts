@@ -1,6 +1,7 @@
 import * as XLSX from 'xlsx';
 import { 
   type SurveyResponse, 
+  type SurveyRound,
   type SurveyRole, 
   surveyQuestions, 
   phaseLabel, 
@@ -44,6 +45,8 @@ export interface SurveyExportOptions {
   mode?: 'paired' | 'all';
   grade?: string;
   reportTitle?: string;
+  roundLabel?: string;
+  rounds?: SurveyRound[];
 }
 
 export function exportSurveyReportToExcel(
@@ -51,6 +54,11 @@ export function exportSurveyReportToExcel(
   options?: SurveyExportOptions
 ) {
   const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
+    ['Phạm vi báo cáo', options?.roundLabel || 'Tất cả các đợt'],
+    ['Mã phản hồi', 'Mã đợt', 'Tên đợt', 'Thời gian gửi'],
+    ...responses.map(r => [r.id, r.roundId || 'legacy', options?.rounds?.find(round => round.id === (r.roundId || 'legacy'))?.name || 'Đợt 1 — dữ liệu hiện có', r.createdAt])
+  ]), 'Dot_khao_sat');
   const timestamp = new Date().toISOString().slice(0, 10);
   const formattedDateTime = new Date().toLocaleString('vi-VN');
 
@@ -58,7 +66,7 @@ export function exportSurveyReportToExcel(
   let filtered = [...responses];
   if (options?.grade && options.grade !== 'all') {
     filtered = filtered.filter(r => 
-      r.className?.includes(options.grade!) || r.code?.includes(options.grade!)
+      r.role === 'teacher' || r.className?.startsWith(options.grade!)
     );
   }
 
@@ -259,8 +267,8 @@ export function exportSurveyReportToExcel(
     ['Sẵn sàng giới thiệu và sử dụng lâu dài', `${tReadyCount}/${tIntentionList.length} giáo viên`, `${tReadyRate}%`, 'Sự đồng thuận cao trong việc nhân rộng mô hình tại các trường THPT'],
     [],
     ['IV. KẾT LUẬN & KHUYẾN NGHỊ SƯ PHẠM'],
-    ['1. Kết luận thực nghiệm:', 'Ứng dụng mô phỏng 3D & WebAR trong môn GDQP-AN giúp nâng cao toàn diện cả 4 chỉ số nhận thức của học sinh, giải quyết triệt để vấn đề trừu tượng và thiếu thốn học cụ thực tế.'],
-    ['2. Khuyến nghị:', 'Cần tiếp tục hoàn thiện thêm các tư thế chiến thuật mới và nhân rộng cho các tổ bộ môn trong nhà trường sử dụng trong các tiết giảng dạy lý thuyết lẫn thực hành.']
+    ['1. Lưu ý diễn giải:', 'Đây là thống kê mô tả trong phạm vi đợt đã chọn. Chỉ kết luận dựa trên số phiếu thực tế; không tự suy ra quan hệ nhân quả.'],
+    ['2. Đối chiếu phiên bản:', 'Dùng báo cáo So sánh các đợt để đánh giá thay đổi sau cải tiến website. Không nhầm với Trước/Sau trải nghiệm trong cùng một đợt.']
   ];
 
   const wsSummary = XLSX.utils.aoa_to_sheet(summaryAoa);

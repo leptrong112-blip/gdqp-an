@@ -72,9 +72,24 @@ export interface DynamicProgress {
   holdRemainingMs?: number;
   message?: string;
 }
+export interface DualMeasurement {
+  featureId: FeatureId;
+  label: string;
+  officialSystem: 'CURRENT_3D' | 'CURRENT_2D';
+  officialValue: number;
+  value2D: number;
+  value3D: number;
+  delta: number;
+  unit: string;
+  confidence: number;
+  isReliable: boolean;
+}
+
 export interface AnalysisSnapshot {
   frame: CanonicalPoseFrame; quality: QualityReport; stage: PoseStage; progress: number;
   inferenceMs: number; inferenceFps: number; message?: string;
   dynamicProgress?: DynamicProgress;
   drillProgress?: { index: number; completed: number; total: number; movementId: 'attention' | 'atEase' | 'salute' };
+  features?: Partial<Record<FeatureId, FeatureValue>>;
+  dualMeasurements?: DualMeasurement[];
 }

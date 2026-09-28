@@ -1,5 +1,6 @@
 import { createHash, scryptSync, timingSafeEqual } from 'node:crypto';
 import { surveyQuestions, type SurveyPhase, type SurveyResponse, type SurveyRole } from '../src/data/survey';
+import { validSurveyAnswers } from '../src/data/surveyRounds';
 
 type AccountRole = 'admin' | 'teacher' | 'student';
 type PublicAccount = { id: string; username: string; name: string; role: AccountRole };
@@ -106,6 +107,45 @@ async function surveyApi(request: Request, env: Env) {
   const needUser = () => user ? null : json({ error: 'Vui lòng đăng nhập tài khoản.' }, 401);
   const needAdmin = () => user?.role === 'admin' ? null : json({ error: user ? 'Chỉ admin được truy cập mục này.' : 'Vui lòng đăng nhập tài khoản admin.' }, user ? 403 : 401);
 
+  if (route === '/rounds') {
+    const denied = needAdmin();
+    if (denied) return denied;
+    if (method === 'GET') {
+      const rounds = await env.DB.prepare('SELECT r.*, (SELECT COUNT(*) FROM survey_responses s WHERE s.roundId = r.id) AS responseCount FROM survey_rounds r ORDER BY createdAt, id').all();
+      const config = await env.DB.prepare('SELECT active_round_id FROM survey_config WHERE id = 1').first<{ active_round_id: string }>();
+      return json({ rounds: rounds.results, activeRoundId: config?.active_round_id || 'legacy' });
+    }
+    if (method === 'POST') {
+      const input = await body(request);
+      const name = typeof input.name === 'string' ? input.name.trim() : '';
+      const notes = typeof input.notes === 'string' ? input.notes.trim() : '';
+      if (!name || name.length > 100 || notes.length > 2000) return json({ error: 'Tên đợt tối đa 100 ký tự, ghi chú tối đa 2000 ký tự.' }, 400);
+      const round = { id: crypto.randomUUID(), name, notes, createdAt: new Date().toISOString() };
+      // Creating a round does not open it: admin must explicitly activate it.
+      await env.DB.prepare('INSERT INTO survey_rounds (id, name, notes, createdAt) VALUES (?, ?, ?, ?)').bind(round.id, name, notes, round.createdAt).run();
+      return json({ round }, 201);
+    }
+  }
+
+  const roundAction = route.match(/^\/rounds\/([^/]+)(\/restore)?$/);
+  if (roundAction && ((method === 'DELETE' && !roundAction[2]) || (method === 'POST' && roundAction[2]))) {
+    const denied = needAdmin();
+    if (denied) return denied;
+    const id = decodeURIComponent(roundAction[1]);
+    const round = await env.DB.prepare('SELECT id FROM survey_rounds WHERE id = ?').bind(id).first();
+    if (!round) return json({ error: 'Đợt khảo sát không tồn tại.' }, 404);
+    if (method === 'DELETE') {
+      // Guard at write time: another admin cannot activate a round as it is trashed.
+      const result = await env.DB.prepare(`UPDATE survey_rounds SET deletedAt = COALESCE(deletedAt, ?)
+        WHERE id = ? AND NOT EXISTS (SELECT 1 FROM survey_config WHERE active_round_id = ?)`)
+        .bind(new Date().toISOString(), id, id).run();
+      if (!result.meta.changes) return json({ error: 'Không thể xóa đợt đang được chọn để nhận phiếu. Hãy chuyển sang đợt khác trước.' }, 409);
+    } else {
+      await env.DB.prepare('UPDATE survey_rounds SET deletedAt = NULL WHERE id = ?').bind(id).run();
+    }
+    return json({ ok: true });
+  }
+
   if (method === 'POST' && route === '/login') {
     const input = await body(request);
     const username = typeof input.username === 'string' ? input.username.trim().toLowerCase() : '';
@@ -167,15 +207,22 @@ async function surveyApi(request: Request, env: Env) {
 
   if (route === '/config') {
     if (method === 'GET') {
-      const value = await env.DB.prepare('SELECT is_open FROM survey_config WHERE id = 1').first<{ is_open: number }>();
-      return json({ isOpen: value?.is_open !== 0 });
+      const value = await env.DB.prepare('SELECT c.is_open, r.id, r.name FROM survey_config c JOIN survey_rounds r ON r.id = c.active_round_id WHERE c.id = 1').first<{ is_open: number; id: string; name: string }>();
+      return json({ isOpen: value?.is_open === 1, activeRoundId: value?.id, activeRoundName: value?.name });
     }
     if (method === 'POST') {
       const denied = needAdmin();
       if (denied) return denied;
       const input = await body(request);
+      if (typeof input.isOpen !== 'boolean') return json({ error: 'Trạng thái không hợp lệ.' }, 400);
       const isOpen = Boolean(input.isOpen);
-      await env.DB.prepare('INSERT INTO survey_config (id, is_open) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET is_open = excluded.is_open').bind(isOpen ? 1 : 0).run();
+      if (input.activeRoundId !== undefined) {
+        if (typeof input.activeRoundId !== 'string') return json({ error: 'Đợt khảo sát không hợp lệ.' }, 400);
+        const changed = await env.DB.prepare('UPDATE survey_config SET is_open = ?, active_round_id = ? WHERE id = 1 AND EXISTS (SELECT 1 FROM survey_rounds WHERE id = ? AND deletedAt IS NULL)').bind(isOpen ? 1 : 0, input.activeRoundId, input.activeRoundId).run();
+        if (!changed.meta.changes) return json({ error: 'Đợt không tồn tại hoặc đang trong Thùng rác. Hãy khôi phục trước.' }, 400);
+      } else {
+        await env.DB.prepare('UPDATE survey_config SET is_open = ? WHERE id = 1').bind(isOpen ? 1 : 0).run();
+      }
       return json({ ok: true, isOpen });
     }
   }
@@ -183,13 +230,45 @@ async function surveyApi(request: Request, env: Env) {
   if (method === 'GET' && route === '/responses') {
     const denied = needAdmin();
     if (denied) return denied;
-    const rows = await env.DB.prepare('SELECT * FROM survey_responses ORDER BY createdAt DESC').all<ResponseRow>();
+    const rows = await env.DB.prepare('SELECT s.* FROM survey_responses s JOIN survey_rounds r ON r.id = s.roundId WHERE r.deletedAt IS NULL ORDER BY s.createdAt DESC').all<ResponseRow>();
     return json({ responses: rows.results.map(toResponse) });
+  }
+  if (method === 'POST' && route === '/submissions') {
+    const input = await body(request);
+    const config = await env.DB.prepare('SELECT is_open, active_round_id FROM survey_config WHERE id = 1').first<{ is_open: number; active_round_id: string }>();
+    if (!config?.is_open) return json({ error: 'Đợt khảo sát đang đóng.' }, 403);
+    if (input.roundId !== config.active_round_id) return json({ error: 'Đợt khảo sát đã thay đổi. Vui lòng tải lại trang để xem đợt mới trước khi gửi.' }, 409);
+    const role = (user?.role || input.role) as SurveyRole;
+    const name = user?.name || (typeof input.name === 'string' ? input.name.trim().slice(0, 160) : '');
+    if (user?.role === 'admin' || (user && input.role !== user.role)) return json({ error: 'Vai trò không được gửi khảo sát này.' }, 403);
+    if (!name || !['student', 'teacher'].includes(role) || !validSurveyAnswers(role, 'before', input.beforeAnswers) || !validSurveyAnswers(role, 'after', input.afterAnswers)) return json({ error: 'Vui lòng điền đầy đủ thông tin và cả hai phần khảo sát.' }, 400);
+    if (input.feedback !== undefined && typeof input.feedback !== 'string') return json({ error: 'Góp ý không hợp lệ.' }, 400);
+    const school = typeof input.school === 'string' ? input.school.trim().slice(0, 160) : '';
+    const className = typeof input.className === 'string' ? input.className.trim().slice(0, 80) : '';
+    const position = typeof input.position === 'string' ? input.position.trim().slice(0, 80) : '';
+    const submissionId = crypto.randomUUID();
+    const code = user?.id || submissionId;
+    const now = new Date().toISOString();
+    // One SQL statement writes both phases. The guard is checked at write time.
+    const result = await env.DB.prepare(`INSERT INTO survey_responses
+      (id, code, username, name, school, className, position, role, phase, createdAt, answers, feedback, roundId)
+      SELECT ? || '-' || p.phase, ?, ?, ?, ?, ?, ?, ?, p.phase, ?,
+        CASE p.phase WHEN 'before' THEN ? ELSE ? END,
+        CASE p.phase WHEN 'after' THEN ? ELSE '' END, ?
+      FROM (SELECT 'before' AS phase UNION ALL SELECT 'after') p
+      WHERE EXISTS (SELECT 1 FROM survey_config WHERE id = 1 AND is_open = 1 AND active_round_id = ?)
+      AND NOT EXISTS (SELECT 1 FROM survey_responses WHERE roundId = ? AND code = ? AND role = ?)`)
+      .bind(submissionId, code, user?.username || null, name, school, className, position, role, now,
+        JSON.stringify(input.beforeAnswers), JSON.stringify(input.afterAnswers), typeof input.feedback === 'string' ? input.feedback.trim().slice(0, 4000) : '',
+        config.active_round_id, config.active_round_id, config.active_round_id, code, role).run();
+    if (result.meta.changes !== 2) return json({ error: 'Đợt đã đóng/thay đổi hoặc tài khoản đã gửi trong đợt này. Dữ liệu cũ vẫn được giữ nguyên.' }, 409);
+    return json({ ok: true, roundId: config.active_round_id }, 201);
   }
   if (method === 'DELETE' && route.startsWith('/responses/')) {
     const denied = needAdmin();
     if (denied) return denied;
     const id = decodeURIComponent(route.slice('/responses/'.length));
+    if (id === 'all') return json({ error: 'Không xóa lịch sử khảo sát. Hãy tạo đợt mới.' }, 409);
     await env.DB.prepare(id === 'all' ? 'DELETE FROM survey_responses' : 'DELETE FROM survey_responses WHERE id = ?').bind(...(id === 'all' ? [] : [id])).run();
     const remaining = await env.DB.prepare('SELECT COUNT(*) AS count FROM survey_responses').first<{ count: number }>();
     return json({ ok: true, remaining: remaining?.count || 0 });
@@ -203,7 +282,8 @@ async function surveyApi(request: Request, env: Env) {
 
   if (method === 'POST' && route === '/responses') {
     const input = await body(request);
-    const config = await env.DB.prepare('SELECT is_open FROM survey_config WHERE id = 1').first<{ is_open: number }>();
+    const config = await env.DB.prepare('SELECT is_open, active_round_id FROM survey_config WHERE id = 1').first<{ is_open: number; active_round_id: string }>();
+    if (input.roundId !== config?.active_round_id) return json({ error: 'Vui lòng tải lại trang để gửi đúng đợt khảo sát.' }, 409);
     if (config?.is_open === 0 && user?.role !== 'admin') return json({ error: 'Đợt khảo sát hiện đang tạm đóng.' }, 403);
     const phase = input.phase as SurveyPhase;
     const role = (user?.role || input.role) as SurveyRole;
@@ -226,19 +306,21 @@ async function surveyApi(request: Request, env: Env) {
     });
     if (invalid) return json({ error: 'Vui lòng trả lời đầy đủ và kiểm tra các lựa chọn.' }, 400);
     const code = user?.id || `${name.toLowerCase().replace(/[^a-z0-9à-ỹ]/gi, '_').slice(0, 16)}_${(className || position || 'khao_sat').toLowerCase().replace(/[^a-z0-9à-ỹ]/gi, '_').slice(0, 10)}`;
-    if (user && await env.DB.prepare('SELECT id FROM survey_responses WHERE code = ? AND role = ? AND phase = ?').bind(code, role, phase).first()) return json({ error: 'Tài khoản này đã gửi khảo sát ở giai đoạn đã chọn.' }, 409);
-    await env.DB.prepare(`INSERT INTO survey_responses (id, code, username, name, school, className, position, role, phase, createdAt, answers, feedback)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(crypto.randomUUID(), code, user?.username || null, name, school, className, position, role, phase, new Date().toISOString(), JSON.stringify(answers), typeof feedback === 'string' ? feedback.trim().slice(0, 4000) : '').run();
+    if (user && await env.DB.prepare('SELECT id FROM survey_responses WHERE code = ? AND role = ? AND phase = ? AND roundId = ?').bind(code, role, phase, config.active_round_id).first()) return json({ error: 'Tài khoản này đã gửi khảo sát ở giai đoạn đã chọn trong đợt này.' }, 409);
+    await env.DB.prepare(`INSERT INTO survey_responses (id, code, username, name, school, className, position, role, phase, createdAt, answers, feedback, roundId)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(crypto.randomUUID(), code, user?.username || null, name, school, className, position, role, phase, new Date().toISOString(), JSON.stringify(answers), typeof feedback === 'string' ? feedback.trim().slice(0, 4000) : '', config.active_round_id).run();
     return json({ ok: true }, 201);
   }
 
   if (route === '/feedback-analysis') {
     const denied = needAdmin();
     if (denied) return denied;
-    const rows = await env.DB.prepare("SELECT id, feedback FROM survey_responses WHERE TRIM(COALESCE(feedback, '')) <> '' ORDER BY createdAt").all<{ id: string; feedback: string }>();
+    const scope = new URL(request.url).searchParams.get('roundId') || 'all';
+    if (scope !== 'all' && !await env.DB.prepare('SELECT id FROM survey_rounds WHERE id = ? AND deletedAt IS NULL').bind(scope).first()) return json({ error: 'Đợt không tồn tại hoặc đã được chuyển vào Thùng rác.' }, 404);
+    const rows = await env.DB.prepare("SELECT s.id, s.feedback FROM survey_responses s JOIN survey_rounds r ON r.id = s.roundId WHERE r.deletedAt IS NULL AND TRIM(COALESCE(s.feedback, '')) <> '' AND (? = 'all' OR s.roundId = ?) ORDER BY s.createdAt, s.id").bind(scope, scope).all<{ id: string; feedback: string }>();
     const items = rows.results.map(row => row.feedback.replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g, '[email đã ẩn]').replace(/(?:\+?84|0)(?:[ .-]?\d){9,10}/g, '[số điện thoại đã ẩn]').replace(/\s+/g, ' ').trim().slice(0, 1200));
     const signature = createHash('sha256').update(rows.results.map(row => `${row.id}:${row.feedback}`).join('\n')).digest('hex');
-    const cache = await env.DB.prepare('SELECT signature, analysis_json FROM feedback_analysis WHERE id = 1').first<{ signature: string; analysis_json: string }>();
+    const cache = await env.DB.prepare('SELECT signature, analysis_json FROM round_feedback_analysis WHERE scope = ?').bind(scope).first<{ signature: string; analysis_json: string }>();
     const cached = cache ? JSON.parse(cache.analysis_json) as FeedbackAnalysis : null;
     if (method === 'GET') return json({ analysis: cached?.signature === signature ? cached : null, needsRefresh: cached?.signature !== signature, feedbackCount: items.length });
     if (method === 'POST') {
@@ -255,7 +337,7 @@ async function surveyApi(request: Request, env: Env) {
         }));
         analysis = localAnalysis(items, signature);
       }
-      await env.DB.prepare('INSERT INTO feedback_analysis (id, signature, analysis_json) VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET signature = excluded.signature, analysis_json = excluded.analysis_json').bind(signature, JSON.stringify(analysis)).run();
+      await env.DB.prepare('INSERT INTO round_feedback_analysis (scope, signature, analysis_json) VALUES (?, ?, ?) ON CONFLICT(scope) DO UPDATE SET signature = excluded.signature, analysis_json = excluded.analysis_json').bind(scope, signature, JSON.stringify(analysis)).run();
       return json({ analysis, cached: false });
     }
   }
@@ -265,7 +347,35 @@ async function surveyApi(request: Request, env: Env) {
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     try {
-      if (new URL(request.url).pathname.startsWith('/api/survey')) return await surveyApi(request, env);
+      const url = new URL(request.url);
+      const pathname = url.pathname;
+
+      // Tuyến khảo sát và xác thực tài khoản trên Cloudflare Worker (sử dụng D1 database)
+      if (pathname.startsWith('/api/survey')) {
+        return await surveyApi(request, env);
+      }
+
+      // Tuyến API chưa có backend trên Cloudflare Worker:
+      // Chặn triệt để việc rơi vào env.ASSETS (vốn sẽ trả về index.html 200 dạng text/html gây crash parser client)
+      if (pathname.startsWith('/api/')) {
+        if (pathname === '/api/ask') {
+          return json({
+            error: 'Tính năng Trợ giảng AI chưa được cấu hình trên máy chủ Cloudflare Worker (yêu cầu Node server hoặc Cloudflare Workers AI binding).',
+            code: 'AI_NOT_CONFIGURED'
+          }, 501);
+        }
+        if (pathname.startsWith('/api/exam') || pathname === '/api/evaluate-essay') {
+          return json({
+            error: 'Hệ thống thi trắc nghiệm và chấm tự luận chưa được hỗ trợ trên máy chủ Cloudflare Worker (yêu cầu Node server backend).',
+            code: 'EXAM_BACKEND_UNAVAILABLE'
+          }, 501);
+        }
+        return json({
+          error: `Đường dẫn API "${pathname}" không tồn tại hoặc chưa được hỗ trợ trên môi trường này.`,
+          code: 'NOT_FOUND'
+        }, 404);
+      }
+
       return env.ASSETS.fetch(request);
     } catch (error) {
       console.error(JSON.stringify({

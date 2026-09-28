@@ -356,8 +356,6 @@ export default function ShootingRangeSection() {
       shots,
       selectedExercise,
       playGunshotSound,
-      swayOffset.x,
-      swayOffset.y,
       currentTarget,
       adsHeld,
       touchAdsHeld,
@@ -382,6 +380,8 @@ export default function ShootingRangeSection() {
     setAimPos({ x: 0, y: initialY });
     lastValidAimRef.current = { x: 0, y: initialY };
   }, [currentTarget.id, releaseTouchControls]);
+  const resetShotsRef = useRef(handleResetShots);
+  resetShotsRef.current = handleResetShots;
 
   // Thay đổi bài bắn (chuyển sang bài mới sẽ hiện màn hình Bắt đầu)
   const handleChangeExercise = (exId: ExerciseId) => {
@@ -475,7 +475,7 @@ export default function ShootingRangeSection() {
 
       if (e.code === "Space" || e.code === "Enter") {
         e.preventDefault();
-        handleFire();
+        fireInputRef.current?.();
       } else if (e.code === "KeyQ") {
         e.preventDefault();
         setIsAimingDownSights((prev) => !prev);
@@ -484,13 +484,13 @@ export default function ShootingRangeSection() {
         setIsHoldingBreath((prev) => !prev);
       } else if (e.code === "KeyR") {
         e.preventDefault();
-        handleResetShots();
+        resetShotsRef.current?.();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeTab, hasStarted, playCockSound, handleFire, handleResetShots, controls.panel]);
+  }, [activeTab, hasStarted, playCockSound, controls.panel]);
 
   // Tổng điểm và xếp loại
   const totalScore = shots.reduce((acc, s) => acc + s.score, 0);

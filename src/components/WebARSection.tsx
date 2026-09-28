@@ -785,17 +785,39 @@ export default function WebARSection() {
   }, [selectedItemId]);
 
   // ── Camera Management ────────────────────────────────────────────────────
+  const isMountedRef = useRef(true);
+  const cameraRequestIdRef = useRef(0);
+
+  const stopCamera = useCallback(() => {
+    cameraRequestIdRef.current++;
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    if (isMountedRef.current) {
+      setIsCameraActive(false);
+    }
+  }, []);
+
   const startCamera = useCallback(async (mode: "environment" | "user") => {
     if (!navigator?.mediaDevices?.getUserMedia) {
-      setIsCameraActive(false);
+      if (isMountedRef.current) {
+        setIsCameraActive(false);
+      }
       return;
     }
 
-    try {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-      }
+    const requestId = ++cameraRequestIdRef.current;
 
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+
+    try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: mode,
@@ -805,6 +827,12 @@ export default function WebARSection() {
         audio: false,
       });
 
+      // Nếu component đã unmount hoặc có yêu cầu camera mới hơn trong lúc chờ getUserMedia
+      if (!isMountedRef.current || cameraRequestIdRef.current !== requestId) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -813,20 +841,20 @@ export default function WebARSection() {
       setIsCameraActive(true);
     } catch (err: any) {
       console.warn("Camera access denied or unavailable:", err);
-      setIsCameraActive(false);
+      if (isMountedRef.current && cameraRequestIdRef.current === requestId) {
+        setIsCameraActive(false);
+      }
     }
   }, []);
 
-  const stopCamera = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-    setIsCameraActive(false);
-  }, []);
+  // Đảm bảo dừng toàn bộ MediaStream tracks khi component unmount
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      stopCamera();
+    };
+  }, [stopCamera]);
 
   // Switch facing mode if camera is active
   const handleToggleFacingMode = () => {

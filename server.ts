@@ -10,7 +10,7 @@ import { createAuth } from "./server/auth";
 dotenv.config();
 
 const app = express();
-const PORT = 3001;
+const PORT = Number(process.env.PORT) || 3001;
 
 app.use(express.json({ limit: '1mb' }));
 const accountDirectory = process.env.SURVEY_DATA_DIR || path.join(process.cwd(), 'data');
@@ -208,7 +208,7 @@ async function setupVite() {
     const vite = await createViteServer({
       server: {
         middlewareMode: true,
-        fs: { deny: ['.env', '.env.*', '*.{crt,pem}', '**/.git/**', '**/accounts.json*', '**/surveys.jsonl', '**/feedback_analysis.json', '**/exam_results.jsonl*'] },
+        fs: { deny: ['.env', '.env.*', '*.{crt,pem}', '**/.git/**', '**/accounts.json*', '**/surveys.jsonl', '**/survey_config.json*', '**/feedback_analysis*.json', '**/exam_results.jsonl*'] },
       },
       appType: "spa",
     });

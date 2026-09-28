@@ -31,7 +31,17 @@ export function extractFeatures(frame: NormalizedPoseFrame): FeatureSample {
       sample.values.bodyYaw = { value: yaw, confidence: conf };
     }
   }
-  add('footOpeningAngle', ['leftHeel', 'rightHeel', 'leftFootIndex', 'rightFootIndex'], () => angleBetween(subtract(p.leftFootIndex!, p.leftHeel!), subtract(p.rightFootIndex!, p.rightHeel!)));
+  add('footOpeningAngle', ['leftHeel', 'rightHeel', 'leftFootIndex', 'rightFootIndex'], () => {
+    if (w.leftHeel && w.rightHeel && w.leftFootIndex && w.rightFootIndex) {
+      const vL = subtract(w.leftFootIndex, w.leftHeel);
+      const vR = subtract(w.rightFootIndex, w.rightHeel);
+      if (Math.abs(vL.z) > 0.015 || Math.abs(vR.z) > 0.015) {
+        const angleGround = angleBetween({ x: vL.x, y: 0, z: vL.z }, { x: vR.x, y: 0, z: vR.z });
+        if (Number.isFinite(angleGround)) return angleGround;
+      }
+    }
+    return angleBetween(subtract(p.leftFootIndex!, p.leftHeel!), subtract(p.rightFootIndex!, p.rightHeel!));
+  });
   for (const side of ['left', 'right'] as const) {
     for (const [id, names] of [[`${side}KneeAngle`, [`${side}Hip`, `${side}Knee`, `${side}Ankle`]], [`${side}ElbowAngle`, [`${side}Shoulder`, `${side}Elbow`, `${side}Wrist`]]] as [FeatureId, LandmarkName[]][]) {
       if (names.every(n => w[n])) add(id, names, () => angleAt3D(...names.map(n => w[n]!) as [Vec3, Vec3, Vec3]));

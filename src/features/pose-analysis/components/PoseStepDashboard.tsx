@@ -167,12 +167,14 @@ export function PoseStepDashboard({
 
             {/* Checklist 6 điều kiện */}
             <ul className="space-y-2 pt-1">
-              {CHECKLIST_ITEMS.map((item, index) => {
-                const check = report?.checks[index];
+              {CHECKLIST_ITEMS.map((item) => {
+                const check = report?.checks?.find((c) => c && typeof c.id === 'string' && c.id === item.id);
                 const isPassed = !!check?.passed;
                 return (
                   <li
                     key={item.id}
+                    data-check-id={item.id}
+                    data-passed={isPassed ? 'true' : 'false'}
                     className={`flex items-center justify-between p-2.5 rounded-xl border text-xs transition-all ${
                       isPassed
                         ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-900 dark:text-emerald-200'

@@ -1,10 +1,11 @@
 import { Router, type Request, type Response } from 'express';
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdir, readFile, appendFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, appendFile, writeFile, rename } from 'node:fs/promises';
 import path from 'node:path';
 import { GoogleGenAI } from '@google/genai';
 import { createAuth } from './auth';
-import { surveyQuestions, type SurveyResponse } from '../src/data/survey';
+import { LEGACY_ROUND_ID, surveyQuestions, type SurveyResponse, type SurveyRound } from '../src/data/survey';
+import { filterRound, responseRound, validSurveyAnswers } from '../src/data/surveyRounds';
 
 type FeedbackTopic = { id: string; label: string; description: string; kind: 'positive' | 'improvement' };
 type FeedbackPriority = FeedbackTopic & { mentions: number; percentage: number; examples: string[] };
@@ -138,26 +139,42 @@ export function createSurveyRouter(directory = process.env.SURVEY_DATA_DIR || pa
     catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return []; throw error; }
   }
 
-  async function feedbackDataset() {
-    const feedbackRows = (await records()).filter(row => row.feedback?.trim());
+  async function feedbackDataset(scope = 'all') {
+    const feedbackRows = filterRound(await visibleRecords(), scope).filter(row => row.feedback?.trim());
     const items = feedbackRows.map(row => anonymizeFeedback(row.feedback || '')).filter(Boolean);
     const signature = createHash('sha256').update(feedbackRows.map(row => `${row.id}:${row.feedback}`).join('\n')).digest('hex');
     return { items, signature };
   }
 
-  async function readFeedbackAnalysis(): Promise<FeedbackAnalysis | null> {
-    try { return JSON.parse(await readFile(feedbackAnalysisFile, 'utf8')) as FeedbackAnalysis; }
+  const analysisFileFor = (scope: string) => scope === 'all' ? feedbackAnalysisFile : path.join(directory, `feedback_analysis_${createHash('sha256').update(scope).digest('hex')}.json`);
+  async function readFeedbackAnalysis(scope: string): Promise<FeedbackAnalysis | null> {
+    try { return JSON.parse(await readFile(analysisFileFor(scope), 'utf8')) as FeedbackAnalysis; }
     catch { return null; }
   }
 
-  async function readConfig(): Promise<{ isOpen: boolean }> {
-    try { return JSON.parse(await readFile(configFile, 'utf8')); }
-    catch { return { isOpen: true }; }
+  type RoundConfig = { isOpen: boolean; activeRoundId: string; rounds: SurveyRound[] };
+  async function readConfig(): Promise<RoundConfig> {
+    let saved: Partial<RoundConfig> = {};
+    try { saved = JSON.parse(await readFile(configFile, 'utf8')); }
+    catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
+    return { isOpen: saved.isOpen !== false, activeRoundId: saved.activeRoundId || LEGACY_ROUND_ID,
+      rounds: saved.rounds || [{ id: LEGACY_ROUND_ID, name: 'Đợt 1 — dữ liệu hiện có', notes: 'Giữ nguyên khảo sát cũ.', createdAt: (await records())[0]?.createdAt || new Date().toISOString() }] };
   }
 
-  async function saveConfig(cfg: { isOpen: boolean }) {
+  async function saveConfig(cfg: RoundConfig) {
     await mkdir(directory, { recursive: true });
-    await writeFile(configFile, JSON.stringify(cfg, null, 2), 'utf8');
+    await writeFile(configFile + '.tmp', JSON.stringify(cfg, null, 2), 'utf8');
+    await rename(configFile + '.tmp', configFile);
+  }
+
+  async function visibleRecords() {
+    const cfg = await readConfig();
+    const deletedIds = new Set(cfg.rounds.filter(r => r.deletedAt).map(r => r.id));
+    return (await records()).filter(r => !deletedIds.has(responseRound(r)));
+  }
+
+  async function visibleScope(scope: string) {
+    return scope === 'all' || (await readConfig()).rounds.some(r => r.id === scope && !r.deletedAt);
   }
 
   router.use((req, res, next) => {
@@ -170,27 +187,90 @@ export function createSurveyRouter(directory = process.env.SURVEY_DATA_DIR || pa
 
   // GET /config - Kiểm tra trạng thái đợt khảo sát (Mở hay Tạm đóng)
   router.get('/config', async (_req, res) => {
-    res.json(await readConfig());
+    try {
+      const cfg = await readConfig();
+      res.json({ isOpen: cfg.isOpen, activeRoundId: cfg.activeRoundId, activeRoundName: cfg.rounds.find(r => r.id === cfg.activeRoundId)?.name });
+    } catch { res.status(500).json({ error: 'Không đọc được cấu hình khảo sát.' }); }
+  });
+
+  router.get('/rounds', auth.requireAdmin, async (_req, res) => {
+    try {
+      const cfg = await readConfig();
+      const rows = await records();
+      res.json({ rounds: cfg.rounds.map(r => ({ ...r, responseCount: rows.filter(row => responseRound(row) === r.id).length })), activeRoundId: cfg.activeRoundId });
+    } catch { res.status(500).json({ error: 'Không đọc được lịch sử đợt khảo sát.' }); }
+  });
+
+  async function trashRound(req: Request, res: Response, restore: boolean) {
+    const task = queue.then(async () => {
+      const cfg = await readConfig();
+      const id = req.params.id;
+      const isPermanent = req.query.permanent === 'true';
+      if (!cfg.rounds.some(r => r.id === id)) return res.status(404).json({ error: 'Đợt khảo sát không tồn tại.' });
+      if (id === LEGACY_ROUND_ID && isPermanent) {
+        return res.status(400).json({ error: 'Không thể xóa vĩnh viễn đợt mặc định ban đầu.' });
+      }
+      let nextActiveRoundId = cfg.activeRoundId;
+      if (!restore && cfg.activeRoundId === id) {
+        const fallback = cfg.rounds.find(r => r.id !== id && !r.deletedAt);
+        if (!fallback) return res.status(400).json({ error: 'Không thể xóa đợt khảo sát duy nhất còn lại.' });
+        nextActiveRoundId = fallback.id;
+      }
+      const nextRounds = isPermanent
+        ? cfg.rounds.filter(r => r.id !== id)
+        : cfg.rounds.map(r => r.id === id ? { ...r, deletedAt: restore ? null : r.deletedAt || new Date().toISOString() } : r);
+      await saveConfig({ 
+        ...cfg, 
+        activeRoundId: nextActiveRoundId,
+        rounds: nextRounds 
+      });
+      res.json({ ok: true, activeRoundId: nextActiveRoundId });
+    });
+    queue = task.then(() => {}, () => {});
+    try { await task; } catch { res.status(500).json({ error: 'Không cập nhật được đợt khảo sát.' }); }
+  }
+  router.delete('/rounds/:id', auth.requireAdmin, (req, res) => { void trashRound(req, res, false); });
+  router.post('/rounds/:id/restore', auth.requireAdmin, (req, res) => { void trashRound(req, res, true); });
+  router.post('/rounds', auth.requireAdmin, async (req, res) => {
+    const name = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
+    const notes = typeof req.body?.notes === 'string' ? req.body.notes.trim() : '';
+    if (!name || name.length > 100 || notes.length > 2000) return res.status(400).json({ error: 'Tên đợt tối đa 100 ký tự, ghi chú tối đa 2000 ký tự.' });
+    const task = queue.then(async () => {
+      const cfg = await readConfig();
+      const round = { id: randomUUID(), name, notes, createdAt: new Date().toISOString() };
+      await saveConfig({ ...cfg, rounds: [...cfg.rounds, round] });
+      res.status(201).json({ round });
+    });
+    queue = task.catch(() => {});
+    try { await task; } catch { res.status(500).json({ error: 'Không lưu được đợt khảo sát.' }); }
   });
 
   // POST /config - Đổi trạng thái đợt khảo sát (chỉ Admin đăng nhập)
   router.post('/config', auth.requireAdmin, async (req, res) => {
-    const { isOpen } = req.body || {};
-    await saveConfig({ isOpen: Boolean(isOpen) });
-    res.json({ ok: true, isOpen: Boolean(isOpen) });
+    const { isOpen, activeRoundId } = req.body || {};
+    const task = queue.then(async () => {
+      const cfg = await readConfig();
+      if (typeof isOpen !== 'boolean' || (activeRoundId !== undefined && !cfg.rounds.some(r => r.id === activeRoundId && !r.deletedAt))) return res.status(400).json({ error: 'Đợt không tồn tại, đang trong Thùng rác hoặc trạng thái không hợp lệ.' });
+      await saveConfig({ ...cfg, isOpen, activeRoundId: activeRoundId || cfg.activeRoundId });
+      res.json({ ok: true, isOpen });
+    });
+    queue = task.then(() => {}, () => {});
+    try { await task; } catch { res.status(500).json({ error: 'Không lưu được cấu hình.' }); }
   });
 
   // GET /responses - Lấy danh sách kết quả khảo sát (chỉ Admin đăng nhập)
   router.get('/responses', auth.requireAdmin, async (_req, res) => {
-    try { res.json({ responses: await records() }); }
+    try { res.json({ responses: await visibleRecords() }); }
     catch { res.status(500).json({ error: 'Không đọc được dữ liệu khảo sát.' }); }
   });
 
   // AI tổng hợp góp ý tự luận; dữ liệu gửi sang AI đã loại thông tin nhận dạng.
-  router.get('/feedback-analysis', auth.requireAdmin, async (_req, res) => {
+  router.get('/feedback-analysis', auth.requireAdmin, async (req, res) => {
     try {
-      const { items, signature } = await feedbackDataset();
-      const cached = await readFeedbackAnalysis();
+      const scope = typeof req.query.roundId === 'string' ? req.query.roundId : 'all';
+      if (!await visibleScope(scope)) return res.status(404).json({ error: 'Đợt không tồn tại hoặc đang trong Thùng rác.' });
+      const { items, signature } = await feedbackDataset(scope);
+      const cached = await readFeedbackAnalysis(scope);
       res.json({ analysis: cached?.signature === signature ? cached : null, needsRefresh: cached?.signature !== signature, feedbackCount: items.length });
     } catch {
       res.status(500).json({ error: 'Không đọc được kết quả tổng hợp góp ý.' });
@@ -199,8 +279,10 @@ export function createSurveyRouter(directory = process.env.SURVEY_DATA_DIR || pa
 
   router.post('/feedback-analysis', auth.requireAdmin, async (req, res) => {
     try {
-      const { items, signature } = await feedbackDataset();
-      const cached = await readFeedbackAnalysis();
+      const scope = typeof req.query.roundId === 'string' ? req.query.roundId : 'all';
+      if (!await visibleScope(scope)) return res.status(404).json({ error: 'Đợt không tồn tại hoặc đang trong Thùng rác.' });
+      const { items, signature } = await feedbackDataset(scope);
+      const cached = await readFeedbackAnalysis(scope);
       if (!req.body?.force && cached?.signature === signature) return res.json({ analysis: cached, cached: true });
       let job = feedbackAnalysisJobs.get(signature);
       if (!job || req.body?.force) {
@@ -209,7 +291,7 @@ export function createSurveyRouter(directory = process.env.SURVEY_DATA_DIR || pa
       }
       const analysis = await job.finally(() => feedbackAnalysisJobs.delete(signature));
       await mkdir(directory, { recursive: true });
-      await writeFile(feedbackAnalysisFile, JSON.stringify(analysis, null, 2), 'utf8');
+      await writeFile(analysisFileFor(scope), JSON.stringify(analysis, null, 2), 'utf8');
       res.json({ analysis, cached: false });
     } catch {
       res.status(500).json({ error: 'Chưa thể tổng hợp góp ý. Vui lòng thử lại.' });
@@ -219,6 +301,7 @@ export function createSurveyRouter(directory = process.env.SURVEY_DATA_DIR || pa
   // DELETE /responses/:id - Xóa phản hồi khảo sát (chỉ Admin đăng nhập)
   router.delete('/responses/:id', auth.requireAdmin, async (req, res) => {
     const { id } = req.params;
+    if (id === 'all') return res.status(409).json({ error: 'Không xóa lịch sử khảo sát. Hãy tạo đợt mới.' });
     try {
       const list = await records();
       const next = id === 'all' ? [] : list.filter(r => r.id !== id);
@@ -243,6 +326,37 @@ export function createSurveyRouter(directory = process.env.SURVEY_DATA_DIR || pa
   });
 
   // POST /responses - Gửi phản hồi khảo sát (Mở cho cả người dùng tự do và tài khoản đăng nhập)
+  router.post('/submissions', async (req, res) => {
+    const input = req.body || {};
+    const user = res.locals.user;
+    const role = user?.role || input.role;
+    const name = user?.name || (typeof input.name === 'string' ? input.name.trim() : '');
+    if (user?.role === 'admin' || (user && input.role !== user.role)) return res.status(403).json({ error: 'Vai trò không được gửi khảo sát này.' });
+    if (!name || !['student', 'teacher'].includes(role) || !validSurveyAnswers(role, 'before', input.beforeAnswers) || !validSurveyAnswers(role, 'after', input.afterAnswers) || (input.feedback !== undefined && typeof input.feedback !== 'string')) return res.status(400).json({ error: 'Vui lòng điền đầy đủ thông tin và cả hai phần khảo sát.' });
+    const task = queue.then(async () => {
+      const cfg = await readConfig();
+      if (!cfg.isOpen) return res.status(403).json({ error: 'Đợt khảo sát đang đóng.' });
+      if (input.roundId !== cfg.activeRoundId) return res.status(409).json({ error: 'Đợt khảo sát đã thay đổi. Vui lòng tải lại trang trước khi gửi.' });
+      const list = await records();
+      const code = user?.id || randomUUID();
+      if (list.some(r => responseRound(r) === cfg.activeRoundId && r.code === code && r.role === role)) return res.status(409).json({ error: 'Tài khoản đã gửi trong đợt này. Dữ liệu cũ vẫn được giữ nguyên.' });
+      const now = new Date().toISOString();
+      const lines = (['before', 'after'] as const).map(phase => JSON.stringify({
+        id: randomUUID(), code, username: user?.username, name,
+        school: typeof input.school === 'string' ? input.school.trim().slice(0, 160) : '',
+        className: typeof input.className === 'string' ? input.className.trim().slice(0, 80) : '',
+        position: typeof input.position === 'string' ? input.position.trim().slice(0, 80) : '',
+        role, phase, roundId: cfg.activeRoundId, createdAt: now,
+        answers: phase === 'before' ? input.beforeAnswers : input.afterAnswers,
+        feedback: phase === 'after' && typeof input.feedback === 'string' ? input.feedback.trim().slice(0, 4000) : ''
+      }));
+      await mkdir(directory, { recursive: true });
+      await appendFile(file, lines.join('\n') + '\n', 'utf8');
+      res.status(201).json({ ok: true, roundId: cfg.activeRoundId });
+    });
+    queue = task.then(() => {}, () => {});
+    try { await task; } catch { res.status(500).json({ error: 'Chưa lưu được khảo sát.' }); }
+  });
   router.post('/responses', async (req, res) => {
     const user = res.locals.user;
     const body = req.body || {};
@@ -253,6 +367,7 @@ export function createSurveyRouter(directory = process.env.SURVEY_DATA_DIR || pa
     }
 
     const config = await readConfig();
+    if (body.roundId !== config.activeRoundId) return res.status(409).json({ error: 'Vui lòng tải lại trang để gửi đúng đợt khảo sát.' });
     if (!config.isOpen && user?.role !== 'admin') {
       return res.status(403).json({ error: 'Đợt khảo sát GDQP-AN hiện đang tạm đóng. Cảm ơn bạn!' });
     }
@@ -292,14 +407,17 @@ export function createSurveyRouter(directory = process.env.SURVEY_DATA_DIR || pa
       : (name.toLowerCase().replace(/[^a-z0-9à-ỹ]/gi, '_').slice(0, 16) + '_' + (className || position || 'khao_sat').toLowerCase().replace(/[^a-z0-9à-ỹ]/gi, '_').slice(0, 10));
 
     const save = queue.then(async () => {
+      const current = await readConfig();
+      if (!current.isOpen || current.activeRoundId !== config.activeRoundId) return void res.status(409).json({ error: 'Đợt đã đóng hoặc thay đổi. Vui lòng tải lại trang.' });
       const existing = await records();
-      if (user && existing.some(r => r.code === code && r.role === role && r.phase === phase)) {
+      if (user && existing.some(r => responseRound(r) === config.activeRoundId && r.code === code && r.role === role && r.phase === phase)) {
         res.status(409).json({ error: 'Tài khoản này đã gửi khảo sát ở giai đoạn đã chọn.' });
         return;
       }
       await mkdir(directory, { recursive: true });
       await appendFile(file, JSON.stringify({
         id: randomUUID(),
+        roundId: config.activeRoundId,
         code,
         username: user?.username,
         name,

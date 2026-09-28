@@ -34,7 +34,7 @@ test('Account roles, isolation, persistence, survey validation and admin reporti
       assert.equal((await request('/accounts', undefined, cookie)).status, 403);
       assert.equal((await request('/accounts', { username: 'hacker', name: 'Hacker', role: 'admin' }, cookie)).status, 403);
     }
-    const before = { phase: 'before', answers: Object.fromEntries(surveyQuestions('student', 'before').map(q => [q.id, [0]])) };
+    const before = { roundId: 'legacy', phase: 'before', answers: Object.fromEntries(surveyQuestions('student', 'before').map(q => [q.id, [0]])) };
     assert.equal((await request('/responses', before, admin)).status, 403);
     assert.equal((await request('/responses', { ...before, role: 'teacher' }, student)).status, 403);
     assert.equal((await request('/responses', { ...before, answers: {} }, student)).status, 400);
@@ -42,10 +42,10 @@ test('Account roles, isolation, persistence, survey validation and admin reporti
     assert.equal((await request('/responses', { ...before, feedback: 12345 }, student)).status, 400);
     assert.equal((await request('/responses', { ...before, code: 'FORGED123' }, student)).status, 201);
     assert.equal((await request('/responses', before, student)).status, 409);
-    const after = { phase: 'after', answers: Object.fromEntries(surveyQuestions('student', 'after').map(q => [q.id, [1]])), feedback: 'Cần thêm tính năng bắn súng 3D' };
+    const after = { roundId: 'legacy', phase: 'after', answers: Object.fromEntries(surveyQuestions('student', 'after').map(q => [q.id, [1]])), feedback: 'Cần thêm tính năng bắn súng 3D' };
     const concurrent = await Promise.all([request('/responses', after, student), request('/responses', after, student)]);
     assert.deepEqual(concurrent.map(r => r.status).sort(), [201, 409]);
-    const teacherAfter = { phase: 'after', answers: Object.fromEntries(surveyQuestions('teacher', 'after').map(q => [q.id, [0]])), feedback: 'Rất hữu ích cho dạy học thực hành' };
+    const teacherAfter = { roundId: 'legacy', phase: 'after', answers: Object.fromEntries(surveyQuestions('teacher', 'after').map(q => [q.id, [0]])), feedback: 'Rất hữu ích cho dạy học thực hành' };
     assert.equal((await request('/responses', teacherAfter, teacher)).status, 201);
     const mine = await (await request('/my-responses', undefined, student)).json();
     assert.equal(mine.responses.length, 2); assert.ok(mine.responses.every(r => r.username === 'student' && r.code !== 'FORGED123'));
@@ -66,6 +66,7 @@ test('Account roles, isolation, persistence, survey validation and admin reporti
     }
     // Test public submission without login
     const publicStudent = {
+      roundId: 'legacy',
       role: 'student',
       phase: 'before',
       name: 'Trần Văn Nam',
@@ -120,6 +121,45 @@ test('Account roles, isolation, persistence, survey validation and admin reporti
     server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve()));
     assert.equal(path.dirname(path.resolve(directory)), path.resolve(tmpdir()));
     assert.ok(path.basename(directory).startsWith('gdqp-survey-test-'));
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test('Local round workflow preserves old responses, scopes AI and persists the active round', async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'gdqp-rounds-test-'));
+  await saveAccounts(directory, [makeAccount('admin', 'Admin', 'admin', 'round-test-password'), makeAccount('student', 'Student', 'student', 'round-test-password')]);
+  const app = express(); app.use(express.json()); app.use('/api/survey', createSurveyRouter(directory));
+  const server = app.listen(0, '127.0.0.1');
+  await new Promise<void>(resolve => server.once('listening', resolve));
+  const base = `http://127.0.0.1:${(server.address() as { port: number }).port}/api/survey/`;
+  const call = (route: string, body?: unknown, cookie = '') => fetch(base + route, { method: body ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json', Cookie: cookie }, body: body ? JSON.stringify(body) : undefined });
+  try {
+    const login = async (username: string) => (await call('login', { username, password: 'round-test-password' })).headers.get('set-cookie')!.split(';')[0];
+    const admin = await login('admin'); const student = await login('student');
+    const payload = { roundId: 'legacy', role: 'student', name: 'Student', beforeAnswers: Object.fromEntries(surveyQuestions('student', 'before').map(q => [q.id, [0]])), afterAnswers: Object.fromEntries(surveyQuestions('student', 'after').map(q => [q.id, [0]])), feedback: 'tải chậm' };
+    assert.equal((await call('submissions', payload, student)).status, 201);
+    const old = (await (await call('responses', undefined, admin)).json()).responses;
+    const round = (await (await call('rounds', { name: 'Đợt 2', notes: 'Tối ưu tốc độ' }, admin)).json()).round;
+    assert.equal((await call('rounds', { name: 'Forbidden' }, student)).status, 403);
+    assert.equal((await (await call('config')).json()).activeRoundId, 'legacy');
+    await call('config', { activeRoundId: round.id, isOpen: true }, admin);
+    assert.equal((await call('submissions', payload, student)).status, 409);
+    const concurrent = await Promise.all([call('submissions', { ...payload, roundId: round.id }, student), call('submissions', { ...payload, roundId: round.id }, student)]);
+    assert.deepEqual(concurrent.map(r => r.status).sort(), [201, 409]);
+    const all = (await (await call('responses', undefined, admin)).json()).responses;
+    assert.equal(all.length, 4);
+    assert.deepEqual(all.slice(0, 2), old);
+    const analysis = await (await call('feedback-analysis?roundId=legacy', {}, admin)).json();
+    assert.equal(analysis.analysis.analyzedCount, 1);
+    const saved = JSON.parse(await readFile(path.join(directory, 'survey_config.json'), 'utf8'));
+    assert.equal(saved.activeRoundId, round.id);
+    assert.equal(saved.rounds.length, 2);
+    await call('config', { isOpen: false }, admin);
+    assert.equal((await call('submissions', { ...payload, roundId: round.id })).status, 403);
+  } finally {
+    server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve()));
+    assert.equal(path.dirname(path.resolve(directory)), path.resolve(tmpdir()));
+    assert.ok(path.basename(directory).startsWith('gdqp-rounds-test-'));
     await rm(directory, { recursive: true, force: true });
   }
 });
