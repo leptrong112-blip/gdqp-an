@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Bộ câu trả lời mẫu tổng hợp – HỌC QPAN 3D</title>
+<style>
+@page { size: A4; margin: 1.7cm 1.6cm; }
+body { font-family: Arial, sans-serif; color:#14243a; font-size:11pt; line-height:1.38; }
+h1 { color:#0b3f78; text-align:center; font-size:24pt; margin:24px 0 8px; }
+.sub { text-align:center; color:#53657a; font-size:12pt; margin-bottom:26px; }
+h2 { color:white; background:#0b3f78; padding:8px 10px; font-size:16pt; margin-top:24px; page-break-before:always; }
+h2.first { page-break-before:auto; }
+h3 { color:#c8102e; font-size:12.5pt; margin:17px 0 5px; page-break-after:avoid; }
+p { margin:5px 0 8px; text-align:justify; }
+.answer { border-left:4px solid #1696d2; background:#eef7fc; padding:8px 10px; margin:6px 0 11px; }
+.note { border:1px solid #e0a800; background:#fff7d6; padding:8px 10px; margin:8px 0 12px; }
+.danger { border:1px solid #d32f2f; background:#fff0f0; padding:8px 10px; margin:8px 0 12px; }
+.tag { font-weight:bold; color:#8b1e2d; }
+table { border-collapse:collapse; width:100%; margin:8px 0 14px; }
+th, td { border:1px solid #9aa9b8; padding:6px; vertical-align:top; }
+th { background:#dcebf7; color:#0b3f78; }
+ul { margin-top:5px; }
+.footer { color:#66788a; font-size:9pt; text-align:center; margin-top:30px; }
+</style>
+</head>
+<body>
+<h1>BỘ CÂU TRẢ LỜI MẪU TỔNG HỢP</h1>
+<div class="sub"><b>Dự án HỌC QPAN 3D</b><br>Câu trả lời ngắn 20–40 giây, đối chiếu báo cáo và code hiện tại</div>
+
+<div class="note"><b>Cách sử dụng:</b> Không cần học thuộc từng chữ. Hãy nhớ theo công thức: <b>khẳng định vừa đủ → bằng chứng trong sản phẩm → giới hạn</b>. Những nội dung có ký hiệu <span class="tag">CẦN SỐ LIỆU</span> chỉ nên khẳng định khi nhóm mang được bảng khảo sát hoặc biên bản kiểm chứng.</div>
+
+<h2 class="first">A. TỔNG QUAN, MODULE VÀ THỊ TRƯỜNG</h2>
+
+<h3>1. Dự án HỌC QPAN 3D là gì?</h3>
+<div class="answer">“HỌC QPAN 3D là một nền tảng web hỗ trợ học sinh THPT học và ôn tập GDQP-AN. Sản phẩm kết hợp học liệu, câu hỏi luyện tập, thi thử, mô phỏng 3D, thử nghiệm phân tích tư thế bằng AI và một số công cụ hỗ trợ khác trong cùng một website. Dự án hỗ trợ việc quan sát và tự ôn, không thay thế giáo viên hoặc thực hành thật.”</div>
+
+<h3>2. Vì sao nhóm chọn đề tài này?</h3>
+<div class="answer">“Môn GDQP-AN có cả lý thuyết và các nội dung cần quan sát thao tác. Hình ảnh hoặc video chỉ cho học sinh xem theo góc đã quay sẵn, còn học liệu và công cụ ôn tập thường rời rạc. Vì vậy nhóm xây dựng một website để học sinh có thể đọc bài, luyện tập và quan sát mô hình từ nhiều góc trong một luồng học thống nhất.”</div>
+
+<h3>3. Dự án có bao nhiêu module chính?</h3>
+<div class="answer">“Nếu đếm theo giao diện người dùng, báo cáo chia thành 12 module chính. Bảng kỹ thuật có thể ghi 13 phân hệ vì tách phần Kỹ năng và Thao trường 3D thành hai phân hệ riêng. Đây là hai cách phân loại, không phải sản phẩm tự mâu thuẫn về số chức năng.”</div>
+
+<h3>4. Có thể kể ngắn gọn các nhóm chức năng không?</h3>
+<div class="answer">“Các nhóm chính gồm học lý thuyết, quiz nhanh, thi thử, kỹ năng và thao trường 3D, tháo/lắp AK, Studio/WebAR, trường bắn mô phỏng, AI Pose, trợ giảng AI, bản đồ di tích, XP–huy hiệu và khảo sát. Khi trình bày, chúng em gom theo mục đích sử dụng nên không nhất thiết đọc toàn bộ tên menu.”</div>
+
+<h3>5. Thị trường đã có sản phẩm tương tự chưa?</h3>
+<div class="answer">“Thị trường đã có các sản phẩm giống từng phần, ví dụ OLM và K12Online ở Việt Nam cung cấp học liệu, kiểm tra và quản lý học tập; nước ngoài có các nền tảng 3D hoặc VR giáo dục. Tuy nhiên nhóm chưa thực hiện khảo sát đủ rộng để khẳng định đã có hay chưa có một sản phẩm giống hoàn toàn HỌC QPAN 3D. Vì vậy chúng em không nói đây là sản phẩm đầu tiên hoặc duy nhất.”</div>
+
+<h3>6. Điểm khác biệt hoặc tính mới của dự án là gì?</h3>
+<div class="answer">“Điểm nhóm có thể chứng minh là cách tích hợp học liệu GDQP-AN, mô hình 3D có điều khiển theo bước, quiz, thi thử và thử nghiệm AI Pose trong một website. Tính mới nằm ở cách tổ chức và triển khai chuyên biệt cho đề tài, chứ nhóm không tuyên bố đã phát minh ra React, Three.js, MediaPipe hay công nghệ AR.”</div>
+
+<h3>7. Đối tượng sử dụng là ai?</h3>
+<div class="answer">“Đối tượng chính là học sinh THPT lớp 10 đến lớp 12; giáo viên có thể dùng sản phẩm để minh họa hoặc tham khảo phản hồi. Sản phẩm chỉ hỗ trợ chuẩn bị, quan sát và tự ôn; các nội dung thực hành liên quan đến điều lệnh hoặc vũ khí vẫn phải có giáo viên hướng dẫn và tuân thủ quy định.”</div>
+
+<h2>B. NGÔN NGỮ VÀ CÔNG NGHỆ</h2>
+
+<h3>8. Nhóm sử dụng ngôn ngữ lập trình nào?</h3>
+<div class="answer">“Phần chính của website được viết bằng TypeScript trên nền JavaScript. Giao diện dùng React; phần 3D dùng Three.js thông qua React Three Fiber và Drei. Ngoài ra dự án có mã backend/API, Cloudflare Worker, cơ sở dữ liệu D1 và một số WebAssembly hoặc JavaScript dự phòng cho các phép tính.”</div>
+
+<h3>9. Vì sao chọn React và TypeScript?</h3>
+<div class="answer">“React giúp chia website thành các component và module để dễ phát triển, tái sử dụng và quản lý trạng thái. TypeScript bổ sung kiểm tra kiểu dữ liệu, giúp phát hiện một số lỗi trước khi chạy. Đây là lựa chọn phù hợp với một website có nhiều màn hình và nhiều loại dữ liệu như bài học, câu hỏi, mô hình và khảo sát.”</div>
+
+<h3>10. Vì sao chọn Three.js và định dạng GLB?</h3>
+<div class="answer">“Three.js cho phép hiển thị và điều khiển cảnh 3D bằng WebGL ngay trong trình duyệt. GLB là định dạng có thể đóng gói hình học, vật liệu, xương và hoạt ảnh trong một tệp, thuận tiện cho web. Nhờ đó người dùng có thể xem mô hình mà không phải cài một phần mềm 3D riêng.”</div>
+
+<h3>11. Quy trình tạo và đưa mô hình 3D lên website như thế nào?</h3>
+<div class="answer">“Mô hình được dựng hoặc chỉnh trong Blender, sau đó thiết lập vật liệu, xương và các keyframe chuyển động rồi xuất thành GLB. Website tải GLB bằng Three.js, tạo camera và ánh sáng, sau đó dùng animation clip để phát từng động tác. Một số chức năng còn dùng raycaster để chọn chi tiết và hộp bao để đưa camera tập trung vào bộ phận được chọn.”</div>
+
+<h2>C. CHỨC NĂNG 3D, STUDIO, WEBAR VÀ TRƯỜNG BẮN</h2>
+
+<h3>12. 3D Studio là gì?</h3>
+<div class="answer">“3D Studio là chế độ quan sát mô hình ngay trên website. Người dùng có thể xoay 360 độ, phóng to, thu nhỏ và xem mô hình trong một không gian 3D do website tạo ra. Đây không phải phần mềm dựng hình như 3ds Max, mà là phòng quan sát mô hình 3D của chính dự án.”</div>
+
+<h3>13. WebAR là gì?</h3>
+<div class="answer">“WebAR là cách kết hợp hình ảnh camera thật với nội dung 3D ngay trên trình duyệt web. Website xin quyền camera, lấy video làm nền và vẽ mô hình 3D lên phía trên. Người dùng có thể mở trên điện thoại mà không cần cài một ứng dụng AR riêng.”</div>
+
+<h3>14. Studio khác WebAR như thế nào?</h3>
+<div class="answer">“Hai chế độ dùng chung mô hình 3D nhưng khác phần nền. Studio đặt mô hình trong môi trường 3D do website tạo và không cần camera. WebAR dùng hình ảnh camera thật làm nền rồi ghép mô hình lên trên, phù hợp để hình dung mô hình trong bối cảnh xung quanh.”</div>
+
+<h3>15. WebAR hiện tại có nhận diện mặt bàn và neo mô hình không?</h3>
+<div class="answer">“Chưa. Phiên bản hiện tại mở camera làm nền và đặt một canvas 3D trong suốt lên trên; người dùng tự điều chỉnh kích thước, góc và cao độ của mô hình. Code chưa có WebXR hit-test, nhận diện mặt phẳng hoặc spatial anchor, nên cách gọi chính xác là nguyên mẫu WebAR dạng camera overlay.”</div>
+
+<h3>16. Như vậy có thật sự là AR không?</h3>
+<div class="answer">“Theo nghĩa rộng, đây là WebAR vì nội dung số được kết hợp với hình ảnh camera thật trên trình duyệt. Tuy nhiên, nếu xét AR không gian đầy đủ thì phiên bản này chưa có theo dõi mặt phẳng và neo vật thể. Nhóm trình bày đây là nguyên mẫu WebAR và coi WebXR là hướng phát triển tiếp theo.”</div>
+
+<h3>17. Mô-đun tháo/lắp AK hoạt động thế nào?</h3>
+<div class="answer">“Người dùng chọn bộ phận hoặc một mốc thao tác; website đưa camera đến chi tiết và phát animation của mô hình đến thời điểm tương ứng. Quy trình lắp có thể chạy timeline theo chiều ngược. Đây là mô phỏng quan sát có hướng dẫn, chưa phải bài thực hành kéo-thả tự do để kiểm tra học sinh lắp đúng thứ tự.”</div>
+
+<h3>18. Trường bắn có mô phỏng chính xác đạn đạo thật không?</h3>
+<div class="answer">“Không. Đây là mô phỏng trực quan và trò chơi ngắm bắn phục vụ học tập. Hệ thống dùng tia ngắm và giao điểm với bia để tính kết quả, kèm hiệu ứng dao động hoặc giật; chưa tính đầy đủ vận tốc đầu đạn, trọng lực, gió và điều kiện bắn thật. Vì vậy kết quả không dùng để dự đoán thành tích bắn ngoài thực tế.”</div>
+
+<h2>D. AI POSE VÀ TRỢ GIẢNG AI</h2>
+
+<h3>19. AI Pose hoạt động theo luồng nào?</h3>
+<div class="answer">“Camera được xử lý trên thiết bị. MediaPipe ước lượng 33 điểm mốc cơ thể; hệ thống kiểm tra ánh sáng, đủ toàn thân, số người và độ tin cậy. Sau đó code tính các góc và khoảng cách đã chuẩn hóa rồi so với rubric có trọng số để cho điểm và góp ý.”</div>
+
+<h3>20. Đây là AI hay chỉ là công thức?</h3>
+<div class="answer">“Cả hai phần cùng tham gia. MediaPipe là mô hình học máy đã được huấn luyện sẵn để phát hiện keypoint cơ thể. Phần chấm điểm do nhóm xây dựng bằng luật hình học và rubric có trọng số. Nhóm không tự huấn luyện một mô hình nhận diện tư thế mới.”</div>
+
+<h3>21. AI Pose hiện hỗ trợ những động tác nào?</h3>
+<div class="answer">“Code hiện có năm bài riêng: đứng nghiêm, đứng nghỉ, quay trái, quay phải và chào; đồng thời có chuỗi cơ bản gồm nghiêm–nghỉ–chào. Động tác quay đằng sau vẫn được đánh dấu chưa khả dụng. Đây là tính năng Beta và chưa đại diện cho toàn bộ nội dung điều lệnh.”</div>
+
+<h3>22. Độ chính xác của AI Pose là bao nhiêu? <span class="tag">CẦN SỐ LIỆU</span></h3>
+<div class="answer">“Nhóm chưa có đủ dữ liệu người thật để công bố phần trăm chính xác. Các test hiện tại chứng minh luồng xử lý, quality gate và logic chấm hoạt động theo dữ liệu thử, nhưng không thay thế kiểm định với nhiều học sinh. Muốn công bố độ chính xác cần video được giáo viên gán nhãn và so sánh kết quả hệ thống với đánh giá chuyên môn.”</div>
+
+<h3>23. Camera của học sinh có được gửi lên máy chủ không?</h3>
+<div class="answer">“Theo luồng Pose hiện tại, các khung hình được MediaPipe xử lý trong trình duyệt và code không có lệnh tải ảnh hoặc landmark lên máy chủ. Khi rời chức năng, camera được giải phóng. Tuy nhiên dữ liệu văn bản gửi cho chatbot hoặc AI phản hồi là một luồng khác và có thể đi qua backend đến Gemini.”</div>
+
+<h3>24. Trợ giảng AI hoạt động ra sao?</h3>
+<div class="answer">“Người dùng nhập câu hỏi; backend nhận nội dung, thêm chỉ dẫn vai trò và lịch sử hội thoại rồi gọi Gemini để tạo phản hồi. Khóa API được giữ ở backend. Phiên bản hiện tại chưa truy xuất trực tiếp các bài học hoặc PDF của dự án và chưa cung cấp trích dẫn nguồn, nên câu trả lời cần được đối chiếu với tài liệu và giáo viên.”</div>
+
+<h3>25. Làm sao ngăn AI trả lời sai hoặc bịa?</h3>
+<div class="answer">“Hiện hệ thống mới giới hạn phạm vi bằng prompt và hướng dẫn cách trả lời, chưa có kho nguồn truy hồi, citation hoặc bộ kiểm chứng sự thật đầy đủ. Vì vậy nhóm xem đây là trợ lý thử nghiệm, không phải nguồn chính thức. Hướng tiếp theo là dùng tài liệu đã duyệt, trích dẫn đoạn nguồn và bổ sung cơ chế báo nội dung nghi ngờ.”</div>
+
+<h3>26. AI chấm tự luận đã dùng làm điểm chính thức được chưa?</h3>
+<div class="answer">“Chưa. Phản hồi AI chỉ nên dùng để tham khảo. Trong code hiện tại, phần điểm tự luận chưa chứng minh được việc đánh giá chính xác nội dung như giáo viên; giáo viên vẫn phải là người chấm cuối cùng. Muốn dùng nghiêm túc cần bộ bài mẫu đã được giáo viên chấm và đo độ lệch của hệ thống.”</div>
+
+<h2>E. HỌC LIỆU, THI, XP VÀ LƯU DỮ LIỆU</h2>
+
+<h3>27. Dự án có bao nhiêu học liệu và câu hỏi?</h3>
+<div class="answer">“Dữ liệu hiện có 31 bài học, gồm 12 bài lớp 10, 10 bài lớp 11 và 9 bài lớp 12. Quiz nhanh có 144 câu, tức 48 câu mỗi khối. Kho thi có 120 câu trắc nghiệm ABCD, 30 cụm Đúng–Sai và 18 câu tự luận, tổng cộng 168 đơn vị câu hỏi.”</div>
+
+<h3>28. Các câu hỏi đã được thẩm định hoàn toàn chưa? <span class="tag">CẦN XÁC NHẬN</span></h3>
+<div class="answer">“Repository chứng minh số lượng, nội dung và đáp án đã được đưa vào hệ thống, nhưng bản thân code không chứng minh đã được thẩm định chuyên môn. Vì vậy nhóm cần chuẩn bị nguồn biên soạn và xác nhận của giáo viên GDQP-AN trước khi dùng cụm từ ‘đã chuẩn hóa’.”</div>
+
+<h3>29. XP và gamification hoạt động thế nào?</h3>
+<div class="answer">“Một số hoạt động học tạo XP để tăng cấp hoặc mở huy hiệu, nhằm khuyến khích học sinh quay lại ôn tập. Tuy nhiên XP chủ yếu lưu trên trình duyệt và có chỗ chưa cộng nhất quán; bảng xếp hạng hiện còn là dữ liệu mẫu. Vì vậy đây là cơ chế tạo động lực ở mức demo, chưa phải bảng thành tích thật của toàn trường.”</div>
+
+<h3>30. Dữ liệu được lưu ở đâu?</h3>
+<div class="answer">“Tiến độ đọc bài, điểm quiz, XP, huy hiệu, lịch sử chat và một phần lịch sử thi được lưu trong localStorage của từng trình duyệt. Tài khoản và khảo sát có thể lưu ở backend hoặc D1 tùy môi trường triển khai. Nếu xóa dữ liệu trình duyệt hoặc đổi máy thì dữ liệu cục bộ có thể không còn.”</div>
+
+<h3>31. Vì sao bản demo công khai có thể không chạy chatbot hoặc lưu điểm thi?</h3>
+<div class="answer">“Dự án có nhiều môi trường backend. Cloudflare Worker công khai hiện tập trung vào file tĩnh, tài khoản và khảo sát; một số API như chatbot hoặc thi có trong Express nhưng chưa được triển khai tương ứng trên Worker. Vì vậy trước khi demo nhóm phải thử đúng URL và không nói đã đồng bộ cloud nếu endpoint đó chưa hoạt động.”</div>
+
+<h2>F. KIỂM THỬ 136/136</h2>
+
+<h3>32. “136/136 ca kiểm thử đạt” có nghĩa là gì?</h3>
+<div class="answer">“Nhóm đã viết 136 tình huống kiểm thử tự động và trong lần chạy kiểm tra, cả 136 tình huống đều cho kết quả mong đợi. Ví dụ hệ thống phải từ chối chấm khi khung hình không đủ chất lượng, giải phóng camera khi rời trang hoặc chuyển sang JavaScript khi WASM không tải được. Đây là kiểm thử logic kỹ thuật, không phải 136 học sinh.”</div>
+
+<h3>33. 136/136 có chứng minh AI chính xác 100% không?</h3>
+<div class="answer">“Không. Con số này chỉ cho biết những trường hợp mà nhóm đã viết test đều qua. Nó không chứng minh phần mềm không còn lỗi, không chứng minh AI chính xác 100% trên người thật và cũng không chứng minh hiệu quả học tập. Các kết luận đó cần những phép thử riêng.”</div>
+
+<h3>34. TypeScript type-check đạt nghĩa là gì?</h3>
+<div class="answer">“Type-check kiểm tra sự nhất quán của kiểu dữ liệu trong mã nguồn, ví dụ truyền sai loại dữ liệu hoặc gọi thuộc tính không tồn tại. Việc đạt type-check giúp giảm một nhóm lỗi lập trình, nhưng không chứng minh giao diện đẹp, nội dung đúng chuyên môn hay mọi chức năng đều chạy hoàn hảo trên thiết bị thật.”</div>
+
+<h2>G. GIẢI THÍCH TOÀN BỘ SỐ LIỆU KHẢO SÁT</h2>
+
+<h3>35. Thang Likert 5 mức là gì?</h3>
+<div class="answer">“Likert 5 mức là cách chuyển mức độ cảm nhận thành thang từ 1 đến 5, chẳng hạn từ rất thấp đến rất cao. Sau đó nhóm tính điểm trung bình để so sánh trước và sau trải nghiệm. Đây là dữ liệu tự đánh giá của người tham gia, không phải điểm kiểm tra kiến thức.”</div>
+
+<h3>36. Con số 47 phản hồi có nghĩa là gì?</h3>
+<div class="answer">“Hệ thống ghi nhận 47 phiếu phản hồi, gồm 45 phiếu học sinh và 2 phiếu giáo viên. Không nên mặc định đó là 47 người hoàn toàn khác nhau, vì một học sinh có thể gửi phiếu trước và phiếu sau. Cách nói chính xác là 47 phiếu hoặc 47 phản hồi.”</div>
+
+<h3>37. Vì sao chỉ có 20 cặp học sinh trước–sau?</h3>
+<div class="answer">“Dữ liệu học sinh gồm 24 phiếu trước và 21 phiếu sau, nhưng chỉ 20 học sinh có đủ cả hai lần để ghép theo cùng người. Phân tích thay đổi phải sử dụng 20 cặp này để tránh lấy hai nhóm khác nhau so trực tiếp với nhau. Các phiếu không ghép được vẫn có thể dùng mô tả, nhưng không dùng để tính thay đổi cá nhân.”</div>
+
+<h3>38. Điểm 2,69 trước và 4,08 sau là gì?</h3>
+<div class="answer">“Đây là điểm trung bình trên thang Likert 5 mức của bốn tiêu chí tự đánh giá trong 20 cặp học sinh. Trước trải nghiệm, trung bình là khoảng 2,69; sau trải nghiệm là khoảng 4,08. Nó cho thấy cảm nhận của nhóm khảo sát tích cực hơn sau khi sử dụng, nhưng không phải điểm thi môn GDQP-AN.”</div>
+
+<h3>39. Mức tăng 51,7% được tính như thế nào?</h3>
+<div class="answer">“Đây là mức tăng tương đối của điểm Likert trung bình, tính gần đúng bằng lấy 4,08 trừ 2,69, rồi chia cho 2,69 và nhân 100%. Kết quả khoảng 51,7%. Vì số đầu vào trên poster đã làm tròn, đây cũng là số gần đúng và không được gọi là mức tăng kết quả học tập.”</div>
+
+<h3>40. “75% đánh giá tích cực” là gì?</h3>
+<div class="answer">“Trong 20 học sinh ghép cặp, có 15 em chọn mức ‘Tốt hơn’ hoặc ‘Tốt hơn nhiều’ khi đánh giá hiệu quả hỗ trợ của sản phẩm, tương đương 75%. Đây là đánh giá chủ quan của người trải nghiệm, không phải 75% học sinh tăng điểm kiểm tra.”</div>
+
+<h3>41. “95% muốn tiếp tục sử dụng” là gì?</h3>
+<div class="answer">“Có 19 trong 20 học sinh ghép cặp chọn ‘Có’ hoặc ‘Chắc chắn có’ đối với ý định tiếp tục sử dụng, tương đương 95%. Con số này phản ánh mức độ sẵn sàng sử dụng tiếp, không phải độ chính xác của phần mềm hoặc chứng nhận chất lượng.”</div>
+
+<h3>42. Các số liệu có chứng minh website làm học sinh học tốt hơn không?</h3>
+<div class="answer">“Chưa thể kết luận như vậy. Đây là khảo sát tự đánh giá trước–sau với mẫu 20 cặp, chưa có nhóm đối chứng và chưa đo bằng bài kiểm tra kiến thức độc lập. Kết quả chỉ cho thấy tín hiệu tích cực ban đầu về cảm nhận, hứng thú và khả năng hình dung của nhóm tham gia.”</div>
+
+<h3>43. Nếu BGK hỏi vì sao khảo sát có nhiều biểu đồ thì trả lời sao?</h3>
+<div class="answer">“Mỗi biểu đồ trả lời một câu hỏi khác nhau, như mức hiểu, khả năng hình dung, hứng thú hoặc ý định tiếp tục sử dụng. Tuy nhiên tất cả vẫn thuộc một đợt khảo sát và không phải nhiều thí nghiệm độc lập. Nhóm dùng biểu đồ để mô tả dữ liệu, không dùng số lượng biểu đồ để làm tăng độ tin cậy.”</div>
+
+<h3>44. Đây mới là khảo sát lần 1, nhóm dự định làm gì tiếp?</h3>
+<div class="answer">“Khảo sát lần đầu giúp nhóm phát hiện điểm cần tối ưu về giao diện, nội dung và hiệu năng. Vòng tiếp theo cần tăng số người, tăng mẫu giáo viên, kiểm thử trên nhiều thiết bị và nếu có thể bổ sung nhóm đối chứng hoặc bài kiểm tra kiến thức. Khi đó nhóm mới có cơ sở đánh giá hiệu quả chặt chẽ hơn.”</div>
+
+<h2>H. TÍNH KHẢ THI, GIỚI HẠN VÀ CÂU KẾT</h2>
+
+<h3>45. Dự án đã hoàn thiện đến mức nào?</h3>
+<div class="answer">“Các phần ổn định hơn gồm khung website, học liệu tĩnh, quiz, logic trắc nghiệm và các mô hình 3D có sẵn. AI Pose, trợ giảng, WebAR và chấm tự luận vẫn mang tính thử nghiệm hoặc nguyên mẫu. Một số chức năng lưu dữ liệu còn phụ thuộc môi trường backend, nên nhóm không gọi toàn bộ hệ thống là sản phẩm thương mại hoàn chỉnh.”</div>
+
+<h3>46. Website có chạy tốt trên mọi điện thoại cấu hình thấp không? <span class="tag">CẦN SỐ LIỆU</span></h3>
+<div class="answer">“Code có giao diện responsive, điều khiển cảm ứng và một số cơ chế giảm tải, nhưng chưa đủ bằng chứng để nói chạy tốt trên mọi máy. Nhóm cần lập bảng thiết bị, trình duyệt, thời gian tải, FPS và lỗi phát sinh. Cách nói hiện tại là website có hỗ trợ điện thoại, còn mức tương thích cần tiếp tục kiểm thử.”</div>
+
+<h3>47. Làm sao chứng minh nội dung và mô hình đúng chuyên môn? <span class="tag">CẦN XÁC NHẬN</span></h3>
+<div class="answer">“Code chỉ chứng minh nội dung và mô hình đã được đưa vào hệ thống, không tự chứng minh chúng đúng tuyệt đối về GDQP-AN. Nhóm cần đối chiếu chương trình, tài liệu chính thống và có giáo viên chuyên môn xác nhận bộ phận, quy trình, tư thế và ngân hàng câu hỏi. Nếu chưa có biên bản thì chúng em chỉ nói đang tiếp tục thẩm định.”</div>
+
+<h3>48. Hạn chế lớn nhất của đề tài là gì?</h3>
+<div class="answer">“Hạn chế chính là mẫu khảo sát còn nhỏ và chưa có nhóm đối chứng; AI Pose chưa được kiểm định rộng trên người thật; WebAR chưa có neo không gian; trợ giảng chưa truy hồi nguồn; dữ liệu và API chưa đồng nhất giữa các môi trường triển khai. Nhóm công khai các giới hạn này để xác định hướng cải tiến tiếp theo.”</div>
+
+<h3>49. Dự án đã sẵn sàng triển khai toàn trường chưa?</h3>
+<div class="answer">“Chưa thể khẳng định đã sẵn sàng triển khai toàn trường. Repository chứng minh một nguyên mẫu có nhiều chức năng và các test kỹ thuật, nhưng còn cần thẩm định chuyên môn, kiểm thử tải và thiết bị, hoàn thiện bảo mật, dữ liệu, API và đánh giá sư phạm với mẫu lớn hơn.”</div>
+
+<h3>50. Câu kết luận ngắn nhất khi BGK yêu cầu tự đánh giá dự án</h3>
+<div class="answer">“Giá trị hiện tại của HỌC QPAN 3D là một nguyên mẫu tích hợp có thể minh họa cách học liệu, mô hình 3D và AI hỗ trợ việc quan sát, luyện tập và tự ôn GDQP-AN trên web. Sản phẩm đã có nền tảng kỹ thuật rõ ràng và tín hiệu phản hồi tích cực ban đầu, nhưng nhóm chưa coi đó là bằng chứng về hiệu quả tuyệt đối và vẫn cần kiểm định chuyên môn, người dùng và thiết bị.”</div>
+
+<h2>I. NHỮNG CÂU TUYỆT ĐỐI KHÔNG NÊN NÓI</h2>
+<table>
+<tr><th>Nên nói</th><th>Không nên nói</th></tr>
+<tr><td>“Khảo sát cho tín hiệu tích cực ban đầu.”</td><td>“Website làm kết quả học tập tăng 51,7%.”</td></tr>
+<tr><td>“136/136 test kỹ thuật đã viết đều đạt.”</td><td>“AI chính xác 100% và phần mềm không còn lỗi.”</td></tr>
+<tr><td>“WebAR hiện là camera overlay và điều chỉnh thủ công.”</td><td>“Mô hình tự nhận diện và bám chính xác mặt bàn.”</td></tr>
+<tr><td>“AI Pose dùng MediaPipe kết hợp rubric của nhóm.”</td><td>“Nhóm tự huấn luyện toàn bộ mô hình AI.”</td></tr>
+<tr><td>“Trường bắn là mô phỏng trực quan.”</td><td>“Kết quả giống chính xác việc bắn thật.”</td></tr>
+<tr><td>“Tính mới là cách tích hợp chuyên biệt của dự án.”</td><td>“Đây là sản phẩm đầu tiên hoặc duy nhất trên thị trường.”</td></tr>
+<tr><td>“47 phiếu phản hồi, trong đó có 20 cặp trước–sau.”</td><td>“47 người đều được đo trước và sau.”</td></tr>
+</table>
+
+<h2>J. NGUỒN ĐỐI CHIẾU THỊ TRƯỜNG</h2>
+<p>Các ví dụ này chỉ chứng minh thị trường có những giải pháp giống <b>từng phần</b>, không chứng minh có hoặc không có một đối thủ giống hoàn toàn dự án:</p>
+<ul>
+<li>OLM – nền tảng học liệu, dạy học và kiểm tra tại Việt Nam: https://dgnl.olm.vn/gioi-thieu</li>
+<li>K12Online – hệ thống quản lý học và thi trực tuyến của Viettel: https://static.k12online.vn/</li>
+<li>ClassVR – giải pháp VR/AR giáo dục ở nước ngoài: https://www.classvr.com/virtual-reality-in-education/</li>
+</ul>
+
+<div class="danger"><b>Nguyên tắc cuối cùng:</b> Khi không có bằng chứng, hãy trả lời “repository chưa chứng minh điều đó; nhóm cần xác nhận/kiểm thử thêm”. Cách trả lời trung thực thường có giá trị hơn một khẳng định ấn tượng nhưng không bảo vệ được.</div>
+<div class="footer">Tổng hợp phục vụ bảo vệ dự án HỌC QPAN 3D – không thay thế hồ sơ báo cáo chính thức.</div>
+</body>
+</html>

@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Sổ tay hiểu bản chất HỌC QPAN 3D</title>
+<style>
+@page { size: A4; margin: 1.6cm; }
+body { font-family: Arial, sans-serif; color:#172f43; font-size:11pt; line-height:1.38; }
+h1 { color:#0c3d70; font-size:26pt; text-align:center; margin-top:70px; }
+h2 { color:#0c3d70; font-size:18pt; border-bottom:2px solid #d71920; padding-bottom:5px; page-break-before:always; }
+h3 { color:#007e87; font-size:14pt; margin-top:18px; }
+h4 { color:#a71920; font-size:12pt; margin-bottom:4px; }
+p { margin:6px 0 9px; }
+table { border-collapse:collapse; width:100%; margin:10px 0 16px; font-size:9.5pt; }
+th { background:#0c3d70; color:white; padding:6px; border:1px solid #9fb0bf; }
+td { padding:6px; border:1px solid #aebbc6; vertical-align:top; }
+.lead { font-size:15pt; text-align:center; color:#50677a; }
+.box { background:#eef5f7; border-left:5px solid #007e87; padding:10px 12px; margin:10px 0; }
+.warn { background:#fff0f0; border-left:5px solid #d71920; padding:10px 12px; margin:10px 0; }
+.say { background:#fff8df; border-left:5px solid #e3a400; padding:10px 12px; margin:10px 0; }
+.tag { font-weight:bold; color:#007e87; }
+.small { font-size:9pt; color:#526778; }
+ul,ol { margin-top:4px; }
+li { margin:4px 0; }
+</style>
+</head>
+<body>
+
+<h1>SỔ TAY HIỂU BẢN CHẤT<br>HỌC QPAN 3D</h1>
+<p class="lead">Giải thích poster và báo cáo 15 trang theo cách học sinh lớp 12 có thể hiểu, tự diễn đạt và phản biện.</p>
+<div class="box"><b>Cách sử dụng:</b> Đọc từng mục, che phần “Cách nói trước BGK”, rồi tự giải thích lại bằng lời của mình. Nếu chưa giải thích được mà không nhìn tài liệu, bạn chưa thực sự hiểu phần đó.</div>
+<p class="small">Căn cứ: Poster_HOC_QPAN_3D.pdf; Bao_cao_HOC_QPAN_3D_DONG_BOFINAL1.pdf; đối chiếu hiện trạng repository trong quá trình rà soát. Tài liệu này giải thích nội dung, không thay đổi hai PDF gốc.</p>
+
+<h2>1. Hiểu toàn bộ dự án trong một hình dung</h2>
+<div class="box"><b>HỌC QPAN 3D là một nguyên mẫu website tích hợp:</b> học lý thuyết → làm câu hỏi → quan sát/thao tác mô phỏng 3D → nhận phản hồi từ một số công cụ AI → lưu tiến độ hoặc khảo sát.</div>
+<p>Dự án giải quyết việc học liệu và công cụ học đang rời rạc, đồng thời giúp học sinh quan sát nội dung có tính không gian hoặc trình tự. Website hỗ trợ chuẩn bị trước và ôn lại sau giờ học. Nó không thay thế thao trường, trang thiết bị thật hoặc quyết định chuyên môn của giáo viên.</p>
+<h3>Ba tầng cần phân biệt</h3>
+<table><tr><th>Tầng</th><th>Bản chất</th><th>Ví dụ</th></tr>
+<tr><td>Nội dung giáo dục</td><td>Điều học sinh cần học</td><td>Bài lý thuyết, điều lệnh, tháo/lắp AK, di tích.</td></tr>
+<tr><td>Công cụ kỹ thuật</td><td>Cách website trình bày hoặc xử lý</td><td>React, Three.js, GLB, MediaPipe, Gemini.</td></tr>
+<tr><td>Bằng chứng đánh giá</td><td>Cách nhóm chứng minh sản phẩm có hoạt động</td><td>Test tự động, kiểm kê dữ liệu, ảnh triển khai và khảo sát vòng đầu.</td></tr></table>
+<div class="say"><b>Cách nói trước BGK:</b> “Đề tài của chúng em là nguyên mẫu cổng học tập GDQP-AN trên web. Giá trị chính là kết nối học liệu, đánh giá, mô phỏng 3D và phản hồi trong cùng một hành trình. Sản phẩm hỗ trợ học và chuẩn bị thực hành, không thay thế giáo viên hoặc thực hành thật.”</div>
+
+<h2>2. Vì sao chọn đề tài và khoảng trống nghiên cứu</h2>
+<h3>Vấn đề thực tế</h3>
+<ul>
+<li>Hình tĩnh giúp xem cấu tạo nhưng không cho xoay, chọn bộ phận hoặc phát riêng từng bước.</li>
+<li>Video thể hiện trình tự nhưng góc nhìn cố định; người học không chủ động điều khiển vật thể.</li>
+<li>Ứng dụng 3D riêng có thể trực quan nhưng thường tách khỏi bài học, câu hỏi và tiến độ.</li>
+<li>Chatbot trả lời nhanh nhưng có thể sai, không tự chứng minh rằng câu trả lời bám chương trình.</li>
+</ul>
+<p><b>Khoảng trống mà dự án hướng tới:</b> một website thống nhất, chạy trên thiết bị phổ biến, kết nối học liệu với 3D, luyện tập, đánh giá và phản hồi.</p>
+<div class="warn"><b>Không được suy diễn:</b> Báo cáo chưa thực hiện khảo sát thị trường đầy đủ và chưa chứng minh HỌC QPAN 3D là sản phẩm đầu tiên ở Việt Nam. “Tính mới” nên hiểu là cách nhóm tích hợp và triển khai trong phạm vi đề tài.</div>
+<h3>Ba câu hỏi nghiên cứu</h3>
+<ol>
+<li>Có thể tích hợp học liệu, 3D, luyện tập và AI trong một website không?</li>
+<li>Hoạt ảnh theo bước, camera và chọn chi tiết có hỗ trợ quan sát rõ hơn không?</li>
+<li>Cần giới hạn nào để sử dụng AI và mô phỏng thực hành an toàn?</li>
+</ol>
+<p>Câu hỏi thứ nhất được kiểm tra chủ yếu bằng sản phẩm và code. Câu thứ hai mới có tín hiệu tự đánh giá, chưa có thực nghiệm đối chứng. Câu thứ ba được trả lời bằng cảnh báo, quyền camera, xử lý tại thiết bị và vai trò thẩm định của giáo viên.</p>
+
+<h2>3. Giả thuyết, biến nghiên cứu và ý nghĩa khoa học</h2>
+<table><tr><th>Khái niệm</th><th>Hiểu đơn giản</th><th>Trong đề tài</th></tr>
+<tr><td>Giả thuyết</td><td>Dự đoán có căn cứ cần được kiểm tra.</td><td>Web-first có thể tạo luồng học thống nhất; điều khiển góc nhìn có thể hỗ trợ quan sát; AI chỉ nên đóng vai trò hỗ trợ.</td></tr>
+<tr><td>Biến độc lập</td><td>Yếu tố được thay đổi hoặc so sánh.</td><td>Cách trình bày: văn bản, video, 3D tương tác hoặc AI.</td></tr>
+<tr><td>Biến phụ thuộc</td><td>Kết quả muốn quan sát.</td><td>Hiểu bài, thời gian, lỗi thao tác, dễ dùng, ghi nhớ.</td></tr>
+<tr><td>Biến kiểm soát</td><td>Điều kiện cố gắng giữ giống nhau.</td><td>Cùng nội dung, thời lượng, thiết bị, mạng và hướng dẫn.</td></tr>
+<tr><td>Nhóm đối chứng</td><td>Nhóm không dùng giải pháp mới để so sánh công bằng.</td><td>Chưa có trong khảo sát hiện tại.</td></tr></table>
+<p>Do chưa có nhóm đối chứng và chưa phân nhóm ngẫu nhiên, báo cáo chỉ được phép nói “có tín hiệu cải thiện trong nhóm trải nghiệm”, không được kết luận website là nguyên nhân duy nhất tạo ra cải thiện.</p>
+
+<h2>4. Các con số phải hiểu đúng</h2>
+<table><tr><th>Số liệu</th><th>Bản chất</th><th>Không được hiểu thành</th></tr>
+<tr><td>12 mô-đun người học</td><td>12 khu vực/chức năng chính mà người học sử dụng.</td><td>12 công nghệ hoặc 12 tệp code.</td></tr>
+<tr><td>13 phân hệ kỹ thuật</td><td>Bảng kiểm kê tách “Kỹ năng” và “Thao trường 3D” thành hai phân hệ.</td><td>Mâu thuẫn với 12 mô-đun. Đây là hai cách phân loại.</td></tr>
+<tr><td>31 bài</td><td>Lớp 10: 12; lớp 11: 10; lớp 12: 9.</td><td>31 chương trình học độc lập.</td></tr>
+<tr><td>144 quiz nhanh</td><td>48 câu cho mỗi khối, có phản hồi và giải thích.</td><td>Số câu trong một đề thi.</td></tr>
+<tr><td>Kho thi 168 đơn vị</td><td>120 MCQ + 30 cụm Đúng/Sai + 18 tự luận.</td><td>168 câu đều cùng một dạng.</td></tr>
+<tr><td>7 nhóm kỹ năng / 14 bước</td><td>Dữ liệu hướng dẫn kỹ năng được chia nhóm và bước.</td><td>14 mô hình 3D.</td></tr>
+<tr><td>14 GLB / 12 runtime</td><td>Repository có 14 tệp GLB; code đang tham chiếu 12 tệp khi chạy.</td><td>Tất cả 14 đều xuất hiện trong giao diện.</td></tr>
+<tr><td>6 di tích</td><td>Sáu địa điểm có marker và nội dung trong bản đồ.</td><td>Sáu tour đã được thẩm định toàn diện.</td></tr>
+<tr><td>136/136 test</td><td>136 tình huống kỹ thuật tự động đều cho kết quả mong đợi trong lần rà soát.</td><td>AI chính xác 100%, đã thử với 136 học sinh hoặc phần mềm không còn lỗi.</td></tr>
+<tr><td>23 tệp test</td><td>136 test được tổ chức trong 23 tệp node:test.</td><td>23 chức năng hoặc 23 người thử nghiệm.</td></tr></table>
+
+<h3>Bản chất của 136/136 ca kiểm thử</h3>
+<p>Mỗi ca là một “đề bài” cho phần mềm. Ví dụ: nếu camera thiếu dữ liệu, hệ thống phải từ chối chấm; nếu WASM không tải, JavaScript dự phòng phải hoạt động; khi rời WebAR, camera phải được giải phóng. Máy tự chạy đầu vào và so sánh kết quả thực tế với kết quả mong đợi.</p>
+<div class="say"><b>Cách nói:</b> “136/136 xác nhận các tình huống kỹ thuật đã viết test hoạt động đúng. Nó không đo độ chính xác của AI trên người thật và không chứng minh hiệu quả học tập.”</div>
+
+<h2>5. Hiểu đúng toàn bộ số liệu khảo sát</h2>
+<h3>47 phản hồi và 20 cặp</h3>
+<p>47 là số <b>phiếu phản hồi</b>, gồm 45 phiếu học sinh và 2 phiếu giáo viên. Không nên diễn đạt thành 47 người độc lập vì học sinh có thể gửi một phiếu trước và một phiếu sau.</p>
+<p>Hệ thống ghép được 20 học sinh có đủ cả hai phần trước–sau. Chỉ nhóm ghép cặp này được dùng cho phép so sánh 2,69 → 4,08.</p>
+<h3>Likert 5 mức</h3>
+<p>Các tiêu chí chính được chọn từ 1 đến 5: Rất thấp, Thấp, Trung bình, Cao, Rất cao. Bốn tiêu chí là hiểu–ghi nhớ, trực quan hóa, hứng thú và tự ôn tập.</p>
+<table><tr><th>Tiêu chí</th><th>Trước</th><th>Sau</th></tr>
+<tr><td>Hiểu và ghi nhớ</td><td>2,60</td><td>3,95</td></tr>
+<tr><td>Trực quan hóa</td><td>2,85</td><td>4,05</td></tr>
+<tr><td>Hứng thú</td><td>2,50</td><td>4,25</td></tr>
+<tr><td>Tự ôn tập</td><td>2,80</td><td>4,05</td></tr>
+<tr><th>Trung bình 4 tiêu chí</th><th>2,69/5</th><th>4,08/5</th></tr></table>
+<p><b>+51,7%</b> là mức tăng tương đối của điểm Likert trung bình: xấp xỉ (4,08 − 2,69) / 2,69 × 100. Đây là điểm tự đánh giá, không phải điểm kiểm tra kiến thức.</p>
+<p><b>75% tích cực</b> = 15/20 học sinh ghép cặp chọn “Tốt hơn” hoặc “Tốt hơn nhiều” khi so sánh ứng dụng với nghe giảng/tranh ảnh/video.</p>
+<p><b>95% muốn dùng tiếp</b> = 19/20 chọn “Có” hoặc “Chắc chắn có”. Đây là ý định tiếp tục sử dụng, không phải chứng nhận chất lượng.</p>
+<div class="warn"><b>Giới hạn:</b> mẫu nhỏ, chỉ có hai phiếu giáo viên, chưa có nhóm đối chứng, dữ liệu dựa nhiều vào tự đánh giá. Vì vậy chỉ gọi là khảo sát vòng đầu hoặc tín hiệu bước đầu.</div>
+<div class="say"><b>Nếu BGK hỏi vì sao mẫu ít:</b> “Đây là vòng khảo sát đầu trên bản thử nghiệm để phát hiện vấn đề. Nhóm đang tối ưu tốc độ, thao tác, mô hình và nội dung theo góp ý; sau đó dự kiến khảo sát vòng hai với mẫu lớn hơn và nếu có điều kiện sẽ bổ sung nhóm đối chứng.”</div>
+
+<h2>6. Kiến trúc hệ thống: bốn lớp</h2>
+<table><tr><th>Lớp</th><th>Nhiệm vụ</th><th>Công nghệ chính</th></tr>
+<tr><td>Giao diện</td><td>Hiển thị màn hình, nhận thao tác, responsive.</td><td>React, TypeScript, Tailwind, Motion.</td></tr>
+<tr><td>Học tập–đánh giá</td><td>Bài học, quiz, thi thử, kỹ năng, XP.</td><td>Dữ liệu TypeScript, component và logic ứng dụng.</td></tr>
+<tr><td>3D/Pose</td><td>Mô hình, camera, clip hoạt ảnh, phân tích tư thế.</td><td>Three.js, R3F, Drei, GLB, MediaPipe, rubric.</td></tr>
+<tr><td>Dịch vụ–dữ liệu</td><td>API, tài khoản, khảo sát, AI và lưu trạng thái.</td><td>Express, Cloudflare Worker/D1, Gemini, localStorage.</td></tr></table>
+<p><b>Luồng cơ bản:</b> người dùng chọn chức năng → React điều phối → tải nội dung/GLB/camera → xử lý tại trình duyệt hoặc gọi API → trả kết quả lên giao diện.</p>
+<div class="warn"><b>Hai backend chưa giống nhau:</b> Worker công khai có tài khoản và khảo sát, nhưng chatbot và API bài thi chưa triển khai; Express có các API này. Khi demo phải biết mình đang chạy môi trường nào.</div>
+
+<h2>7. Từ điển công nghệ phải nói được bằng lời của mình</h2>
+<table><tr><th>Thuật ngữ</th><th>Giải thích dễ hiểu</th></tr>
+<tr><td>React</td><td>Thư viện chia giao diện thành các component và cập nhật màn hình theo trạng thái.</td></tr>
+<tr><td>TypeScript</td><td>JavaScript có khai báo kiểu, giúp phát hiện nhiều lỗi dữ liệu trước khi chạy.</td></tr>
+<tr><td>Vite</td><td>Công cụ chạy môi trường phát triển và đóng gói website.</td></tr>
+<tr><td>Tailwind / Motion</td><td>Tailwind hỗ trợ style; Motion tạo chuyển động giao diện.</td></tr>
+<tr><td>Three.js</td><td>Thư viện WebGL để dựng cảnh, camera, ánh sáng, mô hình và hoạt ảnh 3D.</td></tr>
+<tr><td>React Three Fiber</td><td>Cách dùng Three.js theo mô hình component của React.</td></tr>
+<tr><td>Drei</td><td>Bộ tiện ích có sẵn cho R3F, ví dụ tải GLB và điều khiển camera.</td></tr>
+<tr><td>Blender</td><td>Phần mềm tạo/chỉnh mô hình, rig và hoạt ảnh.</td></tr>
+<tr><td>glTF/GLB</td><td>Định dạng mang mô hình, vật liệu, khung xương và hoạt ảnh lên web; GLB thường gói vào một tệp nhị phân.</td></tr>
+<tr><td>Mesh</td><td>Hình học bề mặt của một bộ phận 3D.</td></tr>
+<tr><td>Rig / skeleton</td><td>Hệ xương điều khiển nhân vật.</td></tr>
+<tr><td>Skinning</td><td>Gắn các đỉnh của mesh với xương để mesh biến dạng theo chuyển động.</td></tr>
+<tr><td>Keyframe / clip</td><td>Mốc chuyển động và một đoạn hoạt ảnh có thể phát/lặp.</td></tr>
+<tr><td>Mixer / crossfade</td><td>Bộ phát hoạt ảnh và cách chuyển mềm giữa hai clip.</td></tr>
+<tr><td>Raycaster</td><td>Tia ảo đi từ camera/con trỏ để xác định người dùng đang chọn vật thể nào.</td></tr>
+<tr><td>Box3</td><td>Hộp bao 3D dùng tính tâm/kích thước để đưa camera tập trung vào chi tiết.</td></tr>
+<tr><td>MediaPipe Pose</td><td>Mô hình có sẵn nhận các điểm mốc cơ thể từ ảnh camera.</td></tr>
+<tr><td>Quality gate</td><td>Bộ điều kiện kiểm tra dữ liệu có đủ tốt trước khi cho phép chấm.</td></tr>
+<tr><td>Rubric</td><td>Bộ tiêu chí và mức điểm do hệ thống định nghĩa để đánh giá tư thế.</td></tr>
+<tr><td>Gemini</td><td>Mô hình AI tạo sinh được gọi qua backend; nhóm không tự huấn luyện Gemini.</td></tr>
+<tr><td>API / backend</td><td>Điểm giao tiếp và phần máy chủ xử lý yêu cầu, khóa AI, tài khoản hoặc dữ liệu.</td></tr>
+<tr><td>Cloudflare Worker / D1</td><td>Mã máy chủ chạy trên Cloudflare và cơ sở dữ liệu SQL của Cloudflare.</td></tr>
+<tr><td>localStorage</td><td>Kho nhỏ trong trình duyệt; xóa dữ liệu trình duyệt có thể làm mất tiến độ.</td></tr>
+<tr><td>WebAssembly (WASM)</td><td>Mã biên dịch chạy trong trình duyệt, dùng cho một số tính toán; có JavaScript dự phòng.</td></tr>
+<tr><td>Fallback</td><td>Phương án dự phòng khi phương án chính không tải hoặc không được hỗ trợ.</td></tr>
+</table>
+
+<h2>8. Bản chất từng chức năng và mức hoàn thiện</h2>
+<table><tr><th>Phân hệ</th><th>Luồng hoạt động</th><th>Trạng thái và giới hạn</th></tr>
+<tr><td>Lý thuyết</td><td>Chọn khối/bài → đọc → đánh dấu → ôn trong bài.</td><td>Có 31 bài; PDF chưa nối; cần thẩm định chuyên môn.</td></tr>
+<tr><td>Quiz nhanh</td><td>Chọn khối → trả lời → xem đúng/sai và giải thích → lưu điểm cao.</td><td>144 câu; điểm lưu trình duyệt.</td></tr>
+<tr><td>Thi thử</td><td>Chọn thời gian → hệ thống xáo đề → đếm giờ → chấm.</td><td>MCQ/Đúng-Sai có thể chấm; tự luận chỉ ước lượng; API tùy backend.</td></tr>
+<tr><td>Kỹ năng</td><td>Xem video/3D theo bước → checklist → câu hỏi.</td><td>7 nhóm/14 bước; một số kỹ năng có 3D.</td></tr>
+<tr><td>Thao trường 3D</td><td>Quan sát nhân vật, đội ngũ, vận động và địa vật trong cảnh.</td><td>Có; cần kiểm tra thiết bị yếu và độ đúng động tác.</td></tr>
+<tr><td>Tháo/lắp AK</td><td>Chọn nhóm chi tiết → phát bước → camera focus → lắp chạy timeline ngược.</td><td>Có; cần giáo viên xác nhận trình tự/hình ảnh.</td></tr>
+<tr><td>Studio/WebAR</td><td>Chọn/tải GLB → cấp quyền camera → ghép mô hình lên video → chụp ảnh.</td><td>Prototype; chưa có WebXR hit-test hoặc neo chính xác vào mặt phẳng.</td></tr>
+<tr><td>Trường bắn</td><td>Ngắm, tương tác bia 4/6/8, trò chơi và đồ thị quỹ đạo.</td><td>Mô phỏng hóa; không đại diện đầy đủ cho điều kiện bắn thật.</td></tr>
+<tr><td>AI Pose</td><td>Camera → MediaPipe lấy mốc → quality gate → rubric → điểm/góp ý.</td><td>Beta; 5 bài + chuỗi 3 động tác; chưa kiểm định độ chính xác trên người thật.</td></tr>
+<tr><td>Trợ lý AI</td><td>Câu hỏi → Express /api/ask → Gemini → phản hồi.</td><td>Worker công khai chưa có; chưa truy hồi bài/PDF và chưa trích dẫn nguồn.</td></tr>
+<tr><td>Bản đồ</td><td>Chọn marker/tour → xem nội dung di tích.</td><td>6 di tích; chưa ghi lượt ghé; cần kiểm tra nguồn.</td></tr>
+<tr><td>Gamification</td><td>Hoạt động học tạo XP → cấp bậc/huy hiệu.</td><td>8 cấp bậc, 11 huy hiệu; một số XP chưa nhất quán; bảng mẫu.</td></tr>
+<tr><td>Khảo sát</td><td>Gửi trước/sau → ghép cùng tài khoản → Likert/biểu đồ → xuất báo cáo.</td><td>Có; mẫu hiện nhỏ và cần vòng khảo sát tiếp theo.</td></tr></table>
+
+<h2>9. 3D, AI Pose, WebAR và AI tạo sinh khác nhau thế nào?</h2>
+<h3>Mô phỏng 3D</h3>
+<p>Dùng mô hình được dựng sẵn. Website tải GLB, đặt camera/ánh sáng và phát hoạt ảnh. Đây không phải AI.</p>
+<h3>AI Pose</h3>
+<p>MediaPipe ước lượng 33 mốc cơ thể. Hệ thống kiểm tra chất lượng, tính góc/khoảng cách và so với rubric. MediaPipe cung cấp mốc; tiêu chuẩn GDQP-AN không tự xuất hiện từ MediaPipe.</p>
+<h3>WebAR hiện tại</h3>
+<p>Video camera là nền, canvas WebGL trong suốt vẽ mô hình lên trên. Vì chưa có WebXR hit-test, hệ thống chưa hiểu chắc chắn mặt sàn và chưa neo mô hình chính xác trong không gian.</p>
+<h3>Trợ lý AI tạo sinh</h3>
+<p>Gemini tạo câu trả lời ngôn ngữ. Vì chưa có truy hồi bài học/PDF và trích dẫn, câu trả lời có thể không bám chính xác tài liệu. Backend giữ khóa API; không nên đặt khóa bí mật trực tiếp trong frontend.</p>
+
+<h2>10. Dữ liệu được lưu ở đâu?</h2>
+<table><tr><th>Loại dữ liệu</th><th>Nơi lưu/xử lý</th><th>Hệ quả</th></tr>
+<tr><td>Tiến độ và XP</td><td>localStorage</td><td>Nhanh và đơn giản nhưng chưa đồng bộ thiết bị; có thể mất khi xóa dữ liệu trình duyệt.</td></tr>
+<tr><td>Tài khoản và khảo sát trên bản công khai</td><td>Cloudflare D1</td><td>Lưu phía máy chủ; cần phân quyền, sao lưu và bảo vệ dữ liệu.</td></tr>
+<tr><td>Khung hình Pose</td><td>Xử lý trong trình duyệt theo thiết kế hiện tại</td><td>Báo cáo không có lệnh upload ảnh; vẫn phải xin quyền camera.</td></tr>
+<tr><td>Văn bản hỏi AI</td><td>Gửi qua backend đến Gemini</td><td>Cần tránh dữ liệu nhận dạng và kiểm chứng câu trả lời.</td></tr></table>
+
+<h2>11. Các trạng thái “Có”, “Beta”, “Prototype”, “Đang hoàn thiện”</h2>
+<table><tr><th>Trạng thái</th><th>Ý nghĩa</th></tr>
+<tr><td>Có</td><td>Đã có giao diện, dữ liệu/asset, xử lý và phản hồi cơ bản trong code.</td></tr>
+<tr><td>Beta</td><td>Đã chạy nhưng chưa đủ kiểm định để coi là ổn định/chính xác cho sử dụng chính thức.</td></tr>
+<tr><td>Prototype</td><td>Minh họa nguyên lý hoặc trải nghiệm; còn thiếu năng lực của một hệ hoàn chỉnh.</td></tr>
+<tr><td>Đang hoàn thiện</td><td>Có phần code/giao diện nhưng luồng hoặc dữ liệu chưa nhất quán.</td></tr></table>
+<p>“Có trong code” không đồng nghĩa “được giáo viên chứng nhận”, “hoạt động trên mọi thiết bị” hoặc “đã chứng minh hiệu quả”.</p>
+
+<h2>12. Rủi ro và giới hạn: vì sao phải chủ động nói ra?</h2>
+<ul>
+<li><b>Sai chuyên môn:</b> bài học, tư thế, số liệu bắn và hoạt ảnh cần giáo viên GDQP-AN thẩm định.</li>
+<li><b>Hiểu sai mô phỏng:</b> mô hình vũ khí và trường bắn chỉ phục vụ giáo dục.</li>
+<li><b>AI tạo sinh sai:</b> Gemini có thể “bịa” hoặc trả lời thiếu nguồn.</li>
+<li><b>Camera và dữ liệu:</b> cần sự đồng ý; tránh gửi thông tin nhận dạng.</li>
+<li><b>Hiệu năng:</b> GLB lớn có thể chậm trên máy yếu hoặc mạng yếu.</li>
+<li><b>Bản quyền:</b> phải lưu nguồn và giấy phép của asset.</li>
+</ul>
+<p>Việc nêu giới hạn không làm dự án yếu đi. Nó chứng minh nhóm hiểu phạm vi và không tuyên bố quá dữ liệu.</p>
+
+<h2>13. Điều nên nói và điều không nên nói</h2>
+<table><tr><th>Nên nói</th><th>Không nên nói</th></tr>
+<tr><td>“Nguyên mẫu tích hợp 12 mô-đun người học.”</td><td>“Sản phẩm hoàn thiện toàn bộ.”</td></tr>
+<tr><td>“Bảng kỹ thuật tách thành 13 phân hệ.”</td><td>“Có 13 mô-đun người học” nếu đang dùng cách đếm của báo cáo.</td></tr>
+<tr><td>“136 test xác nhận các logic đã kiểm tra.”</td><td>“AI chính xác 100%.”</td></tr>
+<tr><td>“Khảo sát cho tín hiệu tích cực ban đầu.”</td><td>“Website làm kết quả học tập tăng 51,7%.”</td></tr>
+<tr><td>“AI Pose beta, cần kiểm định người thật.”</td><td>“AI thay giáo viên chấm thực hành.”</td></tr>
+<tr><td>“WebAR ghép mô hình lên camera.”</td><td>“AR đã neo chính xác mô hình vào mặt phẳng.”</td></tr>
+<tr><td>“Trợ lý AI hoạt động qua Express; Worker chưa có.”</td><td>“Chatbot đang hoạt động đầy đủ trên bản công khai.”</td></tr>
+<tr><td>“Trường bắn là mô phỏng học tập.”</td><td>“Mô phỏng hoàn toàn đúng thực tế bắn.”</td></tr></table>
+
+<h2>14. Những chỗ BGK có thể bắt lỗi trong chính báo cáo</h2>
+<ol>
+<li><b>47 phản hồi:</b> nên gọi là phiếu/phản hồi, không mặc định là 47 người độc lập.</li>
+<li><b>12 và 13:</b> phải giải thích hai cách phân loại.</li>
+<li><b>+51,7%:</b> là tăng tương đối của Likert tự đánh giá, không phải điểm kiến thức.</li>
+<li><b>136/136:</b> chỉ chứng minh các tình huống đã viết test.</li>
+<li><b>AI Pose:</b> test tổng hợp không thay thế bộ dữ liệu người thật có nhãn.</li>
+<li><b>AI trong nghiên cứu:</b> câu tuyên bố về mức sử dụng AI là vấn đề liêm chính học thuật; nhóm chỉ nên bảo vệ nếu phản ánh đúng quá trình thực tế.</li>
+<li><b>Tài liệu tham khảo:</b> PDF cuối có dấu hiệu thay đổi số thứ tự sau khi bổ sung nguồn Sketchfab; cần đối chiếu lại số trích dẫn [11]–[15] trong nội dung và danh mục.</li>
+<li><b>Backend:</b> bản công khai và Express không có cùng chức năng.</li>
+</ol>
+
+<h2>15. Bài trình bày 60 giây</h2>
+<div class="say">“HỌC QPAN 3D là nguyên mẫu website hỗ trợ học sinh THPT học lý thuyết và chuẩn bị thực hành GDQP-AN. Nhóm chọn đề tài vì hình tĩnh và video khó cho người học tự đổi góc nhìn hoặc quan sát từng bước, trong khi học liệu và công cụ ôn tập còn rời rạc. Sản phẩm tích hợp bài học, câu hỏi, thi thử, kỹ năng, mô phỏng 3D, AI Pose, bản đồ, gamification và khảo sát. Về kỹ thuật, website dùng React và TypeScript; mô hình GLB được hiển thị bằng Three.js; MediaPipe nhận mốc cơ thể và rubric tạo phản hồi tư thế. Repository đã được rà soát bằng type-check và 136 test tự động. Khảo sát vòng đầu trên 20 cặp học sinh cho tín hiệu tích cực, nhưng nhóm chưa kết luận hiệu quả nhân quả vì chưa có nhóm đối chứng. Bước tiếp theo là thẩm định chuyên môn, kiểm định Pose trên người thật, hợp nhất backend và mở rộng thực nghiệm.”</div>
+
+<h2>16. Tự kiểm tra: nếu trả lời được thì bạn đã hiểu</h2>
+<ol>
+<li>Tại sao hình tĩnh/video chưa giải quyết hết nhu cầu của đề tài?</li>
+<li>“Tính mới” của dự án nằm ở đâu và không được phóng đại thành điều gì?</li>
+<li>Tại sao báo cáo vừa nói 12 mô-đun vừa nói 13 phân hệ?</li>
+<li>GLB chứa gì? Three.js làm gì? Blender làm gì?</li>
+<li>Raycaster và Box3 được dùng để làm gì?</li>
+<li>MediaPipe khác rubric ở điểm nào?</li>
+<li>Tại sao AI Pose chưa thể dùng làm điểm chính thức?</li>
+<li>WebAR hiện tại khác WebXR có hit-test như thế nào?</li>
+<li>Vì sao chatbot chưa phải hệ hỏi đáp bám tài liệu?</li>
+<li>Dữ liệu nào lưu ở localStorage và rủi ro là gì?</li>
+<li>Worker/D1 khác Express như thế nào?</li>
+<li>136/136 chứng minh được gì và không chứng minh được gì?</li>
+<li>47 phản hồi khác 20 cặp ra sao?</li>
+<li>+51,7%, 75% và 95% được hiểu thế nào?</li>
+<li>Tại sao chưa được kết luận quan hệ nhân quả?</li>
+<li>Ba hạn chế lớn nhất và ba ưu tiên tiếp theo là gì?</li>
+</ol>
+
+<div class="box"><b>Nguyên tắc cuối:</b> Khi không chắc, hãy nói “theo code/báo cáo hiện tại”, nêu đúng giới hạn và đề nghị nhóm xác nhận. Sự chính xác đáng tin hơn một tuyên bố nghe ấn tượng nhưng không có bằng chứng.</div>
+
+</body>
+</html>

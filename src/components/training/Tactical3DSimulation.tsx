@@ -15,7 +15,17 @@ type ActionItem = {
   id: string;
   name: string;
   description: string;
-  animation?: SoldierAnimationName;
+  animation?: SoldierAnimationName | string;
+  animationClipName?: string;
+  modelPath?: string;
+  transformOffset?: {
+    position?: [number, number, number];
+    rotation?: [number, number, number];
+    scale?: number;
+  };
+  available?: boolean;
+  verified?: boolean;
+  unverifiedReason?: string;
   zone?: GroundZone;
   camera?: CameraPreset;
   sgkBadge?: string;
@@ -30,6 +40,9 @@ type CategoryItem = {
   sgkSection: string;
   pdfFile: string;
   pdfLabel: string;
+  available?: boolean;
+  verified?: boolean;
+  unverifiedReason?: string;
   actions: ActionItem[];
 };
 
@@ -45,9 +58,51 @@ const CATEGORIES: CategoryItem[] = [
     pdfLabel: 'SGK GDQP-AN 10 (Kết nối tri thức)',
     actions: [
       {
+        id: 'right',
+        name: 'Quay bên phải',
+        animation: 'Action',
+        animationClipName: 'Action',
+        modelPath: '/models/quay phai.glb',
+        available: true,
+        verified: true,
+        transformOffset: { scale: 0.85, position: [0, 0, 0] },
+        description: 'Quan sát phối hợp thân, hông và chân khi chuyển hướng 90° sang phải.',
+        sgkBadge: 'SGK 10 · Bài 9 (Mục I)',
+        sgkDetail: 'Quay bên phải: Lấy gót chân phải và mũi chân trái làm trụ, xoay người sang phải 90°, sau đó thu chân trái lên sát chân phải.',
+      },
+      {
+        id: 'left',
+        name: 'Quay bên trái',
+        animation: 'Action.018',
+        animationClipName: 'Action.018',
+        modelPath: '/models/quay tay trai.glb',
+        available: true,
+        verified: true,
+        transformOffset: { scale: 0.85, position: [0.300, 0.282, -1.194] },
+        description: 'Quan sát chuyển hướng 90° sang trái tại chỗ. Lấy gót chân trái và mũi chân phải làm trụ.',
+        sgkBadge: 'SGK 10 · Bài 9 (Mục I)',
+        sgkDetail: 'Quay bên trái: Lấy gót chân trái và mũi chân phải làm trụ, xoay người sang trái 90°, sau đó kéo chân phải lên thành thế nghiêm.',
+      },
+      {
+        id: 'back',
+        name: 'Quay đằng sau',
+        animation: 'Action.002',
+        animationClipName: 'Action.002',
+        modelPath: '/models/quay sau.glb',
+        available: true,
+        verified: true,
+        transformOffset: { scale: 0.85, position: [0, 0, 0] },
+        description: 'Quan sát động tác xoay 180° sang bên phải về phía sau, phối hợp gót chân phải và mũi chân trái làm trụ.',
+        sgkBadge: 'SGK 10 · Bài 9 (Mục I)',
+        sgkDetail: 'Quay đằng sau: Lấy gót chân phải và mũi chân trái làm trụ, xoay người sang phải 180°, sau đó kéo chân trái lên sát chân phải thành tư thế đứng nghiêm.',
+      },
+      {
         id: 'attention',
         name: 'Đứng nghiêm',
         animation: 'Attention',
+        available: false,
+        verified: false,
+        unverifiedReason: 'Chưa có file GLB riêng đúng chuẩn tư thế điều lệnh QĐNDVN; tạm ẩn khỏi UI',
         description: 'Quan sát tư thế thẳng, vai cân bằng, tay dọc thân và hướng nhìn phía trước.',
         sgkBadge: 'SGK 10 · Bài 9 (Mục I)',
         sgkDetail: 'Động tác Nghiêm: Hai gót chân sát nhau trên đường thẳng, mũi bàn chân mở 45°, ngực nở, bụng thót, mắt nhìn thẳng.',
@@ -56,6 +111,9 @@ const CATEGORIES: CategoryItem[] = [
         id: 'ease',
         name: 'Đứng nghỉ',
         animation: 'AtEase',
+        available: false,
+        verified: false,
+        unverifiedReason: 'Không có model đúng riêng biệt cho động tác; tạm ẩn khỏi UI',
         description: 'Quan sát chuyển trọng tâm nhẹ, tư thế thư giãn và nhịp thở tự nhiên.',
         sgkBadge: 'SGK 10 · Bài 9 (Mục I)',
         sgkDetail: 'Động tác Nghỉ: Trùng gối chân trái (hoặc chân phải), trọng lượng toàn thân dồn vào chân trụ còn lại, thân trên vẫn giữ ngay ngắn.',
@@ -64,30 +122,20 @@ const CATEGORIES: CategoryItem[] = [
         id: 'salute',
         name: 'Chào',
         animation: 'Salute',
+        available: false,
+        verified: false,
+        unverifiedReason: 'Chưa có file GLB riêng đúng động tác chào chuẩn điều lệnh; tạm ẩn khỏi UI',
         description: 'Quan sát nhịp nâng tay phải, giữ tư thế chào rồi hạ tay về cạnh thân.',
         sgkBadge: 'SGK 10 · Bài 9 (Mục II)',
         sgkDetail: 'Động tác Chào, Thôi chào: Tay phải nâng lên theo đường ngắn nhất, ngón tay khép sát, đầu ngón tay giữa chạm vào vành mũ bên phải.',
       },
       {
-        id: 'left',
-        name: 'Quay bên trái',
-        animation: 'TurnLeft',
-        description: 'Quan sát chuyển hướng 90° tại chỗ. Nhấn lại động tác để phát lại.',
-        sgkBadge: 'SGK 10 · Bài 9 (Mục I)',
-        sgkDetail: 'Quay bên trái: Lấy gót chân trái và mũi chân phải làm trụ, xoay người sang trái 90°, sau đó kéo chân phải lên thành thế nghiêm.',
-      },
-      {
-        id: 'right',
-        name: 'Quay bên phải',
-        animation: 'TurnRight',
-        description: 'Quan sát phối hợp thân, hông và chân khi chuyển hướng 90° sang phải.',
-        sgkBadge: 'SGK 10 · Bài 9 (Mục I)',
-        sgkDetail: 'Quay bên phải: Lấy gót chân phải và mũi chân trái làm trụ, xoay người sang phải 90°, sau đó thu chân trái lên sát chân phải.',
-      },
-      {
         id: 'idle',
         name: 'Tư thế tự nhiên',
         animation: 'Idle',
+        available: false,
+        verified: false,
+        unverifiedReason: 'Placeholder chung, chưa có asset riêng biệt; tạm ẩn khỏi UI',
         description: 'Quan sát toàn thân, tỷ lệ nhân vật và chuyển động thở nhẹ.',
         sgkBadge: 'SGK 10 · Bài 9',
         sgkDetail: 'Tác phong quân nhân cơ bản khi đứng trong hàng ngũ và sinh hoạt điều lệnh.',
@@ -217,10 +265,16 @@ const CATEGORIES: CategoryItem[] = [
     sgkSection: 'Mục I: Xác định phương hướng bằng địa bàn (la bàn quân sự)',
     pdfFile: '/books/gdqpan-12-kntt.pdf',
     pdfLabel: 'SGK GDQP-AN 12 (Kết nối tri thức)',
+    available: false,
+    verified: false,
+    unverifiedReason: 'Mô hình La bàn tạm ẩn khỏi website theo yêu cầu người dùng',
     actions: [
       {
         id: 'monap',
         name: 'Mở nắp la bàn',
+        available: false,
+        verified: false,
+        unverifiedReason: 'Tạm ẩn theo yêu cầu người dùng',
         description: 'Quan sát nắp mở và mặt chia độ từ góc nhìn phía trên.',
         sgkBadge: 'SGK 12 · Bài 7 (Mục I)',
         sgkDetail: 'Cấu tạo địa bàn: Vỏ ngoài bằng kim loại/nhựa cứng, có nắp gập bảo vệ mặt kính và hệ thống lăng kính ngắm đo.',
@@ -228,6 +282,9 @@ const CATEGORIES: CategoryItem[] = [
       {
         id: 'needle_demo',
         name: 'Kim chỉ hướng Bắc',
+        available: false,
+        verified: false,
+        unverifiedReason: 'Tạm ẩn theo yêu cầu người dùng',
         description: 'Quan sát kim và các ký hiệu chỉ hướng trên mặt la bàn.',
         sgkBadge: 'SGK 12 · Bài 7 (Mục I)',
         sgkDetail: 'Nguyên lý định hướng: Kim nam châm tự do luôn chỉ hướng Bắc từ (N). Vòng chia độ 360° và 64 ly giác (vạch chia quân sự).',
@@ -235,6 +292,9 @@ const CATEGORIES: CategoryItem[] = [
       {
         id: 'dongnap',
         name: 'Đóng nắp bảo vệ',
+        available: false,
+        verified: false,
+        unverifiedReason: 'Tạm ẩn theo yêu cầu người dùng',
         description: 'Quan sát chuyển động bản lề khi gập nắp bảo vệ mặt la bàn.',
         sgkBadge: 'SGK 12 · Bài 7 (Mục I)',
         sgkDetail: 'Quy tắc bảo quản địa bàn: Luôn đóng nắp hãm kim khi không đo đạc để tránh va đập làm hỏng trục chóp đá kim nam châm.',
@@ -242,6 +302,9 @@ const CATEGORIES: CategoryItem[] = [
       {
         id: 'dophuongvi',
         name: 'Đo góc phương vị',
+        available: false,
+        verified: false,
+        unverifiedReason: 'Tạm ẩn theo yêu cầu người dùng',
         description: 'Quan sát khe ngắm và vòng chia độ bằng cách xoay hoặc phóng to mô hình.',
         sgkBadge: 'SGK 12 · Bài 7 (Mục I)',
         sgkDetail: 'Đo góc phương vị từ: Đặt địa bàn thăng bằng, hướng khe ngắm - dây sợi tóc vào mục tiêu, đọc số đo góc trên vành chia độ.',
@@ -335,14 +398,24 @@ function RenderStats({ report }: { report: (stats: string) => void }) {
 }
 
 export default function Tactical3DSimulation() {
+  const visibleCategories = useMemo(() => {
+    return CATEGORIES
+      .filter((cat) => cat.available !== false && cat.verified !== false)
+      .map((cat) => ({
+        ...cat,
+        actions: cat.actions.filter((item) => item.available !== false && item.verified !== false),
+      }))
+      .filter((cat) => cat.actions.length > 0);
+  }, []);
+
   const [category, setCategory] = useState<Category>('doingu');
-  const [actionId, setActionId] = useState('attention');
+  const current = visibleCategories.find((item) => item.id === category) || visibleCategories[0];
+  const [actionId, setActionId] = useState<string>(() => current.actions[0]?.id || 'right');
   const [paused, setPaused] = useState(false), [squad, setSquad] = useState(false);
   const [replay, setReplay] = useState(0), [cameraReset, setCameraReset] = useState(0);
   const [preset, setPreset] = useState<CameraPreset>('formationArea');
   const [debugAnimation, setDebugAnimation] = useState<SoldierAnimationName | ''>('');
   const [stats, setStats] = useState('');
-  const current = CATEGORIES.find((item) => item.id === category)!;
   const action = current.actions.find((item) => item.id === actionId) ?? current.actions[0];
   const animation = debugAnimation || action.animation || 'Idle';
   const zone: GroundZone = action.zone ?? (category === 'vandong' ? 'movement' : 'formation');
@@ -380,8 +453,13 @@ export default function Tactical3DSimulation() {
     focusCamera(next.camera ?? (isCompass ? 'compass' : category === 'vandong' ? 'movementArea' : 'formationArea'));
   };
   const selectCategory = (next: Category) => {
-    const first = CATEGORIES.find((item) => item.id === next)!.actions[0];
-    setCategory(next); setActionId(first.id); setDebugAnimation(''); setPaused(false); setReplay((value) => value + 1);
+    const targetCategory = visibleCategories.find((item) => item.id === next) || visibleCategories[0];
+    const first = targetCategory.actions[0];
+    setCategory(targetCategory.id);
+    setActionId(first.id);
+    setDebugAnimation('');
+    setPaused(false);
+    setReplay((value) => value + 1);
     focusCamera(first.camera ?? (next === 'laban' ? 'compass' : next === 'vandong' ? 'movementArea' : 'formationArea'));
   };
 
@@ -390,7 +468,7 @@ export default function Tactical3DSimulation() {
       <div><span className="block font-mono text-[10px] font-black uppercase tracking-widest text-red-600 dark:text-red-400">Thực hành trực quan 3D</span>
         <h1 className="text-xl font-black leading-tight text-slate-900 dark:text-white sm:text-2xl">Mô phỏng Thao trường & Điều lệnh quân sự</h1></div>
       <div aria-label="Nội dung thao trường" className="flex max-w-full gap-1 overflow-x-auto rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800/80">
-        {CATEGORIES.map((cat) => <button key={cat.id} onClick={() => selectCategory(cat.id)} aria-pressed={category === cat.id}
+        {visibleCategories.map((cat) => <button key={cat.id} onClick={() => selectCategory(cat.id)} aria-pressed={category === cat.id}
           className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-2 text-xs font-bold transition-colors sm:px-3 ${category === cat.id ? 'bg-red-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700'}`}>
           <cat.icon className="h-3.5 w-3.5" />
           <span>{cat.title}</span>
@@ -452,10 +530,36 @@ export default function Tactical3DSimulation() {
           <Suspense fallback={<Loader />}>
             {isCompass ? <CompassModel actionId={action.id} paused={paused} replay={replay} /> : <>
               <TrainingGroundModel highlightedZone={preset === 'overview' ? undefined : zone} />
-              {category === 'vandong' ? <MovingSoldiers animation={animation} paused={paused} replay={replay} squad={squad} /> : <group position={OBSERVATION_POINTS[zone]}>
-                <Soldier3D animation={animation} paused={paused} resetSignal={replay} />
-                {squad && <><Soldier3D position={[-1.5, 0, 0]} animation={animation} paused={paused} resetSignal={replay} />
-                  <Soldier3D position={[1.5, 0, 0]} animation={animation} paused={paused} resetSignal={replay} /></>}
+              {category === 'vandong' ? <MovingSoldiers animation={animation as SoldierAnimationName} paused={paused} replay={replay} squad={squad} /> : <group position={OBSERVATION_POINTS[zone]}>
+                <Soldier3D
+                  key={`${action.modelPath || 'soldier-animated'}-${action.id}`}
+                  modelUrl={action.modelPath}
+                  animation={animation as SoldierAnimationName}
+                  animationClipName={action.animationClipName}
+                  transformOffset={action.transformOffset}
+                  paused={paused}
+                  resetSignal={replay}
+                />
+                {squad && <><Soldier3D
+                  key={`squad-l-${action.modelPath || 'soldier-animated'}-${action.id}`}
+                  position={[-1.5, 0, 0]}
+                  modelUrl={action.modelPath}
+                  animation={animation as SoldierAnimationName}
+                  animationClipName={action.animationClipName}
+                  transformOffset={action.transformOffset}
+                  paused={paused}
+                  resetSignal={replay}
+                />
+                  <Soldier3D
+                    key={`squad-r-${action.modelPath || 'soldier-animated'}-${action.id}`}
+                    position={[1.5, 0, 0]}
+                    modelUrl={action.modelPath}
+                    animation={animation as SoldierAnimationName}
+                    animationClipName={action.animationClipName}
+                    transformOffset={action.transformOffset}
+                    paused={paused}
+                    resetSignal={replay}
+                  /></>}
               </group>}
             </>}
           </Suspense>

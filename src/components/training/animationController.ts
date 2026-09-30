@@ -5,16 +5,17 @@ import { AnimationAction, AnimationMixer, LoopOnce, LoopRepeat } from 'three';
 export const SOLDIER_ANIMATIONS = [
   'Idle', 'Attention', 'AtEase', 'Salute', 'Walk', 'Run',
   'SitDown', 'StandUp', 'TurnLeft', 'TurnRight', 'LookAround',
+  'Action', 'Action.002', 'Action.018',
 ] as const;
 
-export type SoldierAnimationName = typeof SOLDIER_ANIMATIONS[number];
+export type SoldierAnimationName = typeof SOLDIER_ANIMATIONS[number] | (string & {});
 
-const LOOPING_ANIMATIONS = new Set<SoldierAnimationName>([
+const LOOPING_ANIMATIONS = new Set<string>([
   'Idle', 'AtEase', 'Walk', 'Run', 'LookAround',
 ]);
 
 /** One-shot actions retain their last pose until the next command. */
-export function getAnimationPlaybackMode(name: SoldierAnimationName) {
+export function getAnimationPlaybackMode(name: string) {
   const repeating = LOOPING_ANIMATIONS.has(name);
   return {
     loop: repeating ? LoopRepeat : LoopOnce,
@@ -62,7 +63,7 @@ export class SoldierAnimationPlayback {
 
   select(animation: SoldierAnimationName, fadeDuration = 0.25) {
     const selected = this.actions[animation];
-    const next = selected ?? this.actions.Idle;
+    const next = selected ?? this.actions.Idle ?? Object.values(this.actions).find((a): a is AnimationAction => a !== null);
     if (!next) return;
 
     const mode = getAnimationPlaybackMode(selected ? animation : 'Idle');

@@ -83,8 +83,25 @@ function DynamicRifleModel({ animationName }: { animationName: string }) {
 
 type PostureType = "nghinghiem" | "tactical" | "stand" | "kneel" | "prone";
 
+interface PostureOption {
+  id: PostureType;
+  label: string;
+  icon: string;
+  available: boolean;
+  verified: boolean;
+  unverifiedReason?: string;
+}
+
+const POSTURE_OPTIONS: PostureOption[] = [
+  { id: "stand", label: "Đứng Bắn (Cảnh giới)", icon: "🧍", available: true, verified: true },
+  { id: "kneel", label: "Quỳ Bắn", icon: "🧎", available: true, verified: true },
+  { id: "prone", label: "Nằm Bắn", icon: "🛌", available: true, verified: true },
+  { id: "nghinghiem", label: "Điều lệnh Nghiêm - Nghỉ K20", icon: "🫡", available: false, verified: false, unverifiedReason: "Clip 0.16s lỗi" },
+  { id: "tactical", label: "Trườn Tiến Đặt Súng K20", icon: "🐍", available: false, verified: false, unverifiedReason: "Chưa xác minh chuẩn điều lệnh" },
+];
+
 export default function PostureSimulation() {
-  const [posture, setPosture] = useState<PostureType>("nghinghiem");
+  const [posture, setPosture] = useState<PostureType>("stand");
 
   const animMap: Record<string, string> = {
     stand: "CanhGioiCoDong",
@@ -121,55 +138,25 @@ export default function PostureSimulation() {
   };
 
   const currentGuide = postureGuides[posture];
+  const visibleOptions = useMemo(() => POSTURE_OPTIONS.filter((o) => o.available && o.verified), []);
 
   return (
     <div className="w-full h-full relative select-none bg-slate-950 flex flex-col">
-      {/* THANH NÚT BẤM CHUYỂN ĐỔI TƯ THẾ */}
+      {/* THANH NÚT BẤM CHUYỂN ĐỔI TƯ THẾ (CHỈ HIỂN THỊ CÁC TƯ THẾ ĐÃ XÁC MINH) */}
       <div className="absolute top-2 left-2 z-20 flex flex-wrap gap-1.5 pointer-events-auto">
-        <button
-          onClick={() => setPosture("nghinghiem")}
-          className={`px-3 py-1.5 rounded-lg text-[11px] font-bold shadow-xs cursor-pointer transition-all flex items-center gap-1 ${
-            posture === "nghinghiem"
-              ? "bg-amber-500 text-slate-950 ring-2 ring-amber-300 font-extrabold"
-              : "bg-slate-800/90 text-slate-200 hover:bg-slate-700"
-          }`}
-        >
-          <span>⭐</span> 🫡 Điều lệnh Nghiêm - Nghỉ K20
-        </button>
-        <button
-          onClick={() => setPosture("tactical")}
-          className={`px-3 py-1.5 rounded-lg text-[11px] font-bold shadow-xs cursor-pointer transition-all flex items-center gap-1 ${
-            posture === "tactical"
-              ? "bg-amber-500 text-slate-950 ring-2 ring-amber-300 font-extrabold"
-              : "bg-slate-800/90 text-slate-200 hover:bg-slate-700"
-          }`}
-        >
-          <span>⭐</span> 🐍 Trườn Tiến Đặt Súng K20 (AK-47)
-        </button>
-        <button
-          onClick={() => setPosture("stand")}
-          className={`px-3 py-1.5 rounded-lg text-[11px] font-bold shadow-xs cursor-pointer transition-all ${
-            posture === "stand" ? "bg-emerald-600 text-white ring-2 ring-emerald-400" : "bg-slate-800/80 text-slate-300 hover:bg-slate-700"
-          }`}
-        >
-          🧍 Đứng Bắn (Cảnh giới)
-        </button>
-        <button
-          onClick={() => setPosture("kneel")}
-          className={`px-3 py-1.5 rounded-lg text-[11px] font-bold shadow-xs cursor-pointer transition-all ${
-            posture === "kneel" ? "bg-emerald-600 text-white ring-2 ring-emerald-400" : "bg-slate-800/80 text-slate-300 hover:bg-slate-700"
-          }`}
-        >
-          🧎 Quỳ Bắn
-        </button>
-        <button
-          onClick={() => setPosture("prone")}
-          className={`px-3 py-1.5 rounded-lg text-[11px] font-bold shadow-xs cursor-pointer transition-all ${
-            posture === "prone" ? "bg-emerald-600 text-white ring-2 ring-emerald-400" : "bg-slate-800/80 text-slate-300 hover:bg-slate-700"
-          }`}
-        >
-          🛌 Nằm Bắn
-        </button>
+        {visibleOptions.map((opt) => (
+          <button
+            key={opt.id}
+            onClick={() => setPosture(opt.id)}
+            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold shadow-xs cursor-pointer transition-all flex items-center gap-1 ${
+              posture === opt.id
+                ? "bg-emerald-600 text-white ring-2 ring-emerald-400 font-extrabold"
+                : "bg-slate-800/80 text-slate-300 hover:bg-slate-700"
+            }`}
+          >
+            <span>{opt.icon}</span> {opt.label}
+          </button>
+        ))}
       </div>
 
       {/* CHỈ DẪN KỸ THUẬT QUÂN SỰ NẰM DƯỚI ĐÁY */}
@@ -208,5 +195,3 @@ export default function PostureSimulation() {
 }
 
 useGLTF.preload("/models/vietnam_people_army_advanced_animations.optimized.glb");
-useGLTF.preload("/models/VNSoldiernghinghiem.glb");
-useGLTF.preload("/models/VNSoldier.glb");

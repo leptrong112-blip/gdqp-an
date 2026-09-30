@@ -74,6 +74,15 @@ export interface ARModelItem {
   specs: { label: string; value: string }[];
   parts?: ARPartDetail[];
   sgkRef?: ARSgkReference;
+  available?: boolean;
+  verified?: boolean;
+  unverifiedReason?: string;
+  loopOnce?: boolean;
+  transformOffset?: {
+    position?: [number, number, number];
+    rotation?: [number, number, number];
+    scale?: number;
+  };
 }
 
 const WEBAR_CATALOG: ARModelItem[] = [
@@ -140,6 +149,8 @@ const WEBAR_CATALOG: ARModelItem[] = [
         detail: "Có các vạch khấc từ 1 đến 10 (tương ứng cự ly 100m - 1000m) và vạch 'П' (tầm bắn thẳng) để ngắm mục tiêu ở các cự ly khác nhau.",
       },
     ],
+    available: true,
+    verified: true,
   },
   {
     id: "grenade",
@@ -169,6 +180,8 @@ const WEBAR_CATALOG: ARModelItem[] = [
       pdfLabel: "SGK GDQP-AN 11 (Kết nối tri thức)",
     },
     parts: F1_PARTS,
+    available: true,
+    verified: true,
   },
 
   // ── NHÓM 2: CHIẾN THUẬT VẬN ĐỘNG (ĐẶT TRÊN SÀN NHÀ) ──────────────────────
@@ -225,6 +238,8 @@ const WEBAR_CATALOG: ARModelItem[] = [
         detail: "Dùng mũi bàn chân và cẳng tay đẩy thân người tiến về phía trước từng bước nhịp nhàng, êm dịu.",
       },
     ],
+    available: true,
+    verified: true,
   },
   {
     id: "kneel",
@@ -274,6 +289,8 @@ const WEBAR_CATALOG: ARModelItem[] = [
         detail: "Mông phải ngồi lên gót chân phải, chân trái vuông góc tạo thành thế chân vạc kiên cố.",
       },
     ],
+    available: true,
+    verified: true,
   },
   {
     id: "prone",
@@ -323,6 +340,8 @@ const WEBAR_CATALOG: ARModelItem[] = [
         detail: "Hai khuỷu tay mở rộng tự nhiên bằng vai, tạo chân kiềng cố định súng cho đường ngắm ổn định.",
       },
     ],
+    available: true,
+    verified: true,
   },
   {
     id: "stand",
@@ -372,6 +391,8 @@ const WEBAR_CATALOG: ARModelItem[] = [
         detail: "Mắt quan sát cảnh giới mọi hướng, cảnh giác cao độ trong địa bàn tác chiến phức tạp.",
       },
     ],
+    available: true,
+    verified: true,
   },
   {
     id: "throw",
@@ -416,14 +437,164 @@ const WEBAR_CATALOG: ARModelItem[] = [
         detail: "Đạp mạnh chân sau xoay hông, đưa cánh tay vút qua mang tai phóng lựu đạn bay cao xa.",
       },
     ],
+    available: true,
+    verified: true,
   },
+
+  // ── NHÓM 3: ĐỘI NGŨ ĐIỀU LỆNH (QUAY TẠI CHỖ CHUẨN ĐÃ XÁC MINH) ─────────────
+  {
+    id: "turn_right",
+    name: "Chiến Sĩ Động Tác Quay Bên Phải",
+    category: "soldier",
+    subtitle: "Chuyển hướng 90° sang phải chuẩn điều lệnh đội ngũ",
+    description:
+      "Mô hình 3D chiến sĩ thực hiện động tác quay bên phải 90°: Lấy gót chân phải và mũi chân trái làm trụ, xoay người sang phải 90°, sau đó thu chân trái lên sát chân phải thành tư thế đứng nghiêm chuẩn mực theo Điều lệnh Quân đội.",
+    modelPath: "/models/quay phai.glb",
+    animationName: "Action",
+    loopOnce: true,
+    transformOffset: { scale: 0.85, position: [0, 0, 0] },
+    baseHeightOffset: 0.0,
+    initialPoseTime: 0,
+    defaultScale: 0.85,
+    realScale: 1.0,
+    miniScale: 0.45,
+    recommendedPlacement: "floor",
+    placementGuidance: "Đặt trên sàn nhà để quan sát động tác xoay 90° sang phải và cách phối hợp trụ chân.",
+    historicalEra: "Điều lệnh đội ngũ từng người không có súng",
+    specs: [
+      { label: "Góc quay", value: "90 độ sang phía bên phải" },
+      { label: "Chân trụ", value: "Gót chân phải & Mũi chân trái" },
+      { label: "Động tác chân", value: "Xoay người xong thu chân trái lên sát chân phải" },
+      { label: "Tư thế kết thúc", value: "Đứng nghiêm chuẩn mực, mắt nhìn thẳng" },
+    ],
+    sgkRef: {
+      grade: 10,
+      badge: "SGK 10 · Bài 9",
+      lesson: "Bài 9: Đội ngũ từng người không có súng",
+      section: "Mục I: Động tác quay tại chỗ (Quay bên phải 90°)",
+      pdfFile: "/books/gdqp10-kntt.pdf",
+      pdfLabel: "SGK GDQP-AN 10 (Kết nối tri thức)",
+    },
+    parts: [
+      {
+        id: "truly_phai",
+        name: "1. Trụ xoay gót chân phải & mũi chân trái",
+        detail: "Dồn trọng tâm lấy gót chân phải và mũi bàn chân trái làm điểm tỳ xoay toàn thân sang phải góc 90° dứt khoát.",
+      },
+      {
+        id: "thuchan_phai",
+        name: "2. Thu chân trái lên thế đứng nghiêm",
+        detail: "Sau khi xoay xong, kéo nhanh chân trái lên sát chân phải theo đường ngắn nhất, hai gót sát nhau mở 45°.",
+      },
+    ],
+    available: true,
+    verified: true,
+  },
+  {
+    id: "turn_left",
+    name: "Chiến Sĩ Động Tác Quay Bên Trái",
+    category: "soldier",
+    subtitle: "Chuyển hướng 90° sang trái chuẩn điều lệnh đội ngũ",
+    description:
+      "Mô hình 3D chiến sĩ thực hiện động tác quay bên trái 90°: Lấy gót chân trái và mũi chân phải làm trụ, xoay người sang trái 90°, sau đó kéo chân phải lên thành tư thế đứng nghiêm chuẩn xác.",
+    modelPath: "/models/quay tay trai.glb",
+    animationName: "Action.018",
+    loopOnce: true,
+    transformOffset: { scale: 0.85, position: [0.300, 0.282, -1.194] },
+    baseHeightOffset: 0.0,
+    initialPoseTime: 0,
+    defaultScale: 0.85,
+    realScale: 1.0,
+    miniScale: 0.45,
+    recommendedPlacement: "floor",
+    placementGuidance: "Đặt trên sàn nhà để quan sát kỹ thuật lấy gót chân trái và mũi chân phải làm trụ.",
+    historicalEra: "Điều lệnh đội ngũ từng người không có súng",
+    specs: [
+      { label: "Góc quay", value: "90 độ sang phía bên trái" },
+      { label: "Chân trụ", value: "Gót chân trái & Mũi chân phải" },
+      { label: "Động tác chân", value: "Xoay người xong kéo chân phải lên sát chân trái" },
+      { label: "Tư thế kết thúc", value: "Đứng nghiêm ngay ngắn, hai bàn chân mở 45°" },
+    ],
+    sgkRef: {
+      grade: 10,
+      badge: "SGK 10 · Bài 9",
+      lesson: "Bài 9: Đội ngũ từng người không có súng",
+      section: "Mục I: Động tác quay tại chỗ (Quay bên trái 90°)",
+      pdfFile: "/books/gdqp10-kntt.pdf",
+      pdfLabel: "SGK GDQP-AN 10 (Kết nối tri thức)",
+    },
+    parts: [
+      {
+        id: "truly_trai",
+        name: "1. Trụ xoay gót chân trái & mũi chân phải",
+        detail: "Dồn trọng tâm vào gót chân trái và mũi bàn chân phải, xoay thân người sang trái góc 90° ngay ngắn.",
+      },
+      {
+        id: "thuchan_trai",
+        name: "2. Thu chân phải về tư thế nghiêm",
+        detail: "Đưa chân phải lên khép sát gót chân trái dứt khoát, thân trên giữ thẳng tự nhiên, hai tay nắm chỉ quần.",
+      },
+    ],
+    available: true,
+    verified: true,
+  },
+  {
+    id: "turn_back",
+    name: "Chiến Sĩ Động Tác Quay Đằng Sau",
+    category: "soldier",
+    subtitle: "Xoay người 180° ra sau chuẩn điều lệnh đội ngũ",
+    description:
+      "Mô hình 3D chiến sĩ thực hiện động tác quay đằng sau 180°: Lấy gót chân phải và mũi chân trái làm trụ, xoay người sang phải 180°, sau đó kéo chân trái lên sát chân phải thành tư thế đứng nghiêm.",
+    modelPath: "/models/quay sau.glb",
+    animationName: "Action.002",
+    loopOnce: true,
+    transformOffset: { scale: 0.85, position: [0, 0, 0] },
+    baseHeightOffset: 0.0,
+    initialPoseTime: 0,
+    defaultScale: 0.85,
+    realScale: 1.0,
+    miniScale: 0.45,
+    recommendedPlacement: "floor",
+    placementGuidance: "Đặt trên sàn nhà để đối chiếu độ vững vàng của thế đứng khi xoay 180°.",
+    historicalEra: "Điều lệnh đội ngũ từng người không có súng",
+    specs: [
+      { label: "Góc quay", value: "180 độ sang phải về phía sau" },
+      { label: "Chân trụ", value: "Gót chân phải & Mũi chân trái" },
+      { label: "Động tác chân", value: "Xoay 180° xong kéo chân trái lên sát chân phải" },
+      { label: "Yêu cầu kỹ thuật", value: "Người không ngả nghiêng, giữ thăng bằng tuyệt đối" },
+    ],
+    sgkRef: {
+      grade: 10,
+      badge: "SGK 10 · Bài 9",
+      lesson: "Bài 9: Đội ngũ từng người không có súng",
+      section: "Mục I: Động tác quay tại chỗ (Quay đằng sau 180°)",
+      pdfFile: "/books/gdqp10-kntt.pdf",
+      pdfLabel: "SGK GDQP-AN 10 (Kết nối tri thức)",
+    },
+    parts: [
+      {
+        id: "truly_sau",
+        name: "1. Trụ xoay 180° sang phải ra sau",
+        detail: "Lấy gót chân phải và mũi chân trái làm trụ, xoay người qua bên phải 180°, giữ trọng tâm thăng bằng không chới với.",
+      },
+      {
+        id: "thuchan_sau",
+        name: "2. Thu chân trái hoàn chỉnh động tác",
+        detail: "Kéo chân trái lên sát chân phải tạo thành tư thế đứng nghiêm dứt khoát, ngực nở mắt nhìn thẳng.",
+      },
+    ],
+    available: true,
+    verified: true,
+  },
+
+  // ── CÁC MÔ HÌNH CHƯA XÁC MINH / PLACEHOLDER (ẨN KHỎI GIAO DIỆN) ─────────────
   {
     id: "vnsoldier_bothap",
     name: "Chiến Sĩ Bò Thấp Dã Chiến K20",
     category: "soldier",
     subtitle: "Quân phục K20 & súng tiểu liên AKM dã chiến",
     description:
-      "Mô hình 3D chiến sĩ bộ binh Quân đội Nhân dân Việt Nam mặc quân phục ngụy trang dã chiến K20 thế hệ mới, trang bị súng tiểu liên AKM, mũ dã chiến hiện đại. Chiến sĩ thực hiện động tác bò thấp luồn sâu, áp sát mặt đất né tránh hỏa lực ngắm bắn trực tiếp của địch.",
+      "Mô hình 3D chiến sĩ bộ binh Quân đội Nhân dân Việt Nam mặc quân phục ngụy trang dã chiến K20 thế hệ mới, trang bị súng tiểu liên AKM, mũ dã chiến hiện đại.",
     modelPath: "/models/VNSoldierBoThap.glb",
     animationName: "rig.002Action",
     baseHeightOffset: 0.1,
@@ -436,35 +607,11 @@ const WEBAR_CATALOG: ARModelItem[] = [
     historicalEra: "Trang bị K20 Quân đội Nhân dân Việt Nam",
     specs: [
       { label: "Trang bị", value: "Quân phục dã chiến K20, Mũ chiến thuật, Súng AKM" },
-      { label: "Tư thế súng", value: "Súng AKM ôm trước ngực, nòng chếch lên chống đất bẩn" },
-      { label: "Độ cao thân người", value: "Dưới 20 - 25 cm so với mặt đất" },
       { label: "Đặc điểm cơ động", value: "Dùng lực cẳng tay và mũi chân đẩy thân trườn tiến vững vàng" },
     ],
-    sgkRef: {
-      grade: 10,
-      badge: "SGK 10 · Bài 11",
-      lesson: "Bài 11: Các tư thế, động tác cơ bản vận động trong chiến đấu",
-      section: "Mục II: Động tác bò cao và bò thấp ôm súng dã chiến luồn qua địa hình hỏa lực địch",
-      pdfFile: "/books/gdqp10-kntt.pdf",
-      pdfLabel: "SGK GDQP-AN 10 (Kết nối tri thức)",
-    },
-    parts: [
-      {
-        id: "bothap_sung",
-        name: "1. Kỹ thuật ôm súng AKM dã chiến",
-        detail: "Tay phải nắm ốp lót tay hoặc cổ báng súng, súng áp dọc theo cẳng tay trước ngực, mũi nòng nâng cao tránh bụi bẩn.",
-      },
-      {
-        id: "bothap_than",
-        name: "2. Thân người hạ thấp trọng tâm",
-        detail: "Ngực, bụng và đùi ép thấp vừa phải để vừa cơ động nhanh vừa không bị lộ mục tiêu trước hỏa lực bắn tỉa.",
-      },
-      {
-        id: "bothap_chan",
-        name: "3. Nhịp đẩy của mũi bàn chân và cẳng tay",
-        detail: "Mũi bàn chân bám đất kết hợp cùi chỏ tỳ đẩy cơ thể lướt về phía trước êm dịu, không phát ra tiếng động.",
-      },
-    ],
+    available: false,
+    verified: false,
+    unverifiedReason: "Asset trùng lặp/chưa xác minh, đã có mô hình crawl chuẩn từ VPA animations",
   },
   {
     id: "vnsoldier_nghinghiem",
@@ -472,7 +619,7 @@ const WEBAR_CATALOG: ARModelItem[] = [
     category: "soldier",
     subtitle: "Tác phong quân nhân chính quy chuẩn điều lệnh",
     description:
-      "Mô hình chiến sĩ QĐND Việt Nam thực hiện các động tác điều lệnh đội ngũ từng người không có súng: Nghiêm và Nghỉ. Toàn bộ quân phục K20, quân hàm, mũ dã chiến bọc rằn ri và tác phong quân nhân được tái hiện sống động chuẩn xác theo Điều lệnh Quân đội.",
+      "Mô hình chiến sĩ QĐND Việt Nam thực hiện các động tác điều lệnh đội ngũ từng người không có súng: Nghiêm và Nghỉ.",
     modelPath: "/models/VNSoldiernghinghiem.glb",
     animationName: "rig.002Action",
     baseHeightOffset: 0.0,
@@ -485,35 +632,11 @@ const WEBAR_CATALOG: ARModelItem[] = [
     historicalEra: "Điều lệnh đội ngũ QĐND Việt Nam",
     specs: [
       { label: "Trang phục", value: "Quân phục dã chiến K20 toàn phần" },
-      { label: "Góc mở bàn chân", value: "45 độ tính từ hai mép trong bàn chân" },
-      { label: "Gót chân", value: "Hai gót chân chụm sát nhau trên một đường thẳng" },
       { label: "Tác phong thân người", value: "Ngực nở, bụng thót, vai thăng bằng, mắt nhìn thẳng" },
     ],
-    sgkRef: {
-      grade: 10,
-      badge: "SGK 10 · Bài 9",
-      lesson: "Bài 9: Đội ngũ từng người không có súng",
-      section: "Mục I: Động tác Nghiêm, Nghỉ (Tư thế đứng nghiêm hai bàn chân mở 45°, ngực nở, mắt nhìn thẳng)",
-      pdfFile: "/books/gdqp10-kntt.pdf",
-      pdfLabel: "SGK GDQP-AN 10 (Kết nối tri thức)",
-    },
-    parts: [
-      {
-        id: "nghinghiem_chan",
-        name: "1. Vị trí hai bàn chân góc 45°",
-        detail: "Hai gót chân sát nhau, hai bàn chân mở rộng thành một góc 45 độ, trọng lượng toàn thân dồn đều lên hai bàn chân.",
-      },
-      {
-        id: "nghinghiem_than",
-        name: "2. Thân trên ngay ngắn, ngực nở",
-        detail: "Hai đầu gối thẳng, lưng thẳng tự nhiên, ngực hơi nở về trước, hai vai thăng bằng, đầu ngay cổ thẳng, mắt nhìn thẳng.",
-      },
-      {
-        id: "nghinghiem_tay",
-        name: "3. Tay buông tự nhiên",
-        detail: "Năm ngón tay khép cong tự nhiên, đầu ngón tay cái áp vào đốt thứ hai của ngón trỏ, mép bàn tay áp sát mép chỉ quần.",
-      },
-    ],
+    available: false,
+    verified: false,
+    unverifiedReason: "Clip rig.002Action chỉ dài 0.16s (4 frame placeholder, lỗi động tác đứng)",
   },
   {
     id: "vnsoldier_tactical",
@@ -521,7 +644,7 @@ const WEBAR_CATALOG: ARModelItem[] = [
     category: "soldier",
     subtitle: "Kỹ thuật vận động chiến trường tiến đặt súng về trước",
     description:
-      "Mô hình 3D chiến sĩ bộ binh dã chiến K20 thực hiện kỹ thuật trườn tiến có súng: Cây súng AK-47 đặt nằm trên mặt đất, người lính trườn tiến lên ngang tầm súng, tay phải vươn nhấc súng đưa về phía trước mặt đất rồi tiếp tục trườn tiến áp sát mục tiêu.",
+      "Mô hình 3D chiến sĩ bộ binh dã chiến K20 thực hiện kỹ thuật trườn tiến có súng.",
     modelPath: "/models/VNSoldier.glb",
     animationName: "rig.002Action",
     baseHeightOffset: 0.1,
@@ -535,34 +658,10 @@ const WEBAR_CATALOG: ARModelItem[] = [
     specs: [
       { label: "Trang phục", value: "Rằn ri dã chiến K20, Áo giáp Molle, Mũ Kevlar" },
       { label: "Vũ khí", value: "Súng tiểu liên AK-47 tiêu chuẩn" },
-      { label: "Kỹ thuật súng", value: "Đặt súng trên đất -> Trườn lên -> Nhấc súng đặt về trước -> Trườn tiếp" },
-      { label: "Đặc điểm cơ động", value: "Áp sát mặt đất tối đa, bảo toàn hỏa lực cá nhân" },
     ],
-    sgkRef: {
-      grade: 10,
-      badge: "SGK 10 · Bài 11",
-      lesson: "Bài 11: Các tư thế, động tác cơ bản vận động trong chiến đấu",
-      section: "Mục II: Động tác trườn tiến có súng (Kỹ thuật áp sát mặt đất, trườn thân và nhấc chuyển súng về trước)",
-      pdfFile: "/books/gdqp10-kntt.pdf",
-      pdfLabel: "SGK GDQP-AN 10 (Kết nối tri thức)",
-    },
-    parts: [
-      {
-        id: "tactical_dat_sung",
-        name: "1. Kỹ thuật đặt súng trên mặt đất",
-        detail: "Súng đặt nằm trên mặt cỏ/cát theo hướng tiến công, nòng súng hướng về phía địch, báng súng hướng về phía người.",
-      },
-      {
-        id: "tactical_truon_tien",
-        name: "2. Trườn thân người lên ngang tầm súng",
-        detail: "Dùng lực đẩy của cẳng tay và mũi hai bàn chân đẩy thân người lướt sát mặt đất tiến lên ngang tầm tay với súng.",
-      },
-      {
-        id: "tactical_nhac_sung",
-        name: "3. Nhấc súng chuyển dịch về trước",
-        detail: "Tay phải vươn lên nắm ốp lót tay, nâng súng êm nhẹ đưa về phía trước đặt xuống đất rồi tiếp tục động tác trườn.",
-      },
-    ],
+    available: false,
+    verified: false,
+    unverifiedReason: "Chưa đủ chứng cứ kiểm định động tác chuẩn điều lệnh; tạm ẩn khỏi danh mục chuẩn",
   },
 ];
 
@@ -579,6 +678,12 @@ interface ModelGLBProps {
   initialPoseTime?: number;
   onModelClick?: () => void;
   resetTrigger?: number;
+  loopOnce?: boolean;
+  transformOffset?: {
+    position?: [number, number, number];
+    rotation?: [number, number, number];
+    scale?: number;
+  };
 }
 
 function Model3DLoader() {
@@ -613,6 +718,8 @@ function ModelGLBViewer({
   initialPoseTime = 0,
   onModelClick,
   resetTrigger,
+  loopOnce = false,
+  transformOffset,
 }: ModelGLBProps) {
   const rootRef = useRef<THREE.Group>(null);
   const animRef = useRef<THREE.Group>(null);
@@ -648,7 +755,12 @@ function ModelGLBViewer({
       if (isPaused) {
         // Trạng thái tĩnh (3D tĩnh): pose tại initialPoseTime (ví dụ đang quỳ hoặc nằm chuẩn mực)
         targetAction.reset();
-        targetAction.setLoop(THREE.LoopRepeat, Infinity);
+        if (loopOnce) {
+          targetAction.setLoop(THREE.LoopOnce, 1);
+          targetAction.clampWhenFinished = true;
+        } else {
+          targetAction.setLoop(THREE.LoopRepeat, Infinity);
+        }
         targetAction.play();
         targetAction.time = initialPoseTime;
         targetAction.paused = true;
@@ -661,12 +773,17 @@ function ModelGLBViewer({
         targetAction.timeScale = 1;
         if (!targetAction.isRunning()) {
           targetAction.reset();
-          targetAction.setLoop(THREE.LoopRepeat, Infinity);
+          if (loopOnce) {
+            targetAction.setLoop(THREE.LoopOnce, 1);
+            targetAction.clampWhenFinished = true;
+          } else {
+            targetAction.setLoop(THREE.LoopRepeat, Infinity);
+          }
           targetAction.fadeIn(0.15).play();
         }
       }
     }
-  }, [actions, names, mixer, isPaused, modelPath, animationName, initialPoseTime]);
+  }, [actions, names, mixer, isPaused, modelPath, animationName, initialPoseTime, loopOnce]);
 
   // Xem lại từ đầu (quay về frame 0 hoặc pose ban đầu)
   useEffect(() => {
@@ -676,20 +793,33 @@ function ModelGLBViewer({
       const targetAction = actions[clipName];
       if (targetAction) {
         targetAction.reset();
+        if (loopOnce) {
+          targetAction.setLoop(THREE.LoopOnce, 1);
+          targetAction.clampWhenFinished = true;
+        } else {
+          targetAction.setLoop(THREE.LoopRepeat, Infinity);
+        }
         targetAction.time = isPaused ? initialPoseTime : 0;
         if (isPaused) {
           targetAction.paused = true;
+        } else {
+          targetAction.paused = false;
+          targetAction.play();
         }
         if (mixer) {
           mixer.update(0);
         }
       }
     }
-  }, [resetTrigger, animationName, actions, names, isPaused, initialPoseTime, mixer]);
+  }, [resetTrigger, animationName, actions, names, isPaused, initialPoseTime, mixer, loopOnce]);
+
+  const finalScale = scale * (transformOffset?.scale ?? 1);
+  const offsetPos = transformOffset?.position ?? [0, 0, 0];
+  const offsetRot = transformOffset?.rotation ?? [0, 0, 0];
 
   return (
-    <group ref={rootRef} scale={scale} rotation={[0, rotationY, 0]}>
-      <group ref={animRef} onClick={onModelClick}>
+    <group ref={rootRef} scale={finalScale} rotation={[0, rotationY, 0]}>
+      <group ref={animRef} onClick={onModelClick} position={offsetPos} rotation={offsetRot}>
         <Center>
           <primitive object={clonedScene} />
         </Center>
@@ -780,9 +910,21 @@ export default function WebARSection() {
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Chỉ hiển thị các mô hình 3D đã kiểm định và xác minh thực tế
+  const verifiedCatalog = useMemo(() => {
+    return WEBAR_CATALOG.filter((item) => item.available !== false && item.verified !== false);
+  }, []);
+
+  const categoryItems = useMemo(() => {
+    return verifiedCatalog.filter((item) => item.category === activeCategory);
+  }, [verifiedCatalog, activeCategory]);
+
   const currentItem = useMemo(() => {
-    return WEBAR_CATALOG.find((item) => item.id === selectedItemId) || WEBAR_CATALOG[0];
-  }, [selectedItemId]);
+    return verifiedCatalog.find((item) => item.id === selectedItemId) || categoryItems[0] || verifiedCatalog[0];
+  }, [verifiedCatalog, categoryItems, selectedItemId]);
+
+  const weaponCount = useMemo(() => verifiedCatalog.filter((i) => i.category === "weapon").length, [verifiedCatalog]);
+  const soldierCount = useMemo(() => verifiedCatalog.filter((i) => i.category === "soldier").length, [verifiedCatalog]);
 
   // ── Camera Management ────────────────────────────────────────────────────
   const isMountedRef = useRef(true);
@@ -1038,8 +1180,8 @@ export default function WebARSection() {
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none w-full sm:w-auto">
           {[
-            { id: "weapon", shortLabel: "🔫 Súng AK-47", label: "🔫 Vũ Khí Bộ Binh (AK-47 & Lựu đạn)", count: 2 },
-            { id: "soldier", shortLabel: "🪖 Động Tác Chiến Thuật", label: "🪖 Chiến Thuật Vận Động (Bò, Quỳ, Nằm)", count: 5 },
+            { id: "weapon", shortLabel: "🔫 Súng & Lựu Đạn", label: `🔫 Vũ Khí Bộ Binh (${weaponCount})`, count: weaponCount },
+            { id: "soldier", shortLabel: "🪖 Chiến Sĩ & Điều Lệnh", label: `🪖 Chiến Sĩ & Điều Lệnh (${soldierCount})`, count: soldierCount },
             ...(customModelUrl ? [{ id: "custom", shortLabel: `📁 ${customModelName}`, label: `📁 ${customModelName} (Tải lên)`, count: 1 }] : []),
           ].map((tab) => {
             const isActive = activeCategory === tab.id;
@@ -1049,7 +1191,7 @@ export default function WebARSection() {
                 onClick={() => {
                   setActiveCategory(tab.id as ARCategoryType);
                   if (tab.id !== "custom") {
-                    const firstItem = WEBAR_CATALOG.find((i) => i.category === tab.id);
+                    const firstItem = verifiedCatalog.find((i) => i.category === tab.id);
                     if (firstItem) handleSelectItem(firstItem);
                   }
                 }}
@@ -1307,6 +1449,8 @@ export default function WebARSection() {
                       scale={computedScale}
                       rotationY={rotationAngle}
                       resetTrigger={resetAnimTrigger}
+                      loopOnce={currentItem.loopOnce}
+                      transformOffset={currentItem.transformOffset}
                       onModelClick={() => setIsPaused(false)}
                     />}
                   </group>
@@ -1466,13 +1610,13 @@ export default function WebARSection() {
           <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-black uppercase text-red-600 dark:text-red-400 tracking-wider">
-                Mô Hình 3D Chuẩn ({WEBAR_CATALOG.filter((i) => i.category === activeCategory).length})
+                Mô Hình 3D Chuẩn ({categoryItems.length})
               </h3>
               <span className="text-[10px] text-slate-400 font-medium">Bấm để chuyển</span>
             </div>
 
             <div className="space-y-2">
-              {WEBAR_CATALOG.filter((item) => item.category === activeCategory).map((item) => {
+              {categoryItems.map((item) => {
                 const isSelected = item.id === currentItem.id && activeCategory !== "custom";
                 return (
                   <button
@@ -1722,6 +1866,6 @@ export default function WebARSection() {
 useGLTF.preload("/models/ak47.glb");
 useGLTF.preload("/models/f1-classroom.glb");
 useGLTF.preload("/models/vietnam_people_army_advanced_animations.optimized.glb");
-useGLTF.preload("/models/VNSoldierBoThap.glb");
-useGLTF.preload("/models/VNSoldiernghinghiem.glb");
-useGLTF.preload("/models/VNSoldier.glb");
+useGLTF.preload("/models/quay phai.glb");
+useGLTF.preload("/models/quay sau.glb");
+useGLTF.preload("/models/quay tay trai.glb");

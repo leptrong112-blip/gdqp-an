@@ -111,11 +111,39 @@ function SoldierLegacyModel({ actionName }: { actionName: string }) {
   );
 }
 
+type CrawlActionType = "BoCao" | "Truon" | "BoThap" | "TruonTien";
+
+interface CrawlOption {
+  id: CrawlActionType;
+  label: string;
+  icon: string;
+  available: boolean;
+  verified: boolean;
+  unverifiedReason?: string;
+}
+
+const CRAWL_OPTIONS: CrawlOption[] = [
+  { id: "Truon", label: "Động tác Trườn dã chiến (Áp sát đất)", icon: "🐍", available: true, verified: true },
+  { id: "BoCao", label: "Động tác Bò Cao (20-30cm)", icon: "🪖", available: true, verified: true },
+  { id: "BoThap", label: "Động tác Bò Thấp K20", icon: "⭐", available: false, verified: false, unverifiedReason: "Asset trùng lặp/chưa xác minh" },
+  { id: "TruonTien", label: "Động tác Trườn Tiến Đặt Súng K20", icon: "⭐", available: false, verified: false, unverifiedReason: "Chưa xác minh chuẩn điều lệnh" },
+];
+
 // 4. Component chính: Thao trường mô phỏng 3D
 export default function CrawlSimulation() {
-  const [activeAction, setActiveAction] = useState<"BoThap" | "TruonTien" | "BoCao">("TruonTien");
+  const [activeAction, setActiveAction] = useState<CrawlActionType>("Truon");
 
   const actionGuides: Record<string, { title: string; note: string; badge: string }> = {
+    Truon: {
+      title: "Động tác Trườn dã chiến áp sát mặt đất",
+      note: "Thân người, bụng và đùi trong ép sát mặt đất, tay giữ súng AK-47 trên cẳng tay. Dùng mũi bàn chân và cẳng tay đẩy thân người tiến về phía trước êm nhẹ dưới làn hỏa lực địch.",
+      badge: "Vận động áp sát",
+    },
+    BoCao: {
+      title: "Động tác Bò Cao dã chiến (20 - 30cm)",
+      note: "Vận động bằng 2 cẳng tay và 2 đầu gối, thân người cách mặt đất 20-30cm. Ứng dụng khi địa hình có gờ đất hoặc cây cỏ che khuất tầm trung bình.",
+      badge: "Cơ động nhanh",
+    },
     TruonTien: {
       title: "Động tác Trườn Tiến Đặt Súng K20 (Súng AK-47)",
       note: "Cây súng AK-47 đặt nằm trên mặt đất. Chiến sĩ trườn tiến người lên ngang tầm súng, sau đó tay phải vươn nhấc súng chuyển dịch về phía trước đặt xuống đất rồi tiếp tục trườn tiến áp sát mục tiêu.",
@@ -126,49 +154,28 @@ export default function CrawlSimulation() {
       note: "Người áp sát đất, tay ôm súng AKM ngang ngực chếch nòng lên tránh đất cát. Dùng mũi bàn chân và cẳng tay đẩy thân người trườn tiến vững chãi dưới tầm hỏa lực bắn tỉa.",
       badge: "Mô hình K20 Mới",
     },
-    BoCao: {
-      title: "Động tác Bò Cao dã chiến (20 - 30cm)",
-      note: "Vận động bằng 2 cẳng tay và 2 đầu gối, thân người cách mặt đất 20-30cm. Ứng dụng khi địa hình có gờ đất hoặc cây cỏ che khuất tầm trung bình.",
-      badge: "Cơ động nhanh",
-    },
   };
 
   const currentGuide = actionGuides[activeAction];
+  const visibleOptions = useMemo(() => CRAWL_OPTIONS.filter((o) => o.available && o.verified), []);
 
   return (
     <div className="w-full h-full relative select-none bg-slate-950 flex flex-col">
-      {/* THANH NÚT BẤM CHUYỂN ĐỔI ĐỘNG TÁC CHIẾN THUẬT */}
+      {/* THANH NÚT BẤM CHUYỂN ĐỔI ĐỘNG TÁC CHIẾN THUẬT (CHỈ HIỂN THỊ CÁC MỤC ĐÃ XÁC MINH) */}
       <div className="absolute top-2 left-2 z-20 flex flex-wrap gap-1.5 pointer-events-auto">
-        <button
-          onClick={() => setActiveAction("TruonTien")}
-          className={`px-3 py-1.5 rounded-lg text-[11px] font-bold shadow-xs cursor-pointer transition-all flex items-center gap-1.5 ${
-            activeAction === "TruonTien"
-              ? "bg-amber-500 text-slate-950 ring-2 ring-amber-300 font-extrabold"
-              : "bg-slate-800/90 text-slate-200 hover:bg-slate-700"
-          }`}
-        >
-          <span>⭐</span> 🐍 Động tác Trườn Tiến Đặt Súng K20
-        </button>
-        <button
-          onClick={() => setActiveAction("BoThap")}
-          className={`px-3 py-1.5 rounded-lg text-[11px] font-bold shadow-xs cursor-pointer transition-all flex items-center gap-1.5 ${
-            activeAction === "BoThap"
-              ? "bg-amber-500 text-slate-950 ring-2 ring-amber-300 font-extrabold"
-              : "bg-slate-800/90 text-slate-200 hover:bg-slate-700"
-          }`}
-        >
-          <span>⭐</span> 🪖 Động tác Bò Thấp K20 (AKM)
-        </button>
-        <button
-          onClick={() => setActiveAction("BoCao")}
-          className={`px-3 py-1.5 rounded-lg text-[11px] font-bold shadow-xs cursor-pointer transition-all flex items-center gap-1.5 ${
-            activeAction === "BoCao"
-              ? "bg-emerald-600 text-white ring-2 ring-emerald-400"
-              : "bg-slate-800/90 text-slate-200 hover:bg-slate-700"
-          }`}
-        >
-          <span>🎖️</span> Động tác Bò Cao (20-30cm)
-        </button>
+        {visibleOptions.map((opt) => (
+          <button
+            key={opt.id}
+            onClick={() => setActiveAction(opt.id)}
+            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold shadow-xs cursor-pointer transition-all flex items-center gap-1.5 ${
+              activeAction === opt.id
+                ? "bg-emerald-600 text-white ring-2 ring-emerald-400 font-extrabold"
+                : "bg-slate-800/90 text-slate-200 hover:bg-slate-700"
+            }`}
+          >
+            <span>{opt.icon}</span> {opt.label}
+          </button>
+        ))}
       </div>
 
       {/* CHỈ DẪN KỸ THUẬT QUÂN SỰ NẰM DƯỚI ĐÁY KHÔNG GIAN 3D */}
@@ -193,9 +200,10 @@ export default function CrawlSimulation() {
           <directionalLight position={[0, -5, 5]} intensity={0.4} />
 
           <Suspense fallback={null}>
+            {activeAction === "Truon" && <SoldierLegacyModel key="truon" actionName="Truon" />}
+            {activeAction === "BoCao" && <SoldierLegacyModel key="bocao" actionName="BoCao" />}
             {activeAction === "TruonTien" && <SoldierTruonTienModel key="truontien" />}
             {activeAction === "BoThap" && <SoldierBoThapModel key="bothap" />}
-            {activeAction === "BoCao" && <SoldierLegacyModel key="bocao" actionName="BoCao" />}
           </Suspense>
 
           <OrbitControls enablePan={true} enableZoom={true} minDistance={0.8} maxDistance={8} />
@@ -206,6 +214,4 @@ export default function CrawlSimulation() {
 }
 
 // Nạp trước tài nguyên vào cache
-useGLTF.preload('/models/VNSoldier.glb');
-useGLTF.preload('/models/VNSoldierBoThap.glb');
 useGLTF.preload('/models/vietnam_people_army_advanced_animations.optimized.glb');

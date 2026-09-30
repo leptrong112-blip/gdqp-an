@@ -12,7 +12,12 @@ import {
   BookOpen,
   Bot,
   Compass,
+  Download,
+  ExternalLink,
+  QrCode,
 } from "lucide-react";
+
+const WEBSITE_URL = "https://gdqp-an.gdqp-3d.workers.dev/";
 
 interface FooterProps {
   onNavigate?: (tab: "home" | "theory" | "quiz" | "exam" | "sim" | "chat" | "training" | "map" | "gamification" | "webar" | "shooting" | "pose") => void;
@@ -218,6 +223,63 @@ export default function Footer({ onNavigate }: FooterProps) {
           </div>
 
         </div>
+
+        <section className="overflow-hidden rounded-3xl border border-amber-400/25 bg-gradient-to-br from-slate-900 via-slate-900 to-red-950/40 shadow-2xl shadow-black/20">
+          <div className="grid items-center gap-6 p-5 sm:p-7 md:grid-cols-[minmax(0,1fr)_auto]">
+            <div className="flex min-w-0 items-start gap-4">
+              <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-amber-400/30 bg-amber-400/10 text-amber-300 sm:flex">
+                <QrCode className="h-6 w-6" />
+              </div>
+              <div className="min-w-0">
+                <p className="mb-1 text-xs font-black uppercase tracking-[0.18em] text-amber-400">
+                  Truy cập nhanh trên điện thoại
+                </p>
+                <h2 className="text-xl font-black text-white sm:text-2xl">
+                  Quét mã QR để mở HỌC QPAN 3D
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
+                  Mã dẫn thẳng tới trang chủ chính thức. Thầy cô và học sinh chỉ cần dùng camera điện thoại để quét, không cần nhập lại địa chỉ.
+                </p>
+                <a
+                  href={WEBSITE_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 inline-flex max-w-full items-center gap-1.5 break-all text-xs font-bold text-sky-300 transition-colors hover:text-sky-200"
+                >
+                  {WEBSITE_URL}
+                  <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                </a>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center gap-3 sm:flex-row md:flex-col">
+              <a
+                href={WEBSITE_URL}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Mở website HỌC QPAN 3D"
+                className="rounded-2xl bg-white p-2.5 shadow-xl ring-4 ring-white/10 transition-transform hover:scale-[1.02]"
+              >
+                <img
+                  src="/qr-gdqp-an.svg"
+                  alt="Mã QR mở website HỌC QPAN 3D"
+                  className="h-36 w-36 sm:h-40 sm:w-40"
+                  width="160"
+                  height="160"
+                  loading="lazy"
+                />
+              </a>
+              <a
+                href="/qr-gdqp-an.png"
+                download="ma-qr-hoc-qpan-3d.png"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-2 text-xs font-black text-amber-300 transition-colors hover:bg-amber-400/20"
+              >
+                <Download className="h-4 w-4" />
+                Tải mã QR
+              </a>
+            </div>
+          </div>
+        </section>
 
         {/* ════════════ DÒNG BẢN QUYỀN DƯỚI CÙNG (COPYRIGHT BAR) ════════════ */}
         <div className="pt-8 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 font-sans">
