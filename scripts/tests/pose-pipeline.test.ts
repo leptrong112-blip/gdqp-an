@@ -57,11 +57,13 @@ test('calibration rejects unstable anatomical proportions', () => {
   assert.equal(createCalibration(frames), null);
 });
 test('a fake detector drives the entire session without MediaPipe or browser APIs', async () => {
-  const detector: PoseDetector = { async initialize() {}, detect: (_source, timestamp) => attentionFrame(timestamp), dispose() {} };
-  await detector.initialize(); const session = new SessionProcessor(); let events: WorkerEvent[] = [];
+  const session = new SessionProcessor();
+  const { drillFrame } = await import('./fixtures/pose/drill');
+  const detector: PoseDetector = { async initialize() {}, detect: (_source, timestamp) => drillFrame(session.expectedPostureId, timestamp), dispose() {} };
+  await detector.initialize(); let events: WorkerEvent[] = [];
   for (let t = 0; t <= 1500; t += 100) session.process(detector.detect(null as never, t, 640, 480), goodLighting, 20);
   session.command('startCalibration');
-  for (let t = 1600; t <= 10400; t += 100) events.push(...session.process(detector.detect(null as never, t, 640, 480), goodLighting, 20));
+  for (let t = 1600; t <= 14000; t += 100) events.push(...session.process(detector.detect(null as never, t, 640, 480), goodLighting, 20));
   assert.ok(events.some(e => e.type === 'calibrationComplete'));
   const scored = events.find(e => e.type === 'score'); assert.ok(scored && scored.type === 'score' && scored.result.status === 'scored');
   assert.equal(events.filter(e => e.type === 'score').length, 1, 'scoring window is frozen and cannot emit duplicate scores');

@@ -41,7 +41,7 @@ export const EXERCISE_CATALOG: ExerciseInfo[] = [
   {
     id: 'attention',
     name: 'Tư thế đứng nghiêm',
-    shortDesc: 'Hai gót sát, mũi mở 45°, hai chân thẳng, tay áp sát chỉ quần.',
+    shortDesc: '2 gót chân đặt sát vào nhau, 2 mũi bàn chân mở rộng 45 độ. Hai chân thẳng, tay áp sát chỉ quần.',
     badge: 'Cơ bản',
     icon: '🎖️',
     available: true,
@@ -49,8 +49,8 @@ export const EXERCISE_CATALOG: ExerciseInfo[] = [
     guidelines: [
       {
         number: 1,
-        title: 'Hai gót sát, mũi mở 45°',
-        description: 'Hai gót chân chạm sát nhau trên một đường thẳng. Hai mũi chân mở rộng hình chữ V khoảng 45°.',
+        title: '2 gót chân đặt sát vào nhau, 2 mũi bàn chân mở rộng 45 độ.',
+        description: '2 gót chân đặt sát vào nhau, 2 mũi bàn chân mở rộng 45 độ.',
       },
       {
         number: 2,
@@ -112,7 +112,7 @@ export const EXERCISE_CATALOG: ExerciseInfo[] = [
       {
         number: 1,
         title: 'Tư thế chuẩn bị đứng nghiêm',
-        description: 'Đứng nghiêm nhìn thẳng camera, hai gót sát, mũi mở 45°, hai tay áp sát mép chỉ quần.',
+        description: 'Đứng nghiêm nhìn thẳng camera. 2 gót chân đặt sát vào nhau, 2 mũi bàn chân mở rộng 45 độ. Hai tay áp sát mép chỉ quần.',
       },
       {
         number: 2,
@@ -143,7 +143,7 @@ export const EXERCISE_CATALOG: ExerciseInfo[] = [
       {
         number: 1,
         title: 'Tư thế chuẩn bị đứng nghiêm',
-        description: 'Đứng nghiêm nhìn thẳng camera, hai gót sát, mũi mở 45°, hai tay áp sát mép chỉ quần.',
+        description: 'Đứng nghiêm nhìn thẳng camera. 2 gót chân đặt sát vào nhau, 2 mũi bàn chân mở rộng 45 độ. Hai tay áp sát mép chỉ quần.',
       },
       {
         number: 2,
@@ -173,7 +173,7 @@ export const EXERCISE_CATALOG: ExerciseInfo[] = [
   },
   {
     id: 'salute',
-    name: 'Động tác chào / thôi chào',
+    name: 'Động tác chào',
     shortDesc: 'Tay phải đưa lên, đầu ngón tay chạm vành mũ bên phải, mắt nhìn thẳng.',
     badge: 'SGK 10 · Bài 9',
     icon: '🫡',
@@ -183,7 +183,7 @@ export const EXERCISE_CATALOG: ExerciseInfo[] = [
       {
         number: 1,
         title: 'Tư thế chuẩn bị đứng nghiêm',
-        description: 'Đứng nghiêm nhìn thẳng camera, hai gót sát, mũi mở 45°, hai tay áp sát mép chỉ quần.',
+        description: 'Đứng nghiêm nhìn thẳng camera. 2 gót chân đặt sát vào nhau, 2 mũi bàn chân mở rộng 45 độ. Hai tay áp sát mép chỉ quần.',
       },
       {
         number: 2,
@@ -198,7 +198,7 @@ export const EXERCISE_CATALOG: ExerciseInfo[] = [
       {
         number: 4,
         title: 'Đầu ngay ngắn, mắt nhìn thẳng',
-        description: 'Đầu ngay ngắn, cằm thu nhẹ, mắt nhìn thẳng về phía trước; khi dứt động tác hạ tay xuống theo đường ngắn nhất về tư thế đứng nghiêm.',
+        description: 'Đầu ngay ngắn, cằm thu nhẹ, mắt nhìn thẳng về phía trước; giữ tư thế chào khoảng 3 giây để hệ thống đánh giá.',
       },
     ],
   },

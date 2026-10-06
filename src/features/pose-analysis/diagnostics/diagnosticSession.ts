@@ -1,8 +1,11 @@
-import type { DualMeasurement, FeatureId, MovementId, QualityReport } from '../types';
+import type { DualMeasurement, FeatureId, MovementId, PoseStage, QualityReport } from '../types';
 import type { ScoreResult } from '../scoring/scoringTypes';
 import { mad, median } from '../pipeline/geometry';
 
 export interface DiagnosticSessionConfig {
+  participantCode?: string;
+  trialCode?: string;
+  device?: 'laptop' | 'phone' | 'other';
   cameraHeight: 'desk' | 'chest' | 'floor' | 'high' | 'other';
   cameraAngle: 'straight' | 'tilted_down' | 'tilted_up' | 'other';
   distanceMeters: 'near' | 'optimal' | 'far';
@@ -20,6 +23,8 @@ export interface TeacherReferenceEvaluation {
 
 export interface DiagnosticFrameRecord {
   timestampMs: number;
+  stage?: PoseStage;
+  inferenceFps?: number;
   qualityPassed: boolean;
   qualityReasons: string[];
   metrics: {
@@ -43,9 +48,14 @@ export interface DiagnosticSessionReport {
   frameCount: number;
   durationMs: number;
   qualityInterruptionCount: number;
+  truncated: boolean;
+  aiAssessment: 'PASS' | 'FAIL' | 'INSUFFICIENT_EVIDENCE' | 'NOT_EVALUATED';
+  refusalReasons: string[];
   officialScore?: {
     total: number;
     passed: boolean;
+    assessment?: 'pass' | 'fail' | 'incomplete';
+    unassessedPoints?: number;
     criteria: Array<{
       id: string;
       label: string;
@@ -53,6 +63,7 @@ export interface DiagnosticSessionReport {
       maximum: number;
       statusLevel: string;
       mistakes: string[];
+      measurements?: Array<{ feature: string; value: number; variability: number }>;
     }>;
   };
   summary: {
@@ -80,6 +91,7 @@ export interface DiagnosticSessionReport {
 }
 
 const DEFAULT_CONFIG: DiagnosticSessionConfig = {
+  device: 'other',
   cameraHeight: 'desk',
   cameraAngle: 'straight',
   distanceMeters: 'optimal',
@@ -93,7 +105,18 @@ const DEFAULT_EVALUATION: TeacherReferenceEvaluation = {
   teacherNotes: '',
 };
 
-const MAX_SESSION_FRAMES = 200;
+// Telemetry only, no images: ~3 minutes at the UI's 5 Hz sampling rate.
+const MAX_SESSION_FRAMES = 1000;
+
+export function diagnosticAssessment(result?: ScoreResult | null): DiagnosticSessionReport['aiAssessment'] {
+  if (!result) return 'NOT_EVALUATED';
+  if (result.status === 'scored' && result.assessment) {
+    return result.assessment === 'incomplete' ? 'INSUFFICIENT_EVIDENCE' : result.assessment === 'pass' ? 'PASS' : 'FAIL';
+  }
+  if (result.status === 'notScorable' || result.criteria.some(c => c.statusLevel === 'NOT_SCORABLE')) return 'INSUFFICIENT_EVIDENCE';
+  const passed = result.passed ?? (result.total >= 65 && result.criteria.every(c => !c.required || c.points / c.maximum >= .6));
+  return passed ? 'PASS' : 'FAIL';
+}
 
 export class DiagnosticSessionRecorder {
   private isRecording = false;
@@ -105,6 +128,10 @@ export class DiagnosticSessionRecorder {
   private startTime = 0;
   private qualityInterruptionCount = 0;
   private lastQualityPassed = true;
+  private officialResult: ScoreResult | null = null;
+  private truncated = false;
+  private sourceStart: number | null = null;
+  private lastSource: number | null = null;
 
   start(movementId: MovementId, config?: Partial<DiagnosticSessionConfig>) {
     this.isRecording = true;
@@ -116,15 +143,24 @@ export class DiagnosticSessionRecorder {
     this.startTime = Date.now();
     this.qualityInterruptionCount = 0;
     this.lastQualityPassed = true;
+    this.officialResult = null;
+    this.truncated = false;
+    this.sourceStart = this.lastSource = null;
   }
 
   recordFrame(
     quality: QualityReport,
     features?: Partial<Record<FeatureId, { value: number; confidence: number }>>,
-    dualMeasurements?: DualMeasurement[]
+    dualMeasurements?: DualMeasurement[],
+    metadata?: { timestampMs: number; stage: PoseStage; inferenceFps: number }
   ) {
     if (!this.isRecording) return;
-    if (this.frames.length >= MAX_SESSION_FRAMES) return;
+    if (this.frames.length >= MAX_SESSION_FRAMES) { this.truncated = true; this.stop(); return; }
+    if (metadata) {
+      if (!Number.isFinite(metadata.timestampMs) || (this.lastSource !== null && metadata.timestampMs <= this.lastSource)) return;
+      this.sourceStart ??= metadata.timestampMs;
+      this.lastSource = metadata.timestampMs;
+    }
 
     if (this.lastQualityPassed && !quality.passed) {
       this.qualityInterruptionCount++;
@@ -132,7 +168,9 @@ export class DiagnosticSessionRecorder {
     this.lastQualityPassed = quality.passed;
 
     this.frames.push({
-      timestampMs: Date.now() - this.startTime,
+      timestampMs: metadata ? metadata.timestampMs - this.sourceStart! : Date.now() - this.startTime,
+      stage: metadata?.stage,
+      inferenceFps: metadata?.inferenceFps,
       qualityPassed: quality.passed,
       qualityReasons: [...quality.reasons],
       metrics: {
@@ -141,8 +179,8 @@ export class DiagnosticSessionRecorder {
         rootMovement: quality.metrics.rootMovement,
         scaleVariation: quality.metrics.scaleVariation,
       },
-      features: features ? { ...features } : {},
-      dualMeasurements: dualMeasurements ? [...dualMeasurements] : [],
+      features: features ? structuredClone(features) : {},
+      dualMeasurements: dualMeasurements ? structuredClone(dualMeasurements) : [],
     });
   }
 
@@ -160,6 +198,12 @@ export class DiagnosticSessionRecorder {
     };
   }
 
+  finish(result: ScoreResult) {
+    if (!this.isRecording) return;
+    this.officialResult = structuredClone(result);
+    this.stop();
+  }
+
   setTestConfig(config: Partial<DiagnosticSessionConfig>) {
     this.config = { ...this.config, ...config };
   }
@@ -173,6 +217,7 @@ export class DiagnosticSessionRecorder {
       durationMs: this.isRecording ? Date.now() - this.startTime : 0,
       config: this.config,
       referenceEvaluation: this.referenceEvaluation,
+      truncated: this.truncated,
     };
   }
 
@@ -182,9 +227,12 @@ export class DiagnosticSessionRecorder {
     this.frames = [];
     this.qualityInterruptionCount = 0;
     this.referenceEvaluation = { ...DEFAULT_EVALUATION };
+    this.officialResult = null;
+    this.truncated = false;
+    this.sourceStart = this.lastSource = null;
   }
 
-  generateReport(officialResult?: ScoreResult | null): DiagnosticSessionReport | null {
+  generateReport(officialResult: ScoreResult | null = this.officialResult): DiagnosticSessionReport | null {
     if (!this.frames.length && !this.sessionId) return null;
 
     const featureKeys: FeatureId[] = [
@@ -285,9 +333,12 @@ export class DiagnosticSessionRecorder {
     }
 
     // Phân tích đối chiếu Giáo viên
-    if (this.referenceEvaluation.status !== 'NOT_EVALUATED') {
+    const aiAssessment = diagnosticAssessment(officialResult);
+    if (this.referenceEvaluation.status === 'INSUFFICIENT_EVIDENCE' || aiAssessment === 'INSUFFICIENT_EVIDENCE' || aiAssessment === 'NOT_EVALUATED') {
+      needsHumanReview.push('Chưa đủ kết quả AI hoặc đánh giá tham chiếu để kết luận đồng thuận/bất đồng; thiếu dữ liệu không có nghĩa là thực hiện sai.');
+    } else if (this.referenceEvaluation.status !== 'NOT_EVALUATED') {
       const teacherStatus = this.referenceEvaluation.status;
-      const aiPassed = officialResult?.status === 'scored' ? officialResult.passed : false;
+      const aiPassed = aiAssessment === 'PASS';
       const teacherPassed = teacherStatus === 'MEETS_CRITERIA';
 
       if (teacherPassed !== aiPassed) {
@@ -314,16 +365,21 @@ export class DiagnosticSessionRecorder {
       recordedAt: new Date(this.startTime).toISOString(),
       movementId: this.movementId,
       movementName: this.movementId === 'attention' ? 'Đứng nghiêm' : this.movementId === 'atEase' ? 'Đứng nghỉ' : this.movementId,
-      rubricVersion: 'v1.2-phase1-diagnostic',
+      rubricVersion: 'v1.7-salute-hand-observation',
       testConfig: { ...this.config },
       referenceEvaluation: { ...this.referenceEvaluation },
       frameCount: this.frames.length,
       durationMs,
       qualityInterruptionCount: this.qualityInterruptionCount,
+      truncated: this.truncated,
+      aiAssessment,
+      refusalReasons: officialResult?.status === 'notScorable' ? [...officialResult.reasons] : [],
       officialScore: officialResult && officialResult.status === 'scored'
         ? {
             total: officialResult.total,
-            passed: !!officialResult.passed,
+            passed: aiAssessment === 'PASS',
+            assessment: officialResult.assessment,
+            unassessedPoints: officialResult.unassessedPoints,
             criteria: officialResult.criteria.map(c => ({
               id: c.id,
               label: c.label,
@@ -331,6 +387,7 @@ export class DiagnosticSessionRecorder {
               maximum: c.maximum,
               statusLevel: c.statusLevel ?? 'NEEDS_ADJUSTMENT',
               mistakes: c.mistakes ?? [],
+              measurements: c.measurements.map(m => ({ ...m })),
             })),
           }
         : undefined,
@@ -338,7 +395,7 @@ export class DiagnosticSessionRecorder {
         featureAggregates: aggregates,
         topDeductions: officialResult && officialResult.status === 'scored'
           ? officialResult.criteria
-              .filter(c => c.points < c.maximum)
+              .filter(c => c.statusLevel !== 'NOT_SCORABLE' && c.points < c.maximum)
               .sort((a, b) => (b.maximum - b.points) - (a.maximum - a.points))
               .map(c => `${c.label} (-${(c.maximum - c.points).toFixed(1)}đ)`)
           : [],
@@ -349,7 +406,7 @@ export class DiagnosticSessionRecorder {
         hypothesis,
         needsHumanReview,
       },
-      frames: [...this.frames],
+      frames: structuredClone(this.frames),
     };
 
     return report;
@@ -369,8 +426,7 @@ export function exportReportToJson(report: DiagnosticSessionReport): void {
   URL.revokeObjectURL(url);
 }
 
-export function exportReportToCsv(report: DiagnosticSessionReport): void {
-  if (!report.frames || report.frames.length === 0) return;
+export function diagnosticReportToCsv(report: DiagnosticSessionReport): string {
 
   const headers = [
     'timestampMs',
@@ -396,9 +452,13 @@ export function exportReportToCsv(report: DiagnosticSessionReport): void {
     'torsoTilt_3D',
     'shoulderTilt_2D',
     'hipTilt_2D',
+    'sessionId', 'participantCode', 'trialCode', 'device', 'movementId', 'rubricVersion',
+    'stage', 'inferenceFps', 'bodyYaw', 'shoulderTilt_official', 'leftWristHip_official', 'rightWristHip_official',
+    'aiAssessment', 'aiTotal', 'teacherAssessment', 'refusalReasons', 'truncated',
+    'scoreAssessment', 'unassessedPoints',
   ];
 
-  const rows = report.frames.map(f => {
+  const rows = (report.frames ?? []).map(f => {
     const dMap = new Map(f.dualMeasurements.map(d => [d.featureId, d]));
     const g = (k: FeatureId, sys: '2D' | '3D') => {
       const d = dMap.get(k);
@@ -431,10 +491,25 @@ export function exportReportToCsv(report: DiagnosticSessionReport): void {
       g('torsoTilt', '3D'),
       g('shoulderTilt', '2D'),
       g('hipTilt', '2D'),
-    ].join(',');
+      report.sessionId, report.testConfig.participantCode ?? '', report.testConfig.trialCode ?? '', report.testConfig.device ?? '',
+      report.movementId, report.rubricVersion, f.stage ?? '', f.inferenceFps ?? '',
+      f.features.bodyYaw?.value ?? '', f.features.shoulderTilt?.value ?? '',
+      f.features.leftWristHipDistance?.value ?? '', f.features.rightWristHipDistance?.value ?? '',
+      report.aiAssessment, report.officialScore?.total ?? '', report.referenceEvaluation.status,
+      report.refusalReasons.join(' | '), report.truncated ? 1 : 0,
+      report.officialScore?.assessment ?? '', report.officialScore?.unassessedPoints ?? '',
+    ].map(value => {
+      let cell = String(value);
+      if (/^[=+@\-]/.test(cell) && typeof value === 'string') cell = `'${cell}`;
+      return /[",\r\n]/.test(cell) ? `"${cell.replaceAll('"', '""')}"` : cell;
+    }).join(',');
   });
 
-  const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+  return '\uFEFF' + [headers.join(','), ...rows].join('\n');
+}
+
+export function exportReportToCsv(report: DiagnosticSessionReport): void {
+  const csvContent = diagnosticReportToCsv(report);
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

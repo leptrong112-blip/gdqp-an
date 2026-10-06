@@ -15,14 +15,16 @@ const above = (feature: FeatureId, ideal: number, zero: number): FeatureRule => 
 
 export const saluteMovement: MovementDefinition = {
   id: 'salute',
-  label: 'Động tác chào / thôi chào',
+  label: 'Động tác chào',
   minimumDurationMs: 2400,
   minimumSamples: 18,
   criteria: [
+    { id: 'saluteHand', label: 'Bàn tay và ngón tay chào', weight: 10, rules: [], feedback: 'Duỗi và khép các ngón tay, giữ cổ tay tự nhiên khi chào.' },
     {
       id: 'saluteArm',
       label: 'Tay phải chào tự nhiên, đúng vị trí',
-      weight: 35,
+      weight: 25,
+      required: true,
       rules: [
         below('rightWristHeadDistance', 0.60, 1.10),
         { feature: 'rightElbowAngle', ideal: [25, 85], zero: [10, 120] },

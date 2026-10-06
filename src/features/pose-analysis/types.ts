@@ -15,6 +15,11 @@ export interface CanonicalPoseFrame {
   personCount: number;
   aspectRatio: number;
   landmarks: Partial<Record<LandmarkName, Landmark>>;
+  saluteHand?: { timestampMs: number; image: Vec3[]; world: Vec3[]; sourceWidth: number; sourceHeight: number;
+    confidence?: number; handedness?: string; identityStable?: boolean; sharpness?: number };
+  handStatus?: 'loading' | 'unavailable' | 'waiting' | 'not-visible' | 'observed';
+  handEvidence?: HandFeatures;
+  detectorTelemetry?: { poseMs: number; handMs: number; handFps: number; handConfidence?: number; handedness?: string; handLandmarks: number; handSharpness?: number };
 }
 export interface LightingMetrics { mean: number; darkRatio: number; brightRatio: number }
 export type QualityId = 'lighting' | 'person' | 'framing' | 'reliability' | 'stability' | 'orientation';
@@ -28,8 +33,9 @@ export interface QualityReport {
 export interface CalibrationProfile {
   bodyScale: number; worldScale: number; shoulderWidth: number; hipWidth: number; torsoLength: number; legLength: number;
   baselineJitter: number; coverage: number; frontFacing: boolean; sampleCount: number;
+  frontalXSign?: 1 | -1;
 }
-export interface NormalizedPoseFrame extends CanonicalPoseFrame { body: Partial<Record<LandmarkName, Vec3>>; worldBody: Partial<Record<LandmarkName, Vec3>> }
+export interface NormalizedPoseFrame extends CanonicalPoseFrame { body: Partial<Record<LandmarkName, Vec3>>; worldBody: Partial<Record<LandmarkName, Vec3>>; frontalXSign?: 1 | -1 }
 export type MovementId =
   | 'attention'
   | 'atEase'
@@ -58,11 +64,35 @@ export type FeatureId =
   | 'bodyYaw'
   | 'yawVelocity'
   | 'turnProgress'
-  | 'torsoStability';
+  | 'torsoStability'
+  | 'rootTravel'
+  | 'pivotTravel'
+  | 'saluteFingerExtension' | 'saluteFingerSpread' | 'saluteThumbGap' | 'saluteWristBend' | 'saluteTipHeadDistance';
+export interface SaluteHandMetrics {
+  extension: number; spread: number; thumbGap: number; wristBend: number; tipHeadDistance: number;
+}
+export interface HandFeatures {
+  available: boolean; confidence?: number; validLandmarks: number; ageMs?: number; handedness?: string;
+  quality: 'OBSERVED' | 'INSUFFICIENT_HAND_EVIDENCE'; reason?: string;
+  fingerExtension?: number[]; fingerAlignment?: number; fingerSpread?: number;
+  palmOrientation?: Vec3; wristOrientation?: Vec3;
+}
+export interface SaluteProgress {
+  state: 'ATTENTION_READY' | 'COUNTDOWN' | 'COMMAND' | 'TRANSITION' | 'HAND_ACQUIRED' | 'STABLE' | 'SCORING' | 'FINALIZED';
+  commandMs?: number; firstMovementMs?: number; arrivalMs?: number; stableMs: number;
+  motionObserved: boolean; observationCount: number; wristRise: number; wristVelocity: number;
+  pathSmoothness?: number; elbowAngle?: number; wristHeadDistance?: number; hand?: HandFeatures;
+}
+export interface PosePerformanceTelemetry {
+  poseMs?: number; handMs?: number; workerLatencyMs?: number; landmarkAgeMs?: number;
+  droppedFrames?: number; droppedFrameRatio?: number; submittedFrames?: number; renderFps?: number;
+  profile?: 'FAST' | 'NORMAL' | 'LOW'; targetFps?: number;
+  benchmark?: Partial<Record<'pose' | 'hand' | 'worker' | 'age', { medianMs: number; p90Ms: number; samples: number }>>;
+}
 export interface FeatureValue { value: number; confidence: number }
-export interface FeatureSample { timestampMs: number; values: Partial<Record<FeatureId, FeatureValue>> }
+export interface FeatureSample { timestampMs: number; values: Partial<Record<FeatureId, FeatureValue>>; saluteHand?: SaluteHandMetrics }
 export interface FeatureWindow { samples: FeatureSample[]; validDurationMs: number; qualityPassed: boolean }
-export type PoseStage = 'idle' | 'loading-model' | 'quality-check' | 'calibrating' | 'countdown' | 'scoring' | 'completed' | 'result' | 'blocked' | 'unsupported' | 'error';
+export type PoseStage = 'idle' | 'loading-model' | 'quality-check' | 'calibrating' | 'waiting-precondition' | 'precondition-scoring' | 'countdown' | 'transition' | 'scoring' | 'stop-command' | 'completed' | 'result' | 'blocked' | 'unsupported' | 'error';
 export type DynamicPhase = 'WAITING_FOR_START' | 'START_READY' | 'MOVING' | 'FINAL_HOLD' | 'COMPLETE';
 export interface DynamicProgress {
   phase: DynamicPhase;
@@ -92,4 +122,7 @@ export interface AnalysisSnapshot {
   drillProgress?: { index: number; completed: number; total: number; movementId: 'attention' | 'atEase' | 'salute' };
   features?: Partial<Record<FeatureId, FeatureValue>>;
   dualMeasurements?: DualMeasurement[];
+  workflow?: { preconditionId: 'attention' | 'atEase'; preconditionLabel: string; status: 'WRONG_PRECONDITION' | 'INSUFFICIENT_EVIDENCE' | 'READY'; scoringPrecondition: boolean };
+  saluteProgress?: SaluteProgress;
+  performance?: PosePerformanceTelemetry;
 }

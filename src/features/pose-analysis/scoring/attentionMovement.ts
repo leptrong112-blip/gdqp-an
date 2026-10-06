@@ -10,7 +10,7 @@ export const attentionMovement: MovementDefinition = {
     { id: 'balance', label: 'Vai và hông cân', weight: 15, rules: [below('shoulderTilt', 5, 18), below('hipTilt', 5, 18)], feedback: 'Giữ hai vai và hai bên hông cân bằng.' },
     // 165° tolerates slight natural flexion; sustained bends still fall toward zero at 140°.
     { id: 'legs', label: 'Hai chân thẳng tự nhiên', weight: 20, required: true, rules: [above('leftKneeAngle', 165, 140), above('rightKneeAngle', 165, 140)], feedback: 'Giữ hai chân thẳng tự nhiên, không cần gồng khóa đầu gối.' },
-    { id: 'feet', label: 'Gót gần sát, bàn chân mở', weight: 20, rules: [below('heelGapRatio', 0.25, 0.65), { feature: 'footOpeningAngle', ideal: [25, 65], zero: [5, 95] }], feedback: 'Đưa hai gót chân gần sát nhau, mở hai mũi chân khoảng 45°.' },
+    { id: 'feet', label: '2 gót chân đặt sát vào nhau, 2 mũi bàn chân mở rộng 45 độ.', weight: 20, rules: [below('heelGapRatio', 0.25, 0.65), { feature: 'footOpeningAngle', ideal: [25, 65], zero: [5, 95] }], feedback: '2 gót chân đặt sát vào nhau, 2 mũi bàn chân mở rộng 45 độ.' },
     { id: 'arms', label: 'Tay dọc thân', weight: 15, rules: [above('leftElbowAngle', 155, 125), above('rightElbowAngle', 155, 125), below('leftWristHipDistance', 0.65, 1.25), below('rightWristHipDistance', 0.65, 1.25)], feedback: 'Duỗi tay tự nhiên và đưa hai bàn tay sát cạnh đùi.' },
     { id: 'head', label: 'Đầu ngay ngắn', weight: 5, rules: [below('headOffset', 0.12, 0.4)], feedback: 'Giữ đầu ngay ngắn ở giữa hai vai, nhìn về phía trước.' },
   ],

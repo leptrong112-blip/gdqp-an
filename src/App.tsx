@@ -44,6 +44,7 @@ import { Component, ErrorInfo, ReactNode } from "react";
 
 const MapSection = lazy(() => import("./components/MapSection"));
 const PoseAnalysisPage = lazy(() => import("./features/pose-analysis/PoseAnalysisPage"));
+const PoseAdminSection = lazy(() => import("./features/pose-analysis/admin/PoseAdminSection"));
 const GamificationSection = lazy(() => import("./components/GamificationSection"));
 const MockExamSection = lazy(() => import("./components/exam/MockExamSection"));
 const WebARSection = lazy(() => import("./components/WebARSection"));
@@ -85,7 +86,7 @@ function AuthenticatedApp() {
   const { user, loading: accountLoading, openLogin } = useAccount();
   const { state: gamState, rank: currentRank, xpToasts, unlockedBadgeToasts, removeBadgeToast } = useGamification();
   const [activeTab, setActiveTab] = useState<
-    "home" | "theory" | "quiz" | "exam" | "sim" | "chat" | "training" | "map" | "gamification" | "webar" | "shooting" | "survey" | "admin" | "exam_admin" | "pose"
+    "home" | "theory" | "quiz" | "exam" | "sim" | "chat" | "training" | "map" | "gamification" | "webar" | "shooting" | "survey" | "admin" | "exam_admin" | "pose" | "pose_admin"
   >(window.location.pathname === '/survey' ? 'survey' : 'home');
   const [globalGrade, setGlobalGrade] = useState<GradeLevel>(11);
   const [liveStats, setLiveStats] = useState({ completedCount: 0, topScore: 0 });
@@ -694,6 +695,7 @@ function AuthenticatedApp() {
         <main id="tab-viewport" className={`flex-1 min-h-0 relative z-10 w-full ${activeTab === "sim" ? "h-full p-0 max-w-none flex flex-col overflow-hidden" : activeTab === "theory" ? "h-full p-2 sm:p-3 lg:p-4 w-full max-w-none flex flex-col min-h-0 overflow-hidden" : "p-3 sm:p-6 lg:p-10 w-full max-w-none"}`}>
           <ErrorBoundary>
             {activeTab === "pose" && <Suspense fallback={<div role="status" className="p-12 text-center">Đang tải trang phân tích tư thế…</div>}><PoseAnalysisPage /></Suspense>}
+            {activeTab === "pose_admin" && <Suspense fallback={<div role="status" className="p-12 text-center">Đang tải kết quả AI Pose…</div>}><PoseAdminSection onBack={() => setActiveTab("pose")} /></Suspense>}
             {activeTab === "survey" && <SurveySection />}
             {activeTab === "admin" && user?.role === 'admin' && <SurveyAdminSection onBack={() => setActiveTab("home")} />}
             {activeTab === "admin" && user?.role !== 'admin' && (

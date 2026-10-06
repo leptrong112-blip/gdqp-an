@@ -24,16 +24,26 @@ export function createCalibration(frames: CanonicalPoseFrame[]): CalibrationProf
     if (m.some(v => !Number.isFinite(v[key]) || v[key] <= 0.001) || variation(m.map(v => v[key])) > 0.12) return null;
   }
   const med = (key: keyof typeof m[number]) => median(m.map(v => v[key] as number));
-  return { bodyScale: med('bodyScale'), worldScale: med('worldScale'), shoulderWidth: med('shoulderWidth'), hipWidth: med('hipWidth'), torsoLength: med('torsoLength'), legLength: med('legLength'), baselineJitter: mad(m.map(v => v.root.x)) / med('torsoLength'), coverage: 1, frontFacing: true, sampleCount: m.length };
+  const frontalDx = median(frames.map(f => {
+    const ls = f.landmarks.leftShoulder?.world, rs = f.landmarks.rightShoulder?.world;
+    const lh = f.landmarks.leftHip?.world, rh = f.landmarks.rightHip?.world;
+    return ls && rs && lh && rh ? (ls.x - rs.x + lh.x - rh.x) / 2 : NaN;
+  }));
+  if (!Number.isFinite(frontalDx) || Math.abs(frontalDx) < 1e-6) return null;
+  const frontalXSign: 1 | -1 = frontalDx > 0 ? 1 : -1;
+  return { bodyScale: med('bodyScale'), worldScale: med('worldScale'), shoulderWidth: med('shoulderWidth'), hipWidth: med('hipWidth'), torsoLength: med('torsoLength'), legLength: med('legLength'), baselineJitter: mad(m.map(v => v.root.x)) / med('torsoLength'), coverage: 1, frontFacing: true, sampleCount: m.length, frontalXSign };
 }
-export function normalizePose(frame: CanonicalPoseFrame, profile: CalibrationProfile): NormalizedPoseFrame | null {
-  const m = measurements(frame), lh = frame.landmarks.leftHip?.world, rh = frame.landmarks.rightHip?.world;
-  if (!m || !lh || !rh || profile.bodyScale <= 0 || profile.worldScale <= 0) return null;
+export function normalizePose(frame: CanonicalPoseFrame, profile: CalibrationProfile, allowPartialTurn = false): NormalizedPoseFrame | null {
+  if (!allowPartialTurn && !measurements(frame)) return null;
+  const leftHip = frame.landmarks.leftHip, rightHip = frame.landmarks.rightHip;
+  const lh = leftHip?.world, rh = rightHip?.world;
+  if (!leftHip || !rightHip || !lh || !rh || profile.bodyScale <= 0 || profile.worldScale <= 0) return null;
+  const imageRoot = midpoint(flat(aspectCorrectedImage(frame, leftHip)), flat(aspectCorrectedImage(frame, rightHip)));
   const root = midpoint(lh, rh), body: NormalizedPoseFrame['body'] = {}, worldBody: NormalizedPoseFrame['worldBody'] = {};
   for (const [key, p] of Object.entries(frame.landmarks)) {
     const name = key as LandmarkName;
-    body[name] = scale(subtract(flat(aspectCorrectedImage(frame, p)), m.root), profile.bodyScale);
+    body[name] = scale(subtract(flat(aspectCorrectedImage(frame, p)), imageRoot), profile.bodyScale);
     if (p.world) worldBody[name] = scale(subtract(p.world, root), profile.worldScale);
   }
-  return { ...frame, body, worldBody };
+  return { ...frame, body, worldBody, frontalXSign: profile.frontalXSign };
 }

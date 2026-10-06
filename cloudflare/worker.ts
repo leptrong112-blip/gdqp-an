@@ -1,6 +1,7 @@
 import { createHash, scryptSync, timingSafeEqual } from 'node:crypto';
 import { surveyQuestions, type SurveyPhase, type SurveyResponse, type SurveyRole } from '../src/data/survey';
 import { validSurveyAnswers } from '../src/data/surveyRounds';
+import { poseResultsApi } from './poseResults';
 
 type AccountRole = 'admin' | 'teacher' | 'student';
 type PublicAccount = { id: string; username: string; name: string; role: AccountRole };
@@ -349,6 +350,10 @@ export default {
     try {
       const url = new URL(request.url);
       const pathname = url.pathname;
+
+      if (pathname === '/api/pose-results' || pathname.startsWith('/api/pose-results/')) {
+        return await poseResultsApi(request, env, userFor);
+      }
 
       // Tuyến khảo sát và xác thực tài khoản trên Cloudflare Worker (sử dụng D1 database)
       if (pathname.startsWith('/api/survey')) {

@@ -8,12 +8,36 @@ import { ExerciseDropdown } from './components/ExerciseDropdown';
 import type { MovementId } from './types';
 import { EXERCISE_CATALOG } from './scoring/movements';
 import { Minimize2, LayoutDashboard } from 'lucide-react';
-import { playCountdownBeep } from './utils/audioFeedback';
 import { PoseDiagnosticOverlay } from './components/PoseDiagnosticOverlay';
 import WasmCompatibilityNotice from '../../components/WasmCompatibilityNotice';
+import { useAccount } from '../../components/AccountGate';
+import { PoseStudentForm } from './components/PoseStudentForm';
+import type { PoseStudentSession } from './results/studentSession';
+import { buildPoseResultSubmission } from './results/buildPoseResult';
+import { usePoseResultStorage } from './hooks/usePoseResultStorage';
+import type { PoseSaveState } from './results/resultSaver';
+import { displayedProcessingLatency } from './results/resultPresentation';
+import { poseScoreOnTen } from './results/scoreScale';
+import { preparationDefinition, STOP_OVERLAY_MS } from './runtime/commandFlow';
 
 export default function PoseAnalysisPage() {
-  const session = usePoseSession();
+  const { user } = useAccount();
+  const [student, setStudent] = useState<PoseStudentSession | null>(null);
+  const studentRef = useRef<PoseStudentSession | null>(null);
+  const attemptStudents = useRef(new Map<string, PoseStudentSession>());
+  const storage = usePoseResultStorage();
+  const [formatError, setFormatError] = useState<PoseSaveState | null>(null);
+  const session = usePoseSession({ onAttemptStarted: attempt => {
+    if (studentRef.current) attemptStudents.current.set(attempt.id, Object.freeze({ ...studentRef.current }));
+  }, onFinalResult: (result, attempt) => {
+    if (result.status !== 'scored') return;
+    const identity = attemptStudents.current.get(attempt.id);
+    const record = identity ? buildPoseResultSubmission(result, attempt, identity, null) : null;
+    if (record) storage.prepare(record, STOP_OVERLAY_MS + 250);
+    else setFormatError({ id: attempt.id, status: 'error', error: 'Chưa tạo được bản lưu hợp lệ. Kết quả vẫn được giữ trên màn hình; hãy thực hiện lại lượt này.' });
+  } });
+  const [presentedTiming, setPresentedTiming] = useState<{ id: string; latencyMs: number } | null>(null);
+  const finalStudent = session.finalAttempt ? attemptStudents.current.get(session.finalAttempt.id) ?? null : student;
   const currentExercise = EXERCISE_CATALOG.find(e => e.id === session.movementId) || EXERCISE_CATALOG[0];
   const activeMovementId = session.snapshot?.drillProgress?.movementId ?? session.movementId;
   const activeExercise = EXERCISE_CATALOG.find(e => e.id === activeMovementId) ?? currentExercise;
@@ -94,39 +118,13 @@ export default function PoseAnalysisPage() {
 
   const ready = !!session.snapshot?.quality.passed;
 
-  // Luồng tự động hiệu chuẩn & đếm ngược khi người dùng đã vào vị trí chuẩn
+  // The processor owns the only exercise countdown. Auto-calibration does not
+  // run a second 3-2-1 sequence and only starts from the required preparation.
   useEffect(() => {
-    if (!autoCalibrate || activeStep !== 2 || session.stage !== 'quality-check' || !ready || session.result) {
-      setAutoCountdown(null);
-      return;
-    }
-
-    setAutoCountdown(3);
-    playCountdownBeep(700, 0.08);
-
-    const t1 = setTimeout(() => {
-      setAutoCountdown(2);
-      playCountdownBeep(700, 0.08);
-    }, 1000);
-
-    const t2 = setTimeout(() => {
-      setAutoCountdown(1);
-      playCountdownBeep(700, 0.08);
-    }, 2000);
-
-    const t3 = setTimeout(() => {
-      setAutoCountdown(null);
-      playCountdownBeep(1050, 0.18);
-      session.calibrate();
-    }, 3000);
-
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-      setAutoCountdown(null);
-    };
-  }, [autoCalibrate, activeStep, session.stage, ready, session.result, session.calibrate]);
+    setAutoCountdown(null);
+    if (autoCalibrate && activeStep === 2 && session.stage === 'quality-check' && ready &&
+        session.snapshot?.workflow?.status === 'READY' && !session.result) session.calibrate();
+  }, [autoCalibrate, activeStep, session.stage, ready, session.snapshot?.workflow?.status, session.result, session.calibrate]);
 
   const handleSelectMovement = (id: MovementId) => {
     session.changeMovement(id);
@@ -138,6 +136,30 @@ export default function PoseAnalysisPage() {
     session.retry();
     setActiveStep(2);
   };
+
+  const handleChangeStudent = () => {
+    studentRef.current = null;
+    session.resetStudentSession();
+    setStudent(null);
+    attemptStudents.current.clear();
+    setDismissedResult(null);
+    setPresentedTiming(null);
+    setFormatError(null);
+    setActiveStep(1);
+  };
+
+  const handleResultPresented = (renderedAtMs: number) => {
+    const attempt = session.finalAttempt, result = session.result;
+    if (!attempt || !result || !finalStudent) return;
+    const latencyMs = Math.max(0, renderedAtMs - (attempt.timing.scoringWindowFinishedAtMs ?? attempt.timing.resultFinalizedAtMs));
+    setPresentedTiming({ id: attempt.id, latencyMs });
+    storage.presented(attempt.id, latencyMs);
+  };
+
+  if (!student) return <PoseStudentForm onStart={identity => {
+    studentRef.current = identity;
+    setStudent(identity);
+  }} />;
 
   return (
     <div
@@ -222,6 +244,10 @@ export default function PoseAnalysisPage() {
       )}
 
       {/* ═══════════════════ KHUNG CHÍNH (CAMERA + DASHBOARD GIỮ NGUYÊN KHÔNG BỊ UNMOUNT) ═══════════════════ */}
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm dark:border-slate-700">
+        <p><strong>{student.studentName}</strong> · Lớp {student.className}</p>
+        <button type="button" onClick={handleChangeStudent} className="rounded-lg px-3 py-2 font-semibold text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30">Đổi học sinh</button>
+      </div>
       <div
         className={
           isFullscreen
@@ -244,22 +270,31 @@ export default function PoseAnalysisPage() {
             qualityPassed={ready}
             pauseReason={session.snapshot?.quality.reasons[0] ?? session.snapshot?.message}
             drillProgress={session.snapshot?.drillProgress}
+            dynamicProgress={session.snapshot?.dynamicProgress}
+            handStatus={session.snapshot?.frame.handStatus}
+            commandCue={session.commandCue}
+            workflow={session.snapshot?.workflow}
+            saluteProgress={session.snapshot?.saluteProgress}
             diagnosticOverlay={debugMode ? (
               <PoseDiagnosticOverlay
                 snapshot={session.snapshot}
                 stage={session.stage}
                 movementId={activeMovementId}
+                result={session.stage === 'stop-command' ? null : session.result}
                 onClose={() => handleToggleDebugMode(false)}
+                allowExport={user?.role === 'admin'}
               />
             ) : undefined}
           />
 
           {session.sequenceEngine === 'javascript' && <WasmCompatibilityNotice feature="pose-sequence" />}
 
-          {session.result && (
-            <button type="button" onClick={() => setDismissedResult(null)} className="shrink-0 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-lg hover:bg-emerald-700">
+          {session.result && session.stage !== 'stop-command' && (
+            <button type="button" onClick={() => setDismissedResult(null)} className={`shrink-0 rounded-2xl px-5 py-3 text-sm font-bold text-white shadow-lg ${session.result.status === 'scored' && session.result.assessment === 'incomplete' ? 'bg-amber-600 hover:bg-amber-700' : session.result.status === 'scored' && session.result.passed !== false ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'}`}>
               {session.result.status === 'scored'
-                ? `Xem kết quả · Mức đạt ${session.result.total}%`
+                ? session.result.assessment === 'incomplete'
+                  ? `Xem kết quả · ${poseScoreOnTen(session.result.total)}/${poseScoreOnTen(100 - (session.result.unassessedPoints ?? 0))} điểm ở phần đã đánh giá`
+                  : `Xem kết quả · ${session.result.passed === false ? 'Chưa đạt' : 'Đạt'} ${poseScoreOnTen(session.result.total)}/10 điểm`
                 : 'Xem lý do chưa thể chấm điểm'}
             </button>
           )}
@@ -304,6 +339,11 @@ export default function PoseAnalysisPage() {
 
               <details className="text-xs border border-slate-200 dark:border-slate-700 rounded-2xl p-4">
                 <summary className="cursor-pointer font-semibold">Thông tin kỹ thuật &amp; Thiết bị</summary>
+                <label className="mt-3 flex items-center gap-2"><input type="checkbox" checked={session.muted} onChange={e => session.setMuted(e.target.checked)} />Tắt âm thanh khẩu lệnh</label>
+                {session.movementId !== 'attention' && session.movementId !== 'basicDrill' && <label className="mt-3 flex items-start gap-2">
+                  <input type="checkbox" checked={session.scorePrecondition} disabled={!['idle', 'quality-check', 'result', 'blocked'].includes(session.stage)} onChange={e => session.setScorePrecondition(e.target.checked)} />
+                  Chấm riêng Đứng nghiêm tiền đề (thêm 3 giây, không cộng vào điểm động tác chính)
+                </label>}
                 <dl className="mt-3 space-y-2 text-slate-600 dark:text-slate-300">
                   <div>Chế độ: {session.mode || 'Chưa khởi tạo'}</div>
                   <div>FPS phân tích: {session.snapshot?.inferenceFps.toFixed(1) ?? '—'}</div>
@@ -356,7 +396,7 @@ export default function PoseAnalysisPage() {
               report={session.stage === 'result' ? undefined : session.snapshot?.quality}
               ready={ready}
               progress={session.snapshot?.progress ?? 0}
-              result={session.result}
+              result={session.stage === 'stop-command' ? null : session.result}
               onStart={session.start}
               onStop={session.stop}
               onCalibrate={session.calibrate}
@@ -364,6 +404,8 @@ export default function PoseAnalysisPage() {
               scoreComparison={session.scoreComparison}
               isFullscreen={isFullscreen}
               movementId={activeMovementId}
+              preparationLabel={preparationDefinition(activeMovementId).label}
+              workflowMessage={session.snapshot?.message}
               activeStep={activeStep}
               onStepChange={setActiveStep}
               autoCalibrate={autoCalibrate}
@@ -373,7 +415,7 @@ export default function PoseAnalysisPage() {
 
             {!isFullscreen && (
               <section className="p-4 border border-emerald-200 dark:border-emerald-900 rounded-2xl text-[11px] text-slate-500 dark:text-slate-400">
-                Video được xử lý trực tiếp ngay trên thiết bị bằng WebAssembly, không tải bất kỳ hình ảnh nào lên máy chủ. An toàn và bảo mật 100%.
+                Video được xử lý trên thiết bị. Họ tên, lớp và kết quả được lưu để giáo viên theo dõi; hình ảnh và dữ liệu khớp không tải lên máy chủ.
               </section>
             )}
           </aside>
@@ -382,11 +424,18 @@ export default function PoseAnalysisPage() {
 
       <PoseResultDialog
           result={session.result}
-          open={!!session.result && dismissedResult !== session.result}
+          open={!!session.result && ['result', 'blocked'].includes(session.stage) && dismissedResult !== session.result}
           onClose={() => setDismissedResult(session.result)}
           movementId={session.movementId}
           onRetry={handleRetry}
           scoreComparison={session.scoreComparison}
+          student={finalStudent}
+          attempt={session.finalAttempt}
+          processingLatencyMs={displayedProcessingLatency(session.finalAttempt, presentedTiming)}
+          saveState={session.finalAttempt ? storage.getState(session.finalAttempt.id) ?? (formatError?.id === session.finalAttempt.id ? formatError : null) : null}
+          onSaveRetry={formatError?.id === session.finalAttempt?.id ? undefined : () => { if (session.finalAttempt) void storage.retry(session.finalAttempt.id); }}
+          onChangeStudent={handleChangeStudent}
+          onPresented={handleResultPresented}
       />
     </div>
   );

@@ -1,6 +1,7 @@
 import type { CanonicalPoseFrame, Landmark, Vec3 } from '../types';
 import { POSE_CONFIG } from '../config';
 import { POSE_CONNECTIONS } from './poseTopology';
+import { HAND_EDGES } from '../pipeline/saluteHand';
 
 export interface SkeletonViewport {
   width: number;
@@ -56,5 +57,16 @@ export function drawSkeleton(canvas: HTMLCanvasElement, frame: CanonicalPoseFram
     const point = projectSkeletonPoint(viewport, p.image);
     ctx.beginPath(); ctx.arc(point.x, point.y, 4, 0, Math.PI * 2);
     ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(2, 6, 23, 0.9)'; ctx.stroke(); ctx.fill();
+  }
+  const hand = frame.saluteHand;
+  if (hand && frame.timestampMs - hand.timestampMs >= 0 && frame.timestampMs - hand.timestampMs <= 200 && hand.image.length === 21) {
+    ctx.strokeStyle = '#38bdf8'; ctx.fillStyle = '#e0f2fe'; ctx.lineWidth = 1.5;
+    for (const [a,b] of HAND_EDGES) {
+      const p = projectSkeletonPoint(viewport,hand.image[a]), q = projectSkeletonPoint(viewport,hand.image[b]);
+      ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke();
+    }
+    for (const point of hand.image) {
+      const p = projectSkeletonPoint(viewport,point); ctx.beginPath(); ctx.arc(p.x,p.y,2,0,Math.PI*2); ctx.fill();
+    }
   }
 }

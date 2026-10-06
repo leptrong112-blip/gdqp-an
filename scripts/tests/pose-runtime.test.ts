@@ -4,6 +4,7 @@ import { createPoseRuntime } from '../../src/features/pose-analysis/runtime/pose
 import type { WorkerCommand, WorkerEvent } from '../../src/features/pose-analysis/runtime/workerProtocol';
 import { goodLighting } from './fixtures/pose/attention';
 import { AdaptiveBudget } from '../../src/features/pose-analysis/runtime/frameScheduler';
+import { createPoseAttempt, poseNowMs } from '../../src/features/pose-analysis/runtime/attemptTiming';
 
 test('slow inference reduces analysis frequency while camera geometry stays untouched', () => {
   const budget = new AdaptiveBudget();
@@ -60,4 +61,68 @@ test('worker transport drops overlap, closes late bitmaps and disposes on abort'
     runtime.command('startCalibration'); assert.equal(workers[0].messages.some(m => m.type === 'startCalibration'), false);
     workers[0].onmessage?.({ data: { type: 'error', message: 'late error' } }); assert.equal(events.length, 0);
   } finally { keys.forEach((key, i) => { if (original[i]) Object.defineProperty(globalThis, key, original[i]!); else Reflect.deleteProperty(globalThis, key); }); }
+});
+
+test('retry invalidates pending captures and stale worker scores, and a final score needs no extra analysis to settle', async () => {
+  const keys = ['Worker', 'OffscreenCanvas', 'createImageBitmap'] as const;
+  const originals = keys.map(key => Object.getOwnPropertyDescriptor(globalThis, key));
+  let worker: FakeWorker;
+  class FakeWorker {
+    onmessage: ((event: { data: WorkerEvent }) => void) | null = null;
+    onerror: unknown; onmessageerror: unknown;
+    messages: WorkerCommand[] = [];
+    constructor() { worker = this; }
+    postMessage(command: WorkerCommand) {
+      this.messages.push(command);
+      if (command.type === 'initialize') queueMicrotask(() => this.onmessage?.({ data: { type: 'ready', delegate: 'CPU', sequenceEngine: 'javascript' } }));
+      if (command.type === 'dispose') queueMicrotask(() => this.onmessage?.({ data: { type: 'disposed' } }));
+    }
+    terminate() {}
+  }
+  let capture: (bitmap: ImageBitmap) => void = () => {};
+  let captures = 0;
+  Object.defineProperty(globalThis, 'Worker', { configurable: true, value: FakeWorker });
+  Object.defineProperty(globalThis, 'OffscreenCanvas', { configurable: true, value: class {} });
+  Object.defineProperty(globalThis, 'createImageBitmap', { configurable: true, value: () => { captures++; return new Promise<ImageBitmap>(resolve => { capture = resolve; }); } });
+  try {
+    const abort = new AbortController(), emitted: WorkerEvent[] = [];
+    const runtime = await createPoseRuntime(abort.signal, event => emitted.push(event));
+    const video = { videoWidth: 640, videoHeight: 480 } as HTMLVideoElement;
+    const first = createPoseAttempt('attention'), second = createPoseAttempt('attention'), third = createPoseAttempt('attention');
+    runtime.command('reset', first);
+    const discarded = runtime.analyze(video, 0, goodLighting);
+    runtime.command('reset', second);
+    let closed = false;
+    capture({ width: 640, height: 480, close() { closed = true; } } as ImageBitmap);
+    await discarded;
+    assert.equal(closed, true);
+    assert.equal(worker!.messages.some(m => m.type === 'analyzeFrame'), false);
+
+    const pending = runtime.analyze(video, 100, goodLighting);
+    capture({ width: 640, height: 480, close() {} } as ImageBitmap);
+    await Promise.resolve();
+    runtime.command('reset', third);
+    worker!.onmessage?.({ data: { type: 'score', attemptId: second.id, result: { status: 'notScorable', reasons: ['old'] } } });
+    await pending;
+    assert.equal(emitted.some(e => e.type === 'score'), false);
+
+    const finalFrame = runtime.analyze(video, 200, goodLighting);
+    capture({ width: 640, height: 480, close() {} } as ImageBitmap);
+    await Promise.resolve();
+    const sent = worker!.messages.filter(m => m.type === 'analyzeFrame').at(-1);
+    assert.ok(sent?.type === 'analyzeFrame' && sent.attemptId === third.id);
+    const now = poseNowMs();
+    worker!.onmessage?.({ data: { type: 'score', attemptId: third.id, result: { status: 'notScorable', reasons: ['current'] }, timing: {
+      attemptStartedAtMs: third.startedAtMs, scoringWindowFinishedAtMs: now - 30, finalFrameProcessedAtMs: now - 5,
+      resultFinalizedAtMs: now, inferenceMs: 20, workerLatencyMs: 1, finalizationMs: 5, processingLatencyMs: 30,
+    } } });
+    await finalFrame;
+    assert.equal(emitted.filter(e => e.type === 'score').length, 1);
+    const count = captures;
+    await runtime.analyze(video, 300, goodLighting);
+    assert.equal(captures, count, 'completed runtime skips camera capture/inference');
+    abort.abort();
+  } finally {
+    keys.forEach((key,i) => { if (originals[i]) Object.defineProperty(globalThis,key,originals[i]!); else Reflect.deleteProperty(globalThis,key); });
+  }
 });

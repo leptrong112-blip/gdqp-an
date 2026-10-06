@@ -2,6 +2,7 @@ import { useRef, useState, type RefObject } from 'react';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import type { PoseStage, AnalysisSnapshot } from '../types';
 import { DRILL_LABELS } from '../scoring/basicDrill';
+import type { PoseCommandText } from '../runtime/commandFlow';
 
 export function PoseViewport({
   videoRef,
@@ -16,7 +17,10 @@ export function PoseViewport({
   qualityPassed = true,
   pauseReason,
   drillProgress,
+  dynamicProgress,
   diagnosticOverlay,
+  handStatus,
+  commandCue, workflow, saluteProgress,
 }: {
   videoRef: RefObject<HTMLVideoElement>;
   canvasRef: RefObject<HTMLCanvasElement>;
@@ -30,16 +34,24 @@ export function PoseViewport({
   qualityPassed?: boolean;
   pauseReason?: string;
   drillProgress?: AnalysisSnapshot['drillProgress'];
+  dynamicProgress?: AnalysisSnapshot['dynamicProgress'];
   diagnosticOverlay?: React.ReactNode;
+  handStatus?: AnalysisSnapshot['frame']['handStatus'];
+  commandCue?: { command: PoseCommandText } | null;
+  workflow?: AnalysisSnapshot['workflow'];
+  saluteProgress?: AnalysisSnapshot['saluteProgress'];
 }) {
   const container = useRef<HTMLDivElement>(null), [localExpanded, setLocalExpanded] = useState(false);
-  const active = ['quality-check', 'calibrating', 'countdown', 'scoring', 'completed', 'blocked'].includes(stage);
+  const active = ['quality-check', 'calibrating', 'waiting-precondition', 'precondition-scoring', 'countdown', 'transition', 'scoring', 'stop-command', 'completed', 'blocked'].includes(stage);
   const holdSeconds = (progress * 3.0).toFixed(1);
   const labels: Partial<Record<PoseStage, string>> = {
     'loading-model': 'Đang mở camera và tải mô hình…',
     calibrating: 'Giữ nguyên tư thế để hiệu chuẩn (2 giây)',
+    'waiting-precondition': `Vui lòng vào tư thế ${workflow?.preconditionLabel ?? 'chuẩn bị'} để chuẩn bị.`,
+    'precondition-scoring': 'Đang ghi nhận điểm tiền đề Đứng nghiêm · giữ ổn định',
+    transition: 'Chuyển tư thế theo khẩu lệnh · chưa tính điểm lúc chuyển động',
     countdown: `Chuẩn bị ${movementLabel} · ${Math.max(1, Math.ceil(3 * (1 - progress)))}`,
-    scoring: `Đang chấm... Giữ nguyên tư thế (${holdSeconds} / 3.0s)`,
+    scoring: dynamicProgress?.message ?? `Đang chấm... Giữ nguyên tư thế (${holdSeconds} / 3.0s)`,
     completed: '✓ Hoàn thành bài! Đang tính điểm...',
     result: 'Đã hoàn tất bài tập · Sẵn sàng thực hiện lại',
   };
@@ -79,6 +91,22 @@ export function PoseViewport({
         <canvas ref={canvasRef} className="absolute inset-0 z-[1] h-full w-full pointer-events-none" aria-hidden="true" />
       </div>
 
+      {commandCue && <div role="status" aria-live="assertive" aria-label={`Khẩu lệnh ${commandCue.command}`}
+        className="absolute inset-0 z-30 grid place-content-center pointer-events-none px-4 text-center">
+        <p className="rounded-3xl border-2 border-amber-300 bg-slate-950/90 px-8 py-6 text-4xl sm:text-6xl font-black text-amber-300 shadow-2xl">{commandCue.command}</p>
+      </div>}
+      {saluteProgress && !commandCue && ['transition', 'scoring'].includes(stage) && <div role="status"
+        className="absolute bottom-4 inset-x-4 z-10 rounded-xl bg-slate-950/90 p-3 text-center text-xs text-white pointer-events-none">
+        <p>{stage === 'scoring' ? 'Đã ghi nhận chuỗi nâng tay · giữ Chào ổn định để chấm.' : saluteProgress.motionObserved ? 'Đã ghi nhận nâng tay · giữ tư thế Chào ổn định.' : 'Đang theo dõi nâng tay phải sau khẩu lệnh CHÀO.'}</p>
+        {stage === 'scoring' && !saluteProgress.hand?.available && <p className="mt-1 text-amber-300">Chưa đủ dữ liệu để đánh giá bàn tay. Hãy giữ tay rõ trong khung hình.</p>}
+      </div>}
+      {workflow && ['quality-check', 'waiting-precondition', 'calibrating', 'precondition-scoring'].includes(stage) &&
+        <div role="status" className="absolute top-20 inset-x-4 z-10 rounded-xl bg-slate-950/90 p-3 text-center text-sm text-white pointer-events-none">
+          Tư thế chuẩn bị: <strong>{workflow.preconditionLabel}</strong>
+          {workflow.status === 'WRONG_PRECONDITION' && <p>Vui lòng vào đúng tư thế chuẩn bị.</p>}
+          {workflow.status === 'INSUFFICIENT_EVIDENCE' && <p>Camera chưa đủ dữ liệu để xác nhận.</p>}
+        </div>}
+
       {stage === 'completed' && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20 animate-in zoom-in-95 duration-200">
           <div className="bg-emerald-950/90 border-2 border-emerald-400 text-white px-7 py-5 rounded-3xl shadow-2xl flex items-center gap-3.5 backdrop-blur-xl">
@@ -97,6 +125,13 @@ export function PoseViewport({
           <p className="text-sm mt-2">Bật camera, đặt máy cố định thấy rõ từ đầu đến bàn chân.</p>
         </div>
       )}
+      {handStatus && !['completed','result','blocked'].includes(stage) && <div className="absolute bottom-4 left-4 right-4 z-10 rounded-xl bg-slate-950/85 px-3 py-2 text-xs text-sky-100 pointer-events-none" role="status">
+        {handStatus === 'loading' ? 'Đang tải nhận diện bàn tay…'
+          : handStatus === 'unavailable' ? 'Chưa chạy được nhận diện bàn tay. Các tiêu chí cơ thể vẫn được đánh giá.'
+          : handStatus === 'observed' ? 'Đã thấy bàn tay phải · Giữ tư thế chào tự nhiên.'
+          : handStatus === 'not-visible' ? 'Camera chưa thấy rõ chi tiết bàn tay phải; phần tay chưa được xác nhận.'
+          : 'Nhận diện ngón tay khi tay phải đưa lên chào.'}
+      </div>}
 
       <div className="absolute top-4 left-4 right-4 flex justify-between gap-3 items-start z-10">
         <span className="rounded-full bg-slate-900/90 backdrop-blur-md px-3.5 py-2 text-xs font-semibold text-white border border-slate-700/50 shadow-md flex items-center gap-2">
@@ -141,13 +176,13 @@ export function PoseViewport({
           {i < drillProgress.completed ? '✓' : i + 1} {label}
         </li>)}
       </ol>}
-      {(stage === 'countdown' || (stage === 'scoring' && progress < 0.18)) && <div role="status" aria-live="polite"
+      {!commandCue && stage === 'countdown' && <div role="status" aria-live="polite"
         className="absolute inset-0 z-10 grid place-content-center pointer-events-none text-center px-6">
         <div className="rounded-3xl bg-slate-950/90 border border-amber-400 p-6 text-white shadow-2xl max-w-lg">
           <p className="text-lg font-black">{!qualityPassed ? 'Tạm dừng chuẩn bị' : stage === 'countdown' ? 'Chuẩn bị bắt đầu' : 'Bắt đầu'}</p>
           <p className="mt-2 text-xl font-bold text-amber-300">{movementLabel}</p>
           {qualityPassed && stage === 'countdown' && <p className="text-7xl font-black my-3">{Math.max(1, Math.ceil(3 * (1 - progress)))}</p>}
-          <p className="mt-2 text-sm">{!qualityPassed ? pauseReason || 'Đứng lại trong vùng nhận diện.' : stage === 'countdown' ? 'Vào tư thế; chưa tính điểm trong lúc đếm ngược.' : 'Giữ tư thế ổn định trong 3 giây.'}</p>
+          <p className="mt-2 text-sm">{!qualityPassed ? pauseReason || 'Đứng lại trong vùng nhận diện.' : `Giữ tư thế ${workflow?.preconditionLabel ?? 'chuẩn bị'}; chờ khẩu lệnh rồi mới thực hiện.`}</p>
         </div>
       </div>}
       {stage === 'scoring' && !qualityPassed && <p role="alert" className="absolute bottom-6 inset-x-6 z-20 rounded-xl bg-amber-950 p-4 text-amber-100">{pauseReason || 'Tạm dừng: chưa đủ dữ liệu theo dõi.'}</p>}

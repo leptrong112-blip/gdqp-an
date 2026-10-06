@@ -1,7 +1,7 @@
 import { Camera, RotateCcw, Square, SwitchCamera } from 'lucide-react';
 import type { PoseStage } from '../types';
 export function SessionControls({ stage, ready, start, stop, calibrate, retry, changeCamera }: { stage: PoseStage; ready: boolean; start: () => void; stop: () => void; calibrate: () => void; retry?: () => void; changeCamera: () => void }) {
-  const running = ['quality-check', 'calibrating', 'countdown', 'scoring', 'completed', 'blocked', 'loading-model'].includes(stage);
+  const running = ['quality-check', 'calibrating', 'waiting-precondition', 'precondition-scoring', 'countdown', 'transition', 'scoring', 'stop-command', 'completed', 'blocked', 'loading-model'].includes(stage);
   const button = 'min-h-12 px-4 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all';
   return <div className="flex flex-wrap gap-3">
     {!running ? (

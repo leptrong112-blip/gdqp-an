@@ -1,5 +1,6 @@
 import type { DualMeasurement, LandmarkName, NormalizedPoseFrame, Vec3 } from '../types';
 import { angleAt2D, angleAt3D, angleBetween, distance, horizontalTilt, midpoint, subtract } from '../pipeline/geometry';
+import { extractFeatures } from '../pipeline/featureExtraction';
 
 /**
  * Phép đo kép song song trên cùng một frame cho các đặc trưng hình học:
@@ -11,7 +12,7 @@ import { angleAt2D, angleAt3D, angleBetween, distance, horizontalTilt, midpoint,
  * - Không lấy chênh lệch làm sai số tuyệt đối; delta phản ánh độ phân kỳ giữa 2 góc nhìn.
  * - KHÔNG thay đổi kết quả chấm điểm chính thức.
  */
-export function extractDualMeasurements(frame: NormalizedPoseFrame): DualMeasurement[] {
+export function extractDualMeasurements(frame: NormalizedPoseFrame, dynamicTurn = false): DualMeasurement[] {
   const p = frame.body;
   const w = frame.worldBody;
   const l = frame.landmarks;
@@ -261,5 +262,16 @@ export function extractDualMeasurements(frame: NormalizedPoseFrame): DualMeasure
     });
   }
 
-  return results;
+  const official = extractFeatures(frame, dynamicTurn).values;
+  return results.map(d => {
+    const feature = official[d.featureId];
+    const turn3D = dynamicTurn && ['shoulderTilt', 'leftWristHipDistance', 'rightWristHipDistance'].includes(d.featureId);
+    return { ...d, officialValue: feature?.value ?? NaN,
+      officialSystem: turn3D ? 'CURRENT_3D' as const : d.officialSystem,
+      value3D: turn3D && d.featureId === 'shoulderTilt' ? feature?.value ?? NaN : d.value3D,
+      delta: turn3D && d.featureId === 'shoulderTilt'
+        ? (feature && Number.isFinite(d.value2D) ? Math.abs(feature.value - d.value2D) : NaN) : d.delta,
+      isReliable: !!feature && feature.confidence >= .6 && Number.isFinite(feature.value),
+    };
+  });
 }

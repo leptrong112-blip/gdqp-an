@@ -1,5 +1,6 @@
-import type { FeatureId } from '../types';
+import type { FeatureId, SaluteProgress } from '../types';
 import type { SequenceReport } from './sequenceAnalysis';
+import type { TurnTechniqueReport } from './turnTechnique';
 export type MovementType = 'STATIC' | 'DYNAMIC';
 
 export interface DynamicMovementConfig {
@@ -39,8 +40,12 @@ export interface CriterionResult {
   measurements: { feature: FeatureId; value: number; variability: number }[];
 }
 export type ScoreResult =
-  | { status: 'notScorable'; reasons: string[]; drill?: DrillSummary }
-  | { status: 'scored'; total: number; confidence: number; criteria: CriterionResult[]; corrections: string[]; sequence?: SequenceReport; passed?: boolean; drill?: DrillSummary };
+  | { status: 'notScorable'; reasons: string[]; drill?: DrillSummary; precondition?: PreconditionScore; saluteSequence?: SaluteProgress }
+  | { status: 'scored'; total: number; confidence: number; criteria: CriterionResult[]; corrections: string[]; sequence?: SequenceReport; turnTechnique?: TurnTechniqueReport; passed?: boolean; assessment?: 'pass' | 'fail' | 'incomplete'; unassessedPoints?: number; drill?: DrillSummary; precondition?: PreconditionScore; saluteSequence?: SaluteProgress };
+export interface PreconditionScore {
+  movementId: 'attention'; result: Extract<ScoreResult, { status: 'scored' }>;
+  quality: { confidence: number; unassessedPoints: number };
+}
 
 export interface DrillStepResult { movementId: 'attention' | 'atEase' | 'salute'; result: ScoreResult }
 export interface DrillSummary { steps: DrillStepResult[]; totalPoints: number; maximum: number; completion: number; passed: boolean }

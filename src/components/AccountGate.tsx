@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { ShieldCheck, UserRound, LockKeyhole, ArrowRight, LogOut, ChevronDown, Home, BarChart3, ClipboardCheck, X, GraduationCap, KeyRound } from 'lucide-react';
+import { ShieldCheck, UserRound, LockKeyhole, ArrowRight, LogOut, ChevronDown, Home, BarChart3, ClipboardCheck, X, GraduationCap, KeyRound, Camera } from 'lucide-react';
 
 export type Account = { id: string; username: string; name: string; role: 'admin' | 'teacher' | 'student' };
 export const accountLabels = { admin: 'Quản trị viên', teacher: 'Giáo viên', student: 'Học sinh' };
@@ -24,7 +24,7 @@ export async function accountApi(route: string, options?: RequestInit) {
   }
   return data;
 }
-export function AccountMenu({ onNavigate }: { onNavigate: (tab: 'home' | 'survey' | 'admin' | 'exam_admin') => void }) {
+export function AccountMenu({ onNavigate }: { onNavigate: (tab: 'home' | 'survey' | 'admin' | 'exam_admin' | 'pose_admin') => void }) {
   const { user, loading, openLogin, openChangePassword, logout } = useAccount();
   const [error, setError] = useState('');
   const menu = useRef<HTMLDetailsElement>(null);
@@ -35,7 +35,7 @@ export function AccountMenu({ onNavigate }: { onNavigate: (tab: 'home' | 'survey
     return () => { document.removeEventListener('pointerdown', close); document.removeEventListener('keydown', escape); };
   }, []);
   const item = 'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800';
-  function navigate(tab: 'home' | 'survey' | 'admin' | 'exam_admin') { menu.current?.removeAttribute('open'); onNavigate(tab); }
+  function navigate(tab: 'home' | 'survey' | 'admin' | 'exam_admin' | 'pose_admin') { menu.current?.removeAttribute('open'); onNavigate(tab); }
   if (!user) return <button disabled={loading} onClick={openLogin} className="flex items-center gap-1.5 sm:gap-2 rounded-xl bg-red-600 hover:bg-red-700 text-white px-2.5 sm:px-3 py-2 text-xs font-bold disabled:opacity-50 transition-all shadow-xs" aria-label="Tài khoản — Đăng nhập" title="Đăng nhập tài khoản"><UserRound size={16} className="shrink-0" /><span className="hidden sm:inline">Tài khoản</span></button>;
   return <details ref={menu} className="relative print:hidden">
     <summary className="list-none cursor-pointer flex items-center gap-1.5 sm:gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white px-2.5 sm:px-3 py-2 text-xs font-bold [&::-webkit-details-marker]:hidden" title={`Tài khoản: ${user.name}`}><UserRound size={16} className="shrink-0 text-red-500" /><span className="hidden sm:inline max-w-24 truncate">{user.username}</span><ChevronDown size={13} className="text-slate-400" /></summary>
@@ -43,7 +43,8 @@ export function AccountMenu({ onNavigate }: { onNavigate: (tab: 'home' | 'survey
       <div className="px-3 py-3 mb-1 border-b border-slate-200 dark:border-slate-700"><p className="font-bold truncate">{user.name}</p><p className="text-xs text-slate-500 mt-1">{accountLabels[user.role]} · {user.username}</p></div>
       <button className={item} onClick={() => navigate('home')}><Home size={17} />Trang chủ</button>
       {(user.role === 'admin' || user.role === 'teacher') && (
-        <button className={item} onClick={() => navigate('exam_admin')}><GraduationCap size={17} />Quản lý kết quả thi</button>
+        <><button className={item} onClick={() => navigate('exam_admin')}><GraduationCap size={17} />Quản lý kết quả thi</button>
+        <button className={item} onClick={() => navigate('pose_admin')}><Camera size={17} />Kết quả AI Pose</button></>
       )}
       {user.role === 'admin' ? (
         <button className={item} onClick={() => navigate('admin')}><BarChart3 size={17} />Báo cáo khảo sát</button>

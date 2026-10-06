@@ -17,6 +17,10 @@ import type { ScoreResult } from '../scoring/scoringTypes';
 import { buildRequirementCards, extractTopCorrections } from '../scoring/postureFeedback';
 import { SequenceSummary } from './SequenceSummary';
 import { DrillResults } from './DrillResults';
+import { PoseFinalSummary } from './PoseFinalSummary';
+import { poseScoreOnTen } from '../results/scoreScale';
+import { CAMERA_LIGHTING_HELP, CAMERA_FRAMING_HELP, CAMERA_DARKNESS_NOTICE } from './PoseCameraGuidance';
+import { SaluteSequenceSummary } from './SaluteSequenceSummary';
 
 interface ScoreResultsProps {
   result: ScoreResult;
@@ -24,6 +28,7 @@ interface ScoreResultsProps {
   onRetry?: () => void;
   scoreComparison?: { previous: number; delta: number } | null;
   compact?: boolean;
+  concise?: boolean;
 }
 
 export function ScoreResults({
@@ -32,8 +37,12 @@ export function ScoreResults({
   onRetry,
   scoreComparison,
   compact = false,
+  concise = false,
 }: ScoreResultsProps) {
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
+  if (concise) return <PoseFinalSummary result={result} movementId={movementId} onRetry={onRetry}>
+    <ScoreResults result={result} movementId={movementId} scoreComparison={scoreComparison} compact={compact} />
+  </PoseFinalSummary>;
   if (result.drill) return <DrillResults result={result} onRetry={onRetry} />;
 
   // ═══════════════════ TRƯỜNG HỢP KHÔNG THỂ CHẤM ĐIỂM (LỖI CHẤT LƯỢNG / CAMERA) ═══════════════════
@@ -70,8 +79,20 @@ export function ScoreResults({
         </div>
 
         <div className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed bg-amber-100/50 dark:bg-amber-900/30 p-3 rounded-xl border border-amber-200/50 dark:border-amber-800/40">
-          💡 <strong>Gợi ý khắc phục:</strong> Chỉnh camera thấy rõ từ đỉnh đầu đến hai bàn chân, giữ phòng đủ sáng và đứng yên không cử động trong suốt 3 giây giữ thế.
+          💡 <strong>Gợi ý khắc phục:</strong> {movementId === 'turnLeft' || movementId === 'turnRight'
+            ? 'Đặt camera cố định, lấy trọn toàn thân và giữ phòng đủ sáng. Nhìn thẳng khi đếm ngược, quay liên tục khi có hiệu lệnh bắt đầu rồi giữ tư thế cuối 1,5 giây.'
+            : 'Chỉnh camera thấy rõ từ đỉnh đầu đến hai bàn chân, giữ phòng đủ sáng và đứng yên không cử động trong suốt 3 giây giữ thế.'}
         </div>
+
+        <SaluteSequenceSummary result={result} />
+        <details className="rounded-xl border border-amber-200 dark:border-amber-800 p-3 text-xs leading-relaxed">
+          <summary className="cursor-pointer font-bold">Cách cải thiện ánh sáng và vị trí camera</summary>
+          <ul className="list-disc pl-5 mt-3 space-y-2">
+            <li>{CAMERA_LIGHTING_HELP}</li>
+            <li>{CAMERA_FRAMING_HELP}</li>
+          </ul>
+          <p className="mt-3">{CAMERA_DARKNESS_NOTICE} Thiếu dữ liệu hình ảnh không đồng nghĩa với thực hiện sai động tác.</p>
+        </details>
 
         {onRetry && (
           <button
@@ -88,6 +109,10 @@ export function ScoreResults({
 
   // ═══════════════════ TRƯỜNG HỢP ĐÃ CHẤM ĐIỂM THÀNH CÔNG ═══════════════════
   const { total, confidence, criteria } = result;
+  const incomplete = result.assessment === 'incomplete';
+  const unassessedPoints = result.unassessedPoints ?? 0;
+  const resultTextColor = incomplete ? 'text-amber-700 dark:text-amber-300'
+    : result.passed === false ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400';
   const cards = buildRequirementCards(criteria, movementId);
   const topCorrections = extractTopCorrections(criteria);
 
@@ -105,7 +130,13 @@ export function ScoreResults({
     tierColor = 'bg-teal-500/15 text-teal-700 dark:text-teal-300 border-teal-500/30';
   }
   if (result.passed === false) {
-    tierLabel = 'CHƯA ĐẠT · XEM TIÊU CHÍ BẮT BUỘC';
+    tierLabel = result.assessment !== 'fail' && criteria.some(c => c.statusLevel === 'NOT_SCORABLE')
+      ? 'CHƯA XÁC NHẬN ĐẠT · THIẾU DỮ LIỆU'
+      : 'CHƯA ĐẠT · ĐIỂM TỔNG DƯỚI 6,5';
+    tierColor = 'bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/40';
+  }
+  if (incomplete) {
+    tierLabel = 'CHƯA KẾT LUẬN TOÀN BÀI · THIẾU DỮ LIỆU';
     tierColor = 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30';
   }
 
@@ -115,7 +146,7 @@ export function ScoreResults({
     : movementId === 'atEase'
     ? 'Tư thế đứng nghỉ'
     : movementId === 'salute'
-    ? 'Động tác chào / thôi chào'
+    ? 'Động tác chào'
     : 'Tư thế đứng nghiêm';
   const exerciseSubtitle =
     isTurn
@@ -128,7 +159,7 @@ export function ScoreResults({
 
   return (
     <section
-      className={`rounded-3xl border border-emerald-300 dark:border-emerald-800/80 bg-white dark:bg-slate-900 shadow-2xl space-y-5 text-slate-800 dark:text-slate-100 ${
+      className={`rounded-3xl border ${incomplete ? 'border-amber-300 dark:border-amber-800/80' : result.passed === false ? 'border-red-300 dark:border-red-800/80' : 'border-emerald-300 dark:border-emerald-800/80'} bg-white dark:bg-slate-900 shadow-2xl space-y-5 text-slate-800 dark:text-slate-100 ${
         compact ? 'p-4 sm:p-5' : 'p-5 sm:p-7'
       }`}
       aria-label={`Kết quả chấm điểm ${exerciseName}`}
@@ -136,7 +167,7 @@ export function ScoreResults({
       {/* ══════════ KHỐI TỔNG ĐIỂM & XẾP HẠNG ══════════ */}
       <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
         <div>
-          <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-600 dark:text-emerald-400 font-mono">
+          <span className={`text-[10px] uppercase font-bold tracking-widest font-mono ${resultTextColor}`}>
             Kết quả bài tập · AI Pose Beta
           </span>
           <h2 className="text-lg sm:text-2xl font-black mt-0.5">{exerciseName}</h2>
@@ -147,17 +178,19 @@ export function ScoreResults({
 
         <div className="flex items-center gap-4">
           <div className="text-right">
-            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Mức đạt theo tiêu chí</p>
-            <div className="text-3xl sm:text-5xl font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight">
-              {total}
-              <span className="text-xl sm:text-3xl">%</span>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{incomplete ? 'Điểm đã ghi nhận' : 'Mức đạt theo tiêu chí'}</p>
+            <div className={`text-3xl sm:text-5xl font-black font-mono tracking-tight ${resultTextColor}`}>
+              {poseScoreOnTen(total)}
+              <span className="text-xl sm:text-3xl"> / {poseScoreOnTen(100 - unassessedPoints)}</span>
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">Tương đương {total}/100 điểm · Điểm tham khảo</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">{incomplete
+              ? `Điểm trên phần đã đánh giá · ${poseScoreOnTen(unassessedPoints)} điểm chưa đánh giá`
+              : 'Thang điểm 10 · Điểm tham khảo'}</p>
             <div className="flex items-center justify-end gap-2 mt-1">
               <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-extrabold border ${tierColor}`}>
                 {tierLabel}
               </span>
-              {scoreComparison && (
+              {scoreComparison && !incomplete && (
                 <span
                   className={`flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full ${
                     scoreComparison.delta > 0
@@ -166,17 +199,17 @@ export function ScoreResults({
                       ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
                       : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
                   }`}
-                  title={`Lần trước: ${scoreComparison.previous} điểm`}
+                  title={`Lần trước: ${poseScoreOnTen(scoreComparison.previous)} điểm`}
                 >
                   {scoreComparison.delta > 0 ? (
                     <>
                       <TrendingUp size={12} />
-                      <span>+{scoreComparison.delta} đ</span>
+                      <span>+{poseScoreOnTen(scoreComparison.delta)} đ</span>
                     </>
                   ) : scoreComparison.delta < 0 ? (
                     <>
                       <TrendingDown size={12} />
-                      <span>{scoreComparison.delta} đ</span>
+                      <span>{poseScoreOnTen(scoreComparison.delta)} đ</span>
                     </>
                   ) : (
                     <>
@@ -192,10 +225,18 @@ export function ScoreResults({
       </div>
 
       {result.sequence && <SequenceSummary report={result.sequence} />}
+      <SaluteSequenceSummary result={result} />
+      {incomplete && <p className="rounded-xl p-3 text-xs bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+        Đã ghi nhận {poseScoreOnTen(total)} điểm; còn {poseScoreOnTen(unassessedPoints)} điểm chưa đánh giá: {criteria.filter(c => c.statusLevel === 'NOT_SCORABLE').map(c => c.label).join(', ')}.
+        {' '}Phần thiếu dữ liệu không được coi là thực hiện sai và không làm giảm điểm đã ghi nhận. Chưa kết luận đạt/chưa đạt toàn bài.
+      </p>}
+      {result.turnTechnique && <p className={`rounded-xl p-3 text-xs ${result.turnTechnique.passed ? 'bg-slate-100 dark:bg-slate-800' : 'bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-200'}`}>
+        {result.turnTechnique.feedback} Chỉ kiểm tra dịch chuyển quan sát được; camera chưa xác nhận lực tỳ gót/mũi chân và toàn bộ trình tự khép chân.
+      </p>}
       {criteria.some(c => c.required) && <p className="text-xs text-slate-600 dark:text-slate-300">
         Tiêu chí bắt buộc: {criteria.filter(c => c.required).map(c => c.label).join(', ')}.
-        {' '}Cần ít nhất 60% điểm mỗi nhóm bắt buộc và 65/100 tổng điểm để đạt mức luyện tập.
-        {' '}Ngực nở, hướng mắt chính xác và phân bố trọng lượng chưa được camera đo trực tiếp.
+        {' '}Kết luận toàn bài dựa vào điểm tổng: từ 6,5/10 là đạt khi camera có đủ dữ liệu. Tiêu chí chưa đạt được ghi riêng để luyện lại.
+        {' '}{isTurn ? 'Cần luyện đúng hướng, quay tại chỗ và giữ thế cuối; các lỗi được phản ánh trong điểm từng tiêu chí.' : 'Ngực nở, hướng mắt chính xác và phân bố trọng lượng chưa được camera đo trực tiếp.'}
       </p>}
 
       {/* ══════════ CẦN CẢI THIỆN NHẤT (NẾU CÓ ĐIỂM TRỪ) ══════════ */}
@@ -219,7 +260,7 @@ export function ScoreResults({
       <div className="space-y-3">
         <h3 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center justify-between">
           <span>Chi tiết yêu cầu bài tập:</span>
-          <span className="text-[10px] font-normal text-slate-400">Thang điểm 100</span>
+          <span className="text-[10px] font-normal text-slate-400">Thang điểm 10</span>
         </h3>
 
         <div className="grid gap-3 sm:grid-cols-2">
@@ -254,13 +295,13 @@ export function ScoreResults({
 
                     <div className="text-right shrink-0">
                       <span className="text-xs font-black font-mono">
-                        {card.points} / {card.maximum}
+                        {card.statusLevel === 'NOT_SCORABLE' ? '—' : poseScoreOnTen(card.points)} / {poseScoreOnTen(card.maximum)}
                       </span>
                     </div>
                   </div>
 
                   {/* Thanh tiến trình mini */}
-                  <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mt-2.5 overflow-hidden">
+                  {card.statusLevel !== 'NOT_SCORABLE' && <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mt-2.5 overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all ${
                         isPass
@@ -273,7 +314,7 @@ export function ScoreResults({
                       }`}
                       style={{ width: `${Math.min(100, Math.max(5, (card.points / card.maximum) * 100))}%` }}
                     />
-                  </div>
+                  </div>}
 
                   {/* Nhãn trạng thái */}
                   <div className="flex items-center gap-1.5 mt-2">
@@ -294,7 +335,7 @@ export function ScoreResults({
                     )}
                     {card.statusLevel === 'NOT_SCORABLE' && (
                       <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500">
-                        <HelpCircle size={13} /> Không đủ dữ liệu
+                        <HelpCircle size={13} /> Camera chưa xác nhận
                       </span>
                     )}
                   </div>
@@ -341,7 +382,7 @@ export function ScoreResults({
                   <span className="text-[11px] text-slate-400 ml-2">({c.feedback})</span>
                 </div>
                 <span className="font-mono font-bold text-slate-600 dark:text-slate-300">
-                  {c.points} / {c.maximum} đ
+                  {c.statusLevel === 'NOT_SCORABLE' ? '—' : poseScoreOnTen(c.points)} / {poseScoreOnTen(c.maximum)} đ
                 </span>
               </div>
             ))}
@@ -352,7 +393,7 @@ export function ScoreResults({
       {/* ══════════ CHÂN TRANG & NÚT THỰC HIỆN LẠI ══════════ */}
       <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400">
-          <span>Độ tin cậy phân tích: <strong>{Math.round(confidence * 100)}%</strong></span>
+          <span>{isTurn || movementId === 'salute' ? <>Phạm vi đánh giá: <strong>{poseScoreOnTen(100 - unassessedPoints)}/10 điểm tiêu chí</strong></> : <>Độ tin cậy phân tích: <strong>{Math.round(confidence * 100)}%</strong></>}</span>
           <span>Xử lý 100% Offline trên máy · Điểm tham khảo kỹ thuật</span>
         </div>
 

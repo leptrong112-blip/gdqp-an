@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { attentionFrame, goodLighting } from './fixtures/pose/attention';
-import { drillFrame } from './fixtures/pose/drill';
+import { drillFrame, saluteMotionFrame } from './fixtures/pose/drill';
 import { createCalibration, normalizePose } from '../../src/features/pose-analysis/pipeline/normalization';
 import { extractFeatures } from '../../src/features/pose-analysis/pipeline/featureExtraction';
 import { QualityChecker } from '../../src/features/pose-analysis/pipeline/qualityChecks';
@@ -23,7 +23,7 @@ function window(): FeatureWindow {
   return { samples: Array.from({ length: 30 }, (_, i) => extractFeatures(normalizePose(attentionFrame(i * 100), profile)!)), validDurationMs: 3000, qualityPassed: true };
 }
 
-test('mild knee flexion is fully tolerated, but sustained clear bends fail required legs without collapsing other scores', () => {
+test('mild knee flexion is fully tolerated, but sustained clear bends fail the leg criterion without overriding the total grade', () => {
   for (const angle of [180, 167, 165, 140]) {
     const data = window();
     data.samples.forEach(s => { s.values.leftKneeAngle!.value = angle; s.values.rightKneeAngle!.value = angle; });
@@ -31,7 +31,7 @@ test('mild knee flexion is fully tolerated, but sustained clear bends fail requi
     assert.ok(result.status === 'scored');
     if (angle >= 165) { assert.equal(result.total, 100); assert.equal(result.passed, true); }
     else {
-      assert.equal(result.total, 80); assert.equal(result.passed, false);
+      assert.equal(result.total, 80); assert.equal(result.passed, true);
       assert.equal(buildRequirementCards(result.criteria)[1].statusLevel, 'NOT_ACHIEVED');
     }
   }
@@ -46,7 +46,8 @@ test('rest has its own mild flexion bands, still distinguishing both-straight an
     });
     const result = evaluate(atEaseMovement, data);
     assert.ok(result.status === 'scored');
-    assert.equal(result.passed, expectedPass);
+    assert.equal(result.passed, result.total >= 65);
+    assert.equal(result.criteria.find(c => c.id === 'legs')!.statusLevel === 'PASS', expectedPass);
     if (expectedPass) {
       assert.equal(result.total, 100);
       assert.deepEqual(result.criteria.flatMap(c => c.mistakes ?? []), []);
@@ -61,7 +62,7 @@ test('one isolated bad frame is trimmed, sustained bad frames still lose points'
     const result = evaluate(attentionMovement, data);
     assert.ok(result.status === 'scored');
     assert.equal(result.total === 100, badCount === 1);
-    if (badCount === 29) assert.equal(result.passed, false);
+    if (badCount === 29) { assert.equal(result.passed, result.total >= 65); assert.equal(result.criteria.find(c => c.id === 'torso')!.statusLevel, 'NOT_ACHIEVED'); }
   }
 });
 
@@ -97,12 +98,17 @@ function runDrill(options: { failAt?: number; wrongRest?: boolean; shortGap?: bo
   const session = new SessionProcessor(), events: WorkerEvent[] = [];
   session.command('selectBasicDrill');
   let snapshot: AnalysisSnapshot | undefined;
+  let saluteCommandMs: number | undefined;
   const feed = (t: number) => {
     const id = snapshot?.drillProgress?.movementId ?? 'attention';
-    const frame = drillFrame(options.wrongRest && id === 'atEase' ? 'attention' : id, t);
-    if (options.failAt !== undefined && snapshot?.drillProgress?.index === options.failAt) frame.personCount = 0;
+    const expected = session.expectedPostureId;
+    const frame = expected === 'salute' && saluteCommandMs !== undefined ? saluteMotionFrame(t, saluteCommandMs) : drillFrame(expected, t);
+    // Enter the target first; only the scored hold contains this leg error.
+    if (options.wrongRest && id === 'atEase' && snapshot?.stage === 'scoring') frame.landmarks.leftKnee!.world!.z = 0;
+    if (options.failAt !== undefined && snapshot?.drillProgress?.index === options.failAt && snapshot?.stage === 'scoring') frame.personCount = 0;
     if (options.shortGap && t === 6800) frame.personCount = 0;
     const next = session.process(frame, goodLighting, 10);
+    if (next.some(e => e.type === 'commandCue' && e.command === 'CHÀO')) saluteCommandMs = t;
     for (const e of next) if (e.type === 'analysis') snapshot = e.snapshot;
     events.push(...next);
   };
@@ -134,13 +140,14 @@ test('full drill counts down for each step, holds 3s, emits only one final resul
     assert.ok(finished.snapshot.frame.timestampMs - scoring.frame.timestampMs >= 3000, 'each posture needs its own full hold');
   }
   const html = renderToStaticMarkup(React.createElement(ScoreResults, { result, movementId: 'basicDrill' }));
-  assert.match(html, /ĐẠT TOÀN CHUỖI/); assert.match(html, /300/); assert.match(html, /100%/);
+  assert.match(html, /ĐẠT TOÀN CHUỖI/); assert.match(html, /10 \/ 10 điểm/); assert.match(html, /100%/);
 });
 
-test('a wrong rest pose cannot be hidden by perfect attention and salute scores', () => {
+test('a rest criterion finding is preserved while the overall drill grade follows its mean', () => {
   const result = runDrill({ wrongRest: true }).events.find(e => e.type === 'score')?.result;
   assert.ok(result?.status === 'scored');
-  assert.equal(result.drill?.completion, 1); assert.equal(result.drill?.passed, false);
+  assert.equal(result.drill?.completion, 1); assert.equal(result.drill?.passed, result.total >= 65);
+  assert.ok(result.drill?.steps[1].result.status === 'scored' && result.drill.steps[1].result.criteria.some(c => c.statusLevel === 'NOT_ACHIEVED'));
 });
 
 test('tracking loss preserves earlier step scores without grading unobserved steps', () => {

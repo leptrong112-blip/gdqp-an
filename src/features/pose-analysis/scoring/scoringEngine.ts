@@ -1,6 +1,8 @@
 import type { FeatureWindow } from '../types';
+import { overallPoseAssessment } from './assessmentPolicy';
 import { mad, mean, median } from '../pipeline/geometry';
-import type { FeatureRule, MovementDefinition, ScoreResult } from './scoringTypes';
+import type { CriterionResult, FeatureRule, MovementDefinition, ScoreResult } from './scoringTypes';
+import { scoreSaluteHand } from './saluteHandScoring';
 import { diagnoseMeasurements } from './postureFeedback';
 import { evaluateDynamicAttempt } from './dynamicMovementAnalyzer';
 import { TemporalMotionBuffer } from '../pipeline/motionBuffer';
@@ -45,8 +47,9 @@ export function evaluate(
   const refuse = (reason: string): ScoreResult => ({ status: 'notScorable', reasons: [reason] });
   if (!window.qualityPassed || window.validDurationMs < definition.minimumDurationMs || window.samples.length < definition.minimumSamples) return refuse('Chưa đủ thời gian và dữ liệu đáng tin cậy để chấm. Vui lòng thử lại.');
   const confidences: number[] = [];
-  const criteria = [];
+  const criteria: CriterionResult[] = [];
   for (const criterion of definition.criteria) {
+    if (definition.id === 'salute' && criterion.id === 'saluteHand') { criteria.push(scoreSaluteHand(window.samples)); continue; }
     const measurements = [], scores: number[] = [], essentialScores: number[] = [];
     for (const rule of criterion.rules) {
       const valid = window.samples.map(s => s.values[rule.feature]).filter(v => !!v && Number.isFinite(v.value) && v.confidence >= 0.6);
@@ -79,14 +82,16 @@ export function evaluate(
     });
   }
   const total = Math.round(criteria.reduce((sum, c) => sum + c.points, 0));
+  const unassessedPoints = criteria.filter(c => c.statusLevel === 'NOT_SCORABLE').reduce((sum,c) => sum+c.maximum,0);
+  const assessment = overallPoseAssessment(total, unassessedPoints);
   return {
     status: 'scored',
     total,
-    ...(definition.robustPosture ? { passed: total >= 65 && criteria.every(c => !c.required || c.points / c.maximum >= 0.6) } : {}),
+    passed: assessment === 'pass', assessment, unassessedPoints,
     confidence: mean(confidences),
     criteria,
     corrections: [...criteria]
-      .filter(c => c.status === 'improve')
+      .filter(c => c.status === 'improve' && c.statusLevel !== 'NOT_SCORABLE')
       .sort((a, b) => (b.maximum - b.points) - (a.maximum - a.points))
       .slice(0, 2)
       .map(c => c.feedback),

@@ -10,7 +10,8 @@ export function attentionFrame(timestampMs = 0, size = 1, xOffset = 0, mirrored 
   const landmarks: CanonicalPoseFrame['landmarks'] = {};
   for (const [key, [x, y]] of Object.entries(coordinates)) landmarks[key as LandmarkName] = {
     image: { x: 0.5 + (xOffset + x * size * (mirrored ? -1 : 1)) / aspectRatio, y: 0.5 + (y - 0.5) * size, z: 0 },
-    world: { x: x * (mirrored ? -1 : 1), y: y - 0.5, z: 0 }, visibility: 0.99, presence: null, confidence: 0.99,
+    // Display mirroring never reflects anatomical world-space coordinates.
+    world: { x, y: key.endsWith('FootIndex') ? .36 : y - 0.5, z: key.endsWith('FootIndex') ? -.05 : 0 }, visibility: 0.99, presence: null, confidence: 0.99,
   };
   return { timestampMs, personCount: 1, aspectRatio, landmarks };
 }
@@ -21,7 +22,7 @@ export function rotatedPoseFrame(yawDeg: number, timestampMs = 0, mirrored = fal
   const rad = yawDeg * Math.PI / 180;
   for (const landmark of Object.values(frame.landmarks)) {
     if (!landmark?.world) continue;
-    const x = landmark.world.x * Math.cos(rad), z = -landmark.world.x * Math.sin(rad);
+    const x = landmark.world.x * Math.cos(rad) + landmark.world.z * Math.sin(rad), z = -landmark.world.x * Math.sin(rad) + landmark.world.z * Math.cos(rad);
     landmark.world = { x, y: landmark.world.y, z };
     landmark.image = { x: 0.5 + x * (mirrored ? -1 : 1) / frame.aspectRatio, y: landmark.image.y, z };
   }

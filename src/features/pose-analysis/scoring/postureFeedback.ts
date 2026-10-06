@@ -189,7 +189,7 @@ export function diagnoseMeasurements(
     mistakes.length = 0;
     switch (criterionId) {
       case 'feet':
-        specificFeedback = 'Gót chân khép sát, hai mũi chân mở hình chữ V chuẩn ~45°.';
+        specificFeedback = '2 gót chân đặt sát vào nhau, 2 mũi bàn chân mở rộng 45 độ.';
         break;
       case 'torso':
         specificFeedback = 'Thân người thẳng đứng, ngực nở tự nhiên.';
@@ -387,42 +387,41 @@ export function buildRequirementCards(
     const card3: RequirementCardResult = {
       id: 'card-torso',
       number: 3,
-      title: 'Thân người thẳng & vai cân',
+      title: 'Thân người thẳng & quay tại chỗ',
       points: torso?.points ?? 0,
-      maximum: torso?.maximum ?? 20,
+      maximum: torso?.maximum ?? 10,
       statusLevel: card3Status,
       feedback: torso?.specificFeedback || torso?.feedback || 'Giữ thân người thẳng đứng khi chuyển động.',
       mistakes: torso?.mistakes ?? [],
       subCriteria: torso ? [torso] : [],
     };
 
-    // 4. Giữ thế kết thúc & khép tay
-    const holdSub = [stability, arms].filter(Boolean) as CriterionResult[];
-    const holdPoints = Math.round(holdSub.reduce((s, c) => s + c.points, 0) * 10) / 10;
-    const holdMax = holdSub.reduce((s, c) => s + c.maximum, 0) || 30;
-    const holdRatio = holdMax > 0 ? holdPoints / holdMax : 0;
-    const card4Mistakes = [...(stability?.mistakes ?? []), ...(arms?.mistakes ?? [])];
-    let card4Status: CriterionStatusLevel = 'PASS';
-    if (holdSub.length < 2) card4Status = 'NOT_SCORABLE';
-    else if (holdRatio >= 0.88) card4Status = 'PASS';
-    else if (holdRatio >= 0.6) card4Status = 'NEEDS_ADJUSTMENT';
-    else card4Status = 'NOT_ACHIEVED';
-
+    // Keep final hold independent of arm visibility in a side-on camera view.
     const card4: RequirementCardResult = {
-      id: 'card-hold-arms',
+      id: 'card-hold',
       number: 4,
-      title: 'Giữ thế kết thúc & khép tay',
-      points: holdPoints,
-      maximum: holdMax,
-      statusLevel: card4Status,
-      feedback: card4Status === 'PASS'
-        ? 'Tư thế kết thúc vững vàng, hai tay khép sát chỉ quần.'
-        : (card4Mistakes[0] || 'Cần giữ yên ổn định 1.5 giây sau khi quay.'),
-      mistakes: card4Mistakes,
-      subCriteria: holdSub,
+      title: 'Giữ thế kết thúc',
+      points: stability?.points ?? 0,
+      maximum: stability?.maximum ?? 20,
+      statusLevel: stability?.statusLevel ?? 'NOT_SCORABLE',
+      feedback: stability?.specificFeedback || stability?.feedback || 'Camera chưa xác nhận được thời gian giữ thế.',
+      mistakes: stability?.mistakes ?? [],
+      subCriteria: stability ? [stability] : [],
     };
-
-    return [card1, card2, card3, card4];
+    const card5: RequirementCardResult = {
+      id: 'card-turn-arms', number: 5, title: 'Hai tay sát thân',
+      points: arms?.points ?? 0, maximum: arms?.maximum ?? 10,
+      statusLevel: arms?.statusLevel ?? 'NOT_SCORABLE',
+      feedback: arms?.specificFeedback || arms?.feedback || 'Camera chưa quan sát rõ phần tay.',
+      mistakes: arms?.mistakes ?? [], subCriteria: arms ? [arms] : [],
+    };
+    const footCards: RequirementCardResult[] = ['feetReady', 'feetFinal'].map((id, i) => {
+      const c = getCriterion(id);
+      return { id: `card-${id}`, number: 6 + i, title: i === 0 ? 'Bàn chân lúc chuẩn bị' : 'Khép chân về tư thế chữ V',
+        points: c?.points ?? 0, maximum: c?.maximum ?? 5, statusLevel: c?.statusLevel ?? 'NOT_SCORABLE',
+        feedback: c?.feedback || 'Camera chưa xác nhận tư thế bàn chân.', mistakes: c?.mistakes ?? [], subCriteria: c ? [c] : [] };
+    });
+    return [card1, card2, card3, card4, card5, ...footCards];
   }
 
   if (movementId === 'salute') {
@@ -430,7 +429,7 @@ export function buildRequirementCards(
     const saluteArm = getCriterion('saluteArm');
     const leftArm = getCriterion('leftArm');
 
-    // Thẻ 1: Tay phải giơ lên chào tự nhiên (35 điểm)
+    // Thẻ 1: Tay phải giơ lên chào tự nhiên (25 điểm)
     const card1Status: CriterionStatusLevel = !saluteArm
       ? 'NOT_SCORABLE'
       : saluteArm.statusLevel ?? (saluteArm.status === 'good' ? 'PASS' : 'NEEDS_ADJUSTMENT');
@@ -439,7 +438,7 @@ export function buildRequirementCards(
       number: 1,
       title: 'Tay phải giơ lên chào tự nhiên',
       points: saluteArm?.points ?? 0,
-      maximum: saluteArm?.maximum ?? 35,
+      maximum: saluteArm?.maximum ?? 25,
       statusLevel: card1Status,
       feedback: card1Status === 'PASS'
         ? 'Tay phải đưa lên tự nhiên, ngón tay đặt sát mép ngoài đuôi lông mày hoặc vành mũ bên phải.'
@@ -517,7 +516,11 @@ export function buildRequirementCards(
       subCriteria: head ? [head] : [],
     };
 
-    return [card1, card2, card3, card4];
+    const hand = getCriterion('saluteHand');
+    const card5: RequirementCardResult = { id:'card-salute-hand', number:5, title:'Bàn tay và ngón tay chào',
+      points:hand?.points ?? 0, maximum:10, statusLevel:hand?.statusLevel ?? 'NOT_SCORABLE',
+      feedback:hand?.feedback ?? 'Camera chưa xác nhận chi tiết bàn tay.', mistakes:hand?.mistakes ?? [], subCriteria:hand ? [hand] : [] };
+    return [card1, card2, card3, card4, card5];
   }
 
   // ═══════════════════ BÀI TẬP: TƯ THẾ ĐỨNG NGHIÊM (MẶC ĐỊNH) ═══════════════════
@@ -531,11 +534,11 @@ export function buildRequirementCards(
   const card1: RequirementCardResult = {
     id: 'card-feet',
     number: 1,
-    title: 'Hai gót sát, mũi mở 45°',
+    title: '2 gót chân đặt sát vào nhau, 2 mũi bàn chân mở rộng 45 độ.',
     points: feet?.points ?? 0,
     maximum: feet?.maximum ?? 20,
     statusLevel: card1Status,
-    feedback: feet?.specificFeedback || feet?.feedback || 'Hai gót chân chạm sát nhau, mở mũi chân khoảng 45°.',
+    feedback: feet?.specificFeedback || feet?.feedback || '2 gót chân đặt sát vào nhau, 2 mũi bàn chân mở rộng 45 độ.',
     mistakes: card1Mistakes,
     subCriteria: feet ? [feet] : [],
   };
@@ -620,7 +623,7 @@ export function buildRequirementCards(
 export function extractTopCorrections(criteria: CriterionResult[]): string[] {
   // Lọc các tiêu chí bị trừ điểm, sắp xếp giảm dần theo số điểm bị mất
   const penalized = [...criteria]
-    .filter(c => c.maximum - c.points > 0.2)
+    .filter(c => c.statusLevel !== 'NOT_SCORABLE' && c.maximum - c.points > 0.2)
     .sort((a, b) => (b.maximum - b.points) - (a.maximum - a.points));
 
   const corrections: string[] = [];

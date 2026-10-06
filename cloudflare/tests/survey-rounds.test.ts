@@ -19,6 +19,8 @@ test('D1 rounds preserve history, isolate submissions/AI and accept another roun
   assert.equal(migrated.roundId, 'legacy');
   const { roundId, ...preserved } = migrated;
   assert.deepEqual(preserved, { ...original });
+  // The current Worker reads deletedAt; the old harness stopped before its additive migration.
+  sql.exec(readFileSync('migrations/0003_survey_round_trash.sql', 'utf8'));
   sql.exec(`INSERT INTO accounts VALUES ('student1', 'student1', 'Test', 'student', 'unused', 'unused');
     INSERT INTO sessions SELECT 'admin-session', id, 9999999999999 FROM accounts WHERE role = 'admin';
     INSERT INTO sessions VALUES ('student-session', 'student1', 9999999999999);`);

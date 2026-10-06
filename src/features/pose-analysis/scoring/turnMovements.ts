@@ -24,6 +24,7 @@ export function createTurnMovement(direction: 'left' | 'right'): MovementDefinit
     criteria: [
       {
         id: 'direction',
+        required: true,
         label: 'Hướng quay',
         weight: 25,
         rules: [
@@ -37,6 +38,7 @@ export function createTurnMovement(direction: 'left' | 'right'): MovementDefinit
       },
       {
         id: 'angle',
+        required: true,
         label: 'Góc quay 90°',
         weight: 25,
         rules: [
@@ -50,8 +52,9 @@ export function createTurnMovement(direction: 'left' | 'right'): MovementDefinit
       },
       {
         id: 'torso',
-        label: 'Thân người thẳng',
-        weight: 20,
+        required: true,
+        label: 'Thân thẳng & quay tại chỗ',
+        weight: 10,
         rules: [
           {
             feature: 'torsoTilt',
@@ -59,10 +62,11 @@ export function createTurnMovement(direction: 'left' | 'right'): MovementDefinit
             zero: [0, 18],
           },
         ],
-        feedback: 'Giữ thân người ngay ngắn, không ngả nghiêng khi quay.',
+        feedback: 'Giữ thân người ngay ngắn và quay tại chỗ; không bước đi để đổi hướng.',
       },
       {
         id: 'stability',
+        required: true,
         label: 'Giữ thế kết thúc',
         weight: 20,
         rules: [
@@ -87,6 +91,8 @@ export function createTurnMovement(direction: 'left' | 'right'): MovementDefinit
         ],
         feedback: 'Hai tay khép sát chỉ quần tự nhiên.',
       },
+      { id: 'feetReady', label: 'Bàn chân khi chuẩn bị', weight: 5, required: true, rules: [], feedback: 'Hai gót gần sát, hai mũi chân mở chữ V.' },
+      { id: 'feetFinal', label: 'Bàn chân khi kết thúc', weight: 5, required: true, rules: [], feedback: 'Khép chân về tư thế hai gót gần sát, hai mũi chân mở chữ V.' },
     ],
   };
 }

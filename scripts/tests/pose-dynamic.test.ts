@@ -27,8 +27,8 @@ function rotatedPoseFrame(yawDeg: number, timestampMs = 0, mirrored = false): Ca
     if (!landmark || !landmark.world) continue;
     const x0 = landmark.world.x;
     const y0 = landmark.world.y;
-    const xRot = x0 * cos;
-    const zRot = -x0 * sin;
+    const xRot = x0 * cos + landmark.world.z * sin;
+    const zRot = -x0 * sin + landmark.world.z * cos;
     landmark.world = { x: xRot, y: y0, z: zRot };
     landmark.image = {
       x: 0.5 + xRot * (mirrored ? -1 : 1) / frame.aspectRatio,
@@ -167,9 +167,9 @@ test('Dynamic turn left: full session transitions START_READY -> MOVING -> FINAL
     assert.equal(angleCriterion.points, 25);
     assert.equal(angleCriterion.statusLevel, 'PASS');
 
-    // Check 4 Vietnamese requirement cards
+    // Final hold and arms are shown separately so occlusion cannot hide hold success.
     const cards = buildRequirementCards(scoreEvent.result.criteria, 'turnLeft');
-    assert.equal(cards.length, 4);
+    assert.equal(cards.length, 7);
     assert.equal(cards[0].title, 'Hướng quay sang trái');
     assert.equal(cards[0].statusLevel, 'PASS');
     assert.equal(cards[1].title, 'Góc quay vuông 90°');

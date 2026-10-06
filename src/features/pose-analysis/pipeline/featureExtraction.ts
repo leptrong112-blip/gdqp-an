@@ -1,15 +1,19 @@
 import type { FeatureId, FeatureSample, LandmarkName, NormalizedPoseFrame, Vec3 } from '../types';
-import { angleAt3D, angleBetween, calculateBodyYaw, distance, horizontalTilt, mean, midpoint, subtract } from './geometry';
-export function extractFeatures(frame: NormalizedPoseFrame): FeatureSample {
+import { angleAt3D, angleBetween, calculateBodyYaw, distance, horizontalTilt, horizontalTilt3D, mean, midpoint, subtract } from './geometry';
+export function extractFeatures(frame: NormalizedPoseFrame, dynamicTurn = false): FeatureSample {
   const sample: FeatureSample = { timestampMs: frame.timestampMs, values: {} }, p = frame.body, w = frame.worldBody;
   const add = (id: FeatureId, names: LandmarkName[], fn: () => number) => {
-    if (names.some(n => !frame.landmarks[n])) return;
+    if (names.some(n => !frame.landmarks[n] || !p[n])) return;
     const value = fn(), confidence = Math.min(...names.map(n => frame.landmarks[n]!.confidence));
     if (Number.isFinite(value)) sample.values[id] = { value, confidence };
   };
   if (p.leftShoulder && p.rightShoulder && p.leftHip && p.rightHip) {
     const width = distance(p.leftShoulder, p.rightShoulder);
-    add('shoulderTilt', ['leftShoulder', 'rightShoulder'], () => horizontalTilt(p.leftShoulder!, p.rightShoulder!));
+    if (!dynamicTurn || (w.leftShoulder && w.rightShoulder)) {
+      add('shoulderTilt', ['leftShoulder', 'rightShoulder'], () => dynamicTurn
+        ? horizontalTilt3D(w.leftShoulder!, w.rightShoulder!)
+        : horizontalTilt(p.leftShoulder!, p.rightShoulder!));
+    }
     add('hipTilt', ['leftHip', 'rightHip'], () => horizontalTilt(p.leftHip!, p.rightHip!));
     if (w.leftShoulder && w.rightShoulder && w.leftHip && w.rightHip) add('torsoTilt', ['leftShoulder', 'rightShoulder', 'leftHip', 'rightHip'], () => angleBetween(subtract(midpoint(w.leftHip!, w.rightHip!), midpoint(w.leftShoulder!, w.rightShoulder!)), { x: 0, y: 1, z: 0 }));
     if (width > 1e-6) {
@@ -21,7 +25,7 @@ export function extractFeatures(frame: NormalizedPoseFrame): FeatureSample {
     }
   }
   if (w.leftShoulder || w.rightShoulder || w.leftHip || w.rightHip) {
-    const yaw = calculateBodyYaw(w.leftShoulder, w.rightShoulder, w.leftHip, w.rightHip);
+    const yaw = calculateBodyYaw(w.leftShoulder, w.rightShoulder, w.leftHip, w.rightHip, frame.frontalXSign);
     if (yaw !== null) {
       const conf = mean(
         (['leftShoulder', 'rightShoulder', 'leftHip', 'rightHip'] as const)
@@ -29,6 +33,16 @@ export function extractFeatures(frame: NormalizedPoseFrame): FeatureSample {
           .filter((c): c is number => c !== undefined)
       );
       sample.values.bodyYaw = { value: yaw, confidence: conf };
+    }
+  }
+  if (dynamicTurn && w.leftShoulder && w.rightShoulder) {
+    const span = distance(w.leftShoulder, w.rightShoulder);
+    for (const side of ['left', 'right'] as const) {
+      delete sample.values[`${side}WristHipDistance`];
+      if (span > 1e-6 && w[`${side}Wrist`] && w[`${side}Hip`]) {
+        add(`${side}WristHipDistance`, [`${side}Wrist`, `${side}Hip`, 'leftShoulder', 'rightShoulder'],
+          () => distance(w[`${side}Wrist`]!, w[`${side}Hip`]!) / span);
+      }
     }
   }
   add('footOpeningAngle', ['leftHeel', 'rightHeel', 'leftFootIndex', 'rightFootIndex'], () => {

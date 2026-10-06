@@ -13,6 +13,7 @@ import type { QualityReport, PoseStage, MovementId } from '../types';
 import type { ScoreResult } from '../scoring/scoringTypes';
 import { EXERCISE_CATALOG } from '../scoring/movements';
 import { ScoreResults } from './ScoreResults';
+import { PoseCameraGuidance } from './PoseCameraGuidance';
 
 interface PoseStepDashboardProps {
   stage: PoseStage;
@@ -32,6 +33,8 @@ interface PoseStepDashboardProps {
   autoCalibrate?: boolean;
   onToggleAutoCalibrate?: (enabled: boolean) => void;
   autoCountdown?: number | null;
+  preparationLabel?: string;
+  workflowMessage?: string;
 }
 
 const CHECKLIST_ITEMS = [
@@ -61,6 +64,7 @@ export function PoseStepDashboard({
   autoCalibrate = true,
   onToggleAutoCalibrate,
   autoCountdown = null,
+  preparationLabel = 'Đứng nghỉ', workflowMessage,
 }: PoseStepDashboardProps) {
   const currentExercise = EXERCISE_CATALOG.find(e => e.id === movementId) || EXERCISE_CATALOG[0];
 
@@ -78,7 +82,7 @@ export function PoseStepDashboard({
   // Xử lý tự động chuyển sang Bước 2 sau 2.5 - 3 giây khi Bước 1 đạt chuẩn tất cả tiêu chí
   useEffect(() => {
     // Nếu đang trong quá trình hiệu chuẩn, đếm ngược, chấm điểm, hoàn thành hoặc có kết quả, giữ luôn ở Bước 2
-    if (['calibrating', 'countdown', 'scoring', 'completed', 'result'].includes(stage)) {
+    if (['calibrating', 'waiting-precondition', 'precondition-scoring', 'countdown', 'transition', 'scoring', 'stop-command', 'completed', 'result'].includes(stage)) {
       handleStepChange(2);
       setTransitionCountdown(null);
       return;
@@ -87,29 +91,20 @@ export function PoseStepDashboard({
     // Nếu đang ở Bước 1 và các tiêu chí đều ĐẠT (ready === true)
     if (activeStep === 1) {
       if (ready) {
-        setTransitionCountdown(3);
-        const timer1 = setTimeout(() => setTransitionCountdown(2), 1000);
-        const timer2 = setTimeout(() => setTransitionCountdown(1), 2000);
-        const timer3 = setTimeout(() => {
-          setTransitionCountdown(null);
-          handleStepChange(2);
-        }, 2800);
-
-        return () => {
-          clearTimeout(timer1);
-          clearTimeout(timer2);
-          clearTimeout(timer3);
-        };
+        setTransitionCountdown(null);
+        handleStepChange(2);
       } else {
         setTransitionCountdown(null);
       }
     }
   }, [ready, stage, activeStep]);
 
-  const running = ['quality-check', 'calibrating', 'countdown', 'scoring', 'completed', 'blocked', 'loading-model'].includes(stage);
+  const running = ['quality-check', 'calibrating', 'waiting-precondition', 'precondition-scoring', 'countdown', 'transition', 'scoring', 'stop-command', 'completed', 'blocked', 'loading-model'].includes(stage);
 
   return (
     <div className="flex flex-col h-full space-y-4 text-slate-800 dark:text-slate-100 select-none">
+      <p className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm font-bold text-amber-900 dark:bg-amber-950 dark:text-amber-200">Tư thế chuẩn bị: {preparationLabel}</p>
+      {['waiting-precondition', 'precondition-scoring', 'transition'].includes(stage) && <p role="status" className="text-sm">{workflowMessage ?? 'Giữ tư thế chuẩn bị, chờ khẩu lệnh.'}</p>}
       {/* ══════════ THANH TIẾN TRÌNH 2 BƯỚC ══════════ */}
       <div className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-xs font-bold gap-2">
         <button
@@ -142,6 +137,7 @@ export function PoseStepDashboard({
       </div>
 
       {/* ══════════ NỘI DUNG BƯỚC 1: KIỂM TRA ĐIỀU KIỆN ══════════ */}
+      {!result && <PoseCameraGuidance report={report} stage={stage} />}
       {activeStep === 1 ? (
         <section className="rounded-3xl border border-slate-200 dark:border-slate-700/80 p-5 bg-white dark:bg-slate-900/95 shadow-xl space-y-4 flex-1 flex flex-col justify-between">
           <div className="space-y-3">
@@ -162,7 +158,7 @@ export function PoseStepDashboard({
             </div>
 
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Đứng lùi lại khoảng 2.0 – 2.5m, chỉnh góc màn hình máy tính cụp nhẹ xuống để camera thấy được từ đầu đến chân.
+              Bật camera, đứng chính diện và kiểm tra ánh sáng cùng độ rõ toàn thân trước khi tập. Có thể bắt đầu ở khoảng 2.0 – 2.5m rồi chỉnh theo khung hình thực tế; không lùi quá xa khiến người quá nhỏ.
             </p>
 
             {/* Checklist 6 điều kiện */}
@@ -284,20 +280,22 @@ export function PoseStepDashboard({
               onClick={() => setShowStep1Details(!showStep1Details)}
               className="w-full py-2 px-3 rounded-xl bg-slate-100 dark:bg-slate-800/60 hover:bg-slate-200 dark:hover:bg-slate-800 text-[11px] text-slate-600 dark:text-slate-300 font-semibold flex items-center justify-between transition-colors cursor-pointer"
             >
-              <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold">
-                <CheckCircle2 size={14} /> Bước 1: Vị trí camera đã đạt chuẩn
+              <span className={`flex items-center gap-1.5 font-bold ${ready ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
+                {ready ? <CheckCircle2 size={14} /> : <Circle size={14} />}
+                {ready ? 'Bước 1: Vị trí camera đã đạt chuẩn' : 'Bước 1: Kiểm tra vị trí camera'}
               </span>
               {showStep1Details ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
             </button>
 
             {showStep1Details && (
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 text-[11px] space-y-1 text-slate-600 dark:text-slate-300">
-                {CHECKLIST_ITEMS.map((item) => (
-                  <div key={item.id} className="flex items-center gap-1.5">
-                    <CheckCircle2 size={12} className="text-emerald-500 shrink-0" />
-                    <span>{item.label}</span>
-                  </div>
-                ))}
+                {CHECKLIST_ITEMS.map((item) => {
+                  const isPassed = !!report?.checks?.find(check => check?.id === item.id)?.passed;
+                  return <div key={item.id} data-check-id={item.id} data-passed={isPassed ? 'true' : 'false'} className="flex items-center gap-1.5">
+                    {isPassed ? <CheckCircle2 size={12} className="text-emerald-500 shrink-0" /> : <Circle size={12} className="text-slate-400 shrink-0" />}
+                    <span>{item.label} · {isPassed ? 'ĐẠT' : 'CHƯA'}</span>
+                  </div>;
+                })}
               </div>
             )}
 
@@ -375,7 +373,7 @@ export function PoseStepDashboard({
                 <div className="text-3xl font-black font-mono my-0.5">
                   {ready ? Math.max(1, Math.ceil(3 * (1 - progress))) : '—'}
                 </div>
-                <p className="text-xs font-bold">Chỉnh ngay ngắn chân, tay và mắt nhìn thẳng!</p>
+                <p className="text-xs font-bold">Giữ tư thế {preparationLabel}; chờ khẩu lệnh rồi mới thực hiện.</p>
               </div>
             )}
 
@@ -433,6 +431,7 @@ export function PoseStepDashboard({
                   onRetry={onRetry || onStart}
                   scoreComparison={scoreComparison}
                   compact={true}
+                  concise={true}
                 />
               </div>
             )}

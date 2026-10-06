@@ -11,6 +11,11 @@ export function angleBetween(a: Vec3, b: Vec3): number {
 export const angleAt3D = (a: Vec3, b: Vec3, c: Vec3) => angleBetween(subtract(a, b), subtract(c, b));
 export const angleAt2D = (a: Vec3, b: Vec3, c: Vec3) => angleAt3D(flat(a), flat(b), flat(c));
 export const horizontalTilt = (a: Vec3, b: Vec3) => Math.atan2(Math.abs(a.y - b.y), Math.abs(a.x - b.x)) * 180 / Math.PI;
+/** World-space shoulder inclination, independent of foreshortening in the image. */
+export function horizontalTilt3D(a: Vec3, b: Vec3): number {
+  const span = Math.hypot(a.x - b.x, a.z - b.z);
+  return span > 1e-6 ? Math.atan2(Math.abs(a.y - b.y), span) * 180 / Math.PI : NaN;
+}
 export function median(values: number[]): number {
   const sorted = values.filter(Number.isFinite).sort((a, b) => a - b), mid = Math.floor(sorted.length / 2);
   return sorted.length ? (sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2) : NaN;
@@ -30,7 +35,8 @@ export function calculateBodyYaw(
   leftShoulder?: Vec3,
   rightShoulder?: Vec3,
   leftHip?: Vec3,
-  rightHip?: Vec3
+  rightHip?: Vec3,
+  frontalXSign: 1 | -1 = -1
 ): number | null {
   const vectors: { dx: number; dz: number }[] = [];
   if (leftShoulder && rightShoulder) {
@@ -49,6 +55,8 @@ export function calculateBodyYaw(
   const avgDx = mean(vectors.map(v => v.dx));
   const avgDz = mean(vectors.map(v => v.dz));
   const norm = Math.hypot(avgDx, avgDz);
-  if (norm < 1e-6) return null;
-  return Math.atan2(avgDz, Math.abs(avgDx)) * (180 / Math.PI);
+  if (!Number.isFinite(norm) || norm < 1e-6) return null;
+  // Use the calibrated frontal X direction; never infer it from a turned frame.
+  // Preserve the current X sign so >90-degree rotations do not fold backwards.
+  return Math.atan2(avgDz, frontalXSign * avgDx) * (180 / Math.PI);
 }

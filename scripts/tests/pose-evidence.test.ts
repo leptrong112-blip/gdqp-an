@@ -23,7 +23,9 @@ function bufferFor(yawAt: (t: number) => number, gap = false) {
   for (let t = 0; t <= 4000; t += 100) {
     if (gap && t > 700 && t < 1300) continue;
     buffer.push({ timestampMs: t, bodyYawDeg: yawAt(t), confidence: 0.99, isReliable: true,
-      torsoTilt: 0, shoulderTilt: 0, leftWristHipDistance: 0.4, rightWristHipDistance: 0.4 });
+      footOpeningAngle: 45, heelGapRatio: .17,
+      torsoTilt: 0, shoulderTilt: 0, leftWristHipDistance: 0.4, rightWristHipDistance: 0.4,
+      imageRoot: { x: 0, y: 0 }, leftHeelPosition: { x: -0.1, y: 1 }, rightToePosition: { x: 0.1, y: 1 } });
   }
   return buffer;
 }

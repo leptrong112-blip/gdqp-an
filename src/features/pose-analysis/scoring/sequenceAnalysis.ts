@@ -1,7 +1,8 @@
-import type { MotionBufferFrame } from '../pipeline/motionBuffer';
+import type { MotionBufferFrame, TurnPreparation } from '../pipeline/motionBuffer';
 import type { DynamicMovementConfig } from './scoringTypes';
 import { median } from '../pipeline/geometry';
 import { javascriptSequenceEngine, type SequenceEngine } from './sequenceEngine';
+import { turnHoldMs } from './turnHold';
 
 export type SequenceReport =
   | { status: 'unavailable'; reason: string }
@@ -14,7 +15,7 @@ const wrap = (v: number) => ((v + 180) % 360 + 360) % 360 - 180;
 
 /** Observed phases validate evidence; synthetic DTW distance remains feedback only. */
 export function analyzeTurnSequence(frames: readonly MotionBufferFrame[], config: DynamicMovementConfig,
-  engine: SequenceEngine = javascriptSequenceEngine): SequenceReport {
+  engine: SequenceEngine = javascriptSequenceEngine, preparation?: TurnPreparation | null): SequenceReport {
   const unavailable = (reason: string): SequenceReport => ({ status: 'unavailable', reason });
   if (frames.length < 10 || !Number.isFinite(config.targetYawDeg) || Math.abs(config.targetYawDeg) < 1) {
     return unavailable('Chưa đủ dữ liệu để phân tích chuỗi động tác.');
@@ -28,29 +29,38 @@ export function analyzeTurnSequence(frames: readonly MotionBufferFrame[], config
   }
   const start = valid[0].timestampMs, duration = valid.at(-1)!.timestampMs - start;
   if (duration < 1200) return unavailable('Chuỗi chuyển động quá ngắn để so sánh.');
-  const baseline = median(valid.filter(f => f.timestampMs - start <= config.startReadyDurationMs).map(f => f.bodyYawDeg));
+  const prepared = preparation ? valid.filter(f => f.timestampMs >= preparation.startMs && f.timestampMs <= preparation.cueMs) : [];
+  // Recheck the retained evidence, not just a boolean claiming readiness.
+  const confirmed = !!preparation && prepared.length >= 3 &&
+    prepared[0].timestampMs === preparation.startMs && prepared.at(-1)!.timestampMs === preparation.cueMs &&
+    preparation.cueMs - preparation.startMs >= config.startReadyDurationMs &&
+    prepared.every(f => Math.abs(f.bodyYawDeg) <= 25) &&
+    Number.isFinite(preparation.baselineYaw) && Math.abs(preparation.baselineYaw - median(prepared.map(f => f.bodyYawDeg))) < 1e-6;
+  const baseline = confirmed ? preparation!.baselineYaw
+    : median(valid.filter(f => f.timestampMs - start <= config.startReadyDurationMs).map(f => f.bodyYawDeg));
   const sign = config.direction === 'left' ? 1 : -1, target = Math.abs(config.targetYawDeg);
   const deltas = valid.map(f => wrap(f.bodyYawDeg - baseline) * sign);
   // Use observed angles, not interpolated/smoothed trace points, as proof of motion.
   // Accept either direction here so a clearly observed wrong turn can still be scored.
-  const intermediate = deltas.filter(v => Math.abs(v) > 12 && Math.abs(v) < target - config.yawToleranceDeg);
+  const afterCue = (i: number) => !confirmed || valid[i].timestampMs > preparation!.cueMs;
+  const intermediate = deltas.filter((v, i) => afterCue(i) && Math.abs(v) > 12 && Math.abs(v) < target - config.yawToleranceDeg);
   const motionObserved = intermediate.some((v, i) => intermediate.slice(i + 1).some(next =>
     Math.sign(next) === Math.sign(v) && Math.abs(next) - Math.abs(v) >= 10));
   // Median of three neighbouring frames suppresses isolated landmark jitter.
   const smooth = deltas.map((_, i) => median(deltas.slice(Math.max(0, i - 1), Math.min(deltas.length, i + 2))));
-  const firstMove = smooth.findIndex(v => Math.abs(v) > 12);
+  const firstMove = smooth.findIndex((v, i) => afterCue(i) && Math.abs(v) > 12);
   const firstTarget = smooth.findIndex((v, i) => i >= firstMove && Math.abs(v - target) <= config.yawToleranceDeg);
-  const readyMs = firstMove < 0 ? duration : valid[firstMove].timestampMs - start;
-  const startReady = Math.abs(baseline) <= 25 && readyMs >= config.startReadyDurationMs &&
-    valid.filter(f => f.timestampMs - start < config.startReadyDurationMs).every(f => Math.abs(f.bodyYawDeg) <= 25);
-  let holdStart = valid.length - 1;
-  if (Math.abs(smooth[holdStart] - target) <= config.yawToleranceDeg) {
-    while (holdStart > 0 && Math.abs(smooth[holdStart - 1] - target) <= config.yawToleranceDeg) holdStart--;
-  }
-  const holdMs = valid.at(-1)!.timestampMs - valid[holdStart].timestampMs;
+  const readyMs = confirmed ? preparation!.cueMs - preparation!.startMs
+    : firstMove < 0 ? duration : valid[firstMove].timestampMs - start;
+  const startReady = confirmed || (Math.abs(baseline) <= 25 && readyMs >= config.startReadyDurationMs &&
+    valid.filter(f => f.timestampMs - start < config.startReadyDurationMs).every(f => Math.abs(f.bodyYawDeg) <= 25));
+  const holdMs = turnHoldMs(frames, baseline, config.targetYawDeg, config.yawToleranceDeg);
   const movingMs = firstMove >= 0 && firstTarget >= firstMove ? valid[firstTarget].timestampMs - valid[firstMove].timestampMs : null;
   let peak = 0, maxReversalDeg = 0;
-  for (const v of smooth) { peak = Math.max(peak, v); maxReversalDeg = Math.max(maxReversalDeg, peak - v); }
+  for (let i = 0; i < smooth.length; i++) {
+    if (!afterCue(i)) continue;
+    const v = smooth[i]; peak = Math.max(peak, v); maxReversalDeg = Math.max(maxReversalDeg, peak - v);
+  }
   const trace: { timeMs: number; progress: number }[] = [];
   let cursor = 0;
   for (let i = 0; i < 64; i++) {

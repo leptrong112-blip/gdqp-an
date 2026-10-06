@@ -6,6 +6,8 @@ import dotenv from "dotenv";
 import { createSurveyRouter } from "./server/survey";
 import { createExamRouter } from "./server/exam";
 import { createAuth } from "./server/auth";
+import { createPoseResultsRouter } from "./server/poseResults";
+import { PRIVATE_DEV_FILE_PATTERNS } from "./server/devFilePolicy";
 
 dotenv.config();
 
@@ -17,6 +19,7 @@ const accountDirectory = process.env.SURVEY_DATA_DIR || path.join(process.cwd(),
 const accountAuth = createAuth(accountDirectory);
 app.use('/api/survey', createSurveyRouter(accountDirectory, accountAuth));
 app.use('/api/exam', createExamRouter(accountDirectory, accountAuth));
+app.use('/api/pose-results', createPoseResultsRouter(accountDirectory, accountAuth));
 
 // In-memory rate limiter for AI endpoints
 function createRateLimiter(windowMs: number, maxRequests: number, message: string) {
@@ -206,9 +209,13 @@ Chỉ trả về duy nhất chuỗi JSON hợp lệ, không bọc markdown hay c
 async function setupVite() {
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
+      // Separate running dev servers from QA instances: sharing optimizer files
+      // leaves existing module URLs pointing at a different dependency hash.
+      cacheDir: path.join(process.cwd(), 'node_modules', '.vite', `gdqp-app-${PORT}`),
+      optimizeDeps: { include: ['@mediapipe/tasks-vision'] },
       server: {
         middlewareMode: true,
-        fs: { deny: ['.env', '.env.*', '*.{crt,pem}', '**/.git/**', '**/accounts.json*', '**/surveys.jsonl', '**/survey_config.json*', '**/feedback_analysis*.json', '**/exam_results.jsonl*'] },
+        fs: { deny: PRIVATE_DEV_FILE_PATTERNS },
       },
       appType: "spa",
     });

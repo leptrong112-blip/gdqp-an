@@ -1,14 +1,29 @@
 import { mean, median, mad } from './geometry';
 
+export interface TurnPreparation {
+  startMs: number;
+  cueMs: number;
+  baselineYaw: number;
+}
+
 export interface MotionBufferFrame {
   timestampMs: number;
   bodyYawDeg: number;
   confidence: number;
   torsoTilt?: number;
+  imageTorsoTilt?: number;
+  footOpeningAngle?: number;
+  heelGapRatio?: number;
   shoulderTilt?: number;
   leftWristHipDistance?: number;
   rightWristHipDistance?: number;
   isReliable: boolean;
+  /** Camera-plane positions in calibrated torso-length units, not root-relative 3D. */
+  imageRoot?: { x: number; y: number };
+  leftHeelPosition?: { x: number; y: number };
+  rightHeelPosition?: { x: number; y: number };
+  leftToePosition?: { x: number; y: number };
+  rightToePosition?: { x: number; y: number };
 }
 
 /**
@@ -20,6 +35,7 @@ export interface MotionBufferFrame {
 export class TemporalMotionBuffer {
   private readonly maxFrames: number;
   private buffer: MotionBufferFrame[] = [];
+  private confirmedPreparation: TurnPreparation | null = null;
 
   constructor(maxFrames = 150) {
     this.maxFrames = maxFrames;
@@ -30,11 +46,35 @@ export class TemporalMotionBuffer {
     this.buffer.push(frame);
     if (this.buffer.length > this.maxFrames) {
       this.buffer.shift();
+      if (this.confirmedPreparation && this.buffer[0].timestampMs > this.confirmedPreparation.startMs) this.confirmedPreparation = null;
     }
   }
 
   clear() {
     this.buffer = [];
+    this.confirmedPreparation = null;
+  }
+
+  retainSince(timestampMs: number) {
+    this.buffer = this.buffer.filter(frame => frame.timestampMs >= timestampMs);
+    this.confirmedPreparation = null;
+  }
+
+  /** Freeze only observed, continuous frontal preparation at the start cue. */
+  confirmPreparation(readyMs: number): TurnPreparation | null {
+    this.confirmedPreparation = null;
+    const frames = this.buffer;
+    if (frames.length < 3 || this.durationMs < readyMs || frames.some((f, i) =>
+      !f.isReliable || !Number.isFinite(f.bodyYawDeg) || Math.abs(f.bodyYawDeg) > 25 ||
+      !Number.isFinite(f.confidence) || f.confidence < .6 ||
+      (i > 0 && f.timestampMs - frames[i - 1].timestampMs > 250))) return null;
+    this.confirmedPreparation = { startMs: frames[0].timestampMs, cueMs: frames.at(-1)!.timestampMs,
+      baselineYaw: median(frames.map(f => f.bodyYawDeg)) };
+    return this.preparation;
+  }
+
+  get preparation(): TurnPreparation | null {
+    return this.confirmedPreparation ? { ...this.confirmedPreparation } : null;
   }
 
   get length(): number {
@@ -54,6 +94,7 @@ export class TemporalMotionBuffer {
    * Lấy góc xoay cơ sở (baseline yaw) ở giai đoạn xuất phát.
    */
   getBaselineYaw(windowMs = 600): number | null {
+    if (this.confirmedPreparation) return this.confirmedPreparation.baselineYaw;
     if (!this.buffer.length) return null;
     const startT = this.buffer[0].timestampMs;
     const initial = this.buffer.filter(f => f.timestampMs - startT <= windowMs && f.isReliable);

@@ -6,7 +6,7 @@ import {
 import type { AnalysisSnapshot, FeatureId, MovementId, PoseStage } from '../types';
 import { EXERCISE_CATALOG, MOVEMENTS } from '../scoring/movements';
 import { ruleScore } from '../scoring/scoringEngine';
-import type { FeatureRule } from '../scoring/scoringTypes';
+import type { FeatureRule, ScoreResult } from '../scoring/scoringTypes';
 import {
   DiagnosticSessionRecorder,
   exportReportToJson,
@@ -19,8 +19,10 @@ export interface PoseDiagnosticOverlayProps {
   snapshot?: AnalysisSnapshot | null;
   stage: PoseStage;
   movementId: MovementId;
+  result?: ScoreResult | null;
   onClose: () => void;
   className?: string;
+  allowExport?: boolean;
 }
 
 const FEATURE_NAMES: Record<FeatureId, string> = {
@@ -44,6 +46,13 @@ const FEATURE_NAMES: Record<FeatureId, string> = {
   yawVelocity: 'Vận tốc quay thân',
   turnProgress: 'Tiến trình quay',
   torsoStability: 'Độ ổn định thân',
+  rootTravel: 'Dịch chuyển thân (đơn vị chiều dài thân)',
+  pivotTravel: 'Dịch chuyển điểm trụ (đơn vị chiều dài thân)',
+  saluteFingerExtension: 'Độ duỗi ngón tay chào',
+  saluteFingerSpread: 'Góc xòe ngón tay chào',
+  saluteThumbGap: 'Độ mở ngón cái',
+  saluteWristBend: 'Góc gập cổ tay chào',
+  saluteTipHeadDistance: 'Đầu ngón tay - vị trí chào',
 };
 
 function formatVal(val?: number, unit = '°'): string {
@@ -62,8 +71,10 @@ export function PoseDiagnosticOverlay({
   snapshot,
   stage,
   movementId,
+  result,
   onClose,
   className = '',
+  allowExport = false,
 }: PoseDiagnosticOverlayProps) {
   const [minimized, setMinimized] = useState(false);
   const [activeTab, setActiveTab] = useState<'telemetry' | 'comparison' | 'experiment' | 'report'>('telemetry');
@@ -73,6 +84,7 @@ export function PoseDiagnosticOverlay({
 
   // Test configuration
   const [testConfig, setTestConfig] = useState<DiagnosticSessionConfig>({
+    device: 'other',
     cameraHeight: 'desk',
     cameraAngle: 'straight',
     distanceMeters: 'optimal',
@@ -96,10 +108,21 @@ export function PoseDiagnosticOverlay({
   // Record frames when recording is active
   useEffect(() => {
     if (snapshot && recorderRef.current.getActiveStatus().isRecording) {
-      recorderRef.current.recordFrame(snapshot.quality, snapshot.features, snapshot.dualMeasurements);
+      recorderRef.current.recordFrame(snapshot.quality, snapshot.features, snapshot.dualMeasurements, {
+        timestampMs: snapshot.frame.timestampMs, stage: snapshot.stage, inferenceFps: snapshot.inferenceFps,
+      });
       setRecorderState(recorderRef.current.getActiveStatus());
     }
   }, [snapshot]);
+
+  useEffect(() => {
+    if (result) { recorderRef.current.finish(result); setRecorderState(recorderRef.current.getActiveStatus()); }
+  }, [result]);
+
+  useEffect(() => {
+    recorderRef.current.stop();
+    setRecorderState(recorderRef.current.getActiveStatus());
+  }, [movementId]);
 
   const allRules: { criterionId: string; criterionLabel: string; rule: FeatureRule }[] = [];
   if (movement?.criteria) {
@@ -115,6 +138,7 @@ export function PoseDiagnosticOverlay({
   const progressPercent = Math.round((snapshot?.progress ?? 0) * 100);
 
   const handleStartRecording = () => {
+    setTeacherEval({ status: 'NOT_EVALUATED', unmetCriteria: [], teacherNotes: '' });
     recorderRef.current.start(movementId, testConfig);
     setRecorderState(recorderRef.current.getActiveStatus());
   };
@@ -136,16 +160,18 @@ export function PoseDiagnosticOverlay({
   };
 
   const handleExportJson = () => {
-    const report = recorderRef.current.generateReport(null);
+    if (!allowExport) return;
+    const report = recorderRef.current.generateReport();
     if (report) exportReportToJson(report);
   };
 
   const handleExportCsv = () => {
-    const report = recorderRef.current.generateReport(null);
+    if (!allowExport) return;
+    const report = recorderRef.current.generateReport();
     if (report) exportReportToCsv(report);
   };
 
-  const report = recorderRef.current.generateReport(null);
+  const report = recorderRef.current.generateReport();
 
   return (
     <aside
@@ -209,6 +235,21 @@ export function PoseDiagnosticOverlay({
 
       {!minimized && (
         <>
+          <section aria-label="Latency và chuyển động Chào" className="max-h-52 overflow-y-auto border-b border-slate-800 p-3 space-y-1 text-[10px]">
+            <p>Profile {snapshot?.performance?.profile ?? '—'} · Target {snapshot?.performance?.targetFps ?? '—'} FPS · Render {snapshot?.performance?.renderFps?.toFixed(1) ?? '—'} FPS</p>
+            <p>Pose {snapshot?.performance?.poseMs?.toFixed(1) ?? '—'} ms · Hand {snapshot?.performance?.handMs?.toFixed(1) ?? '—'} ms · Worker {snapshot?.performance?.workerLatencyMs?.toFixed(1) ?? '—'} ms</p>
+            <p>Landmark age {snapshot?.performance?.landmarkAgeMs?.toFixed(1) ?? '—'} ms · Skipped camera frames {snapshot?.performance?.droppedFrames ?? 0} ({((snapshot?.performance?.droppedFrameRatio ?? 0) * 100).toFixed(1)}%)</p>
+            {Object.entries(snapshot?.performance?.benchmark ?? {}).map(([name, data]) => data && <p key={name}>{name}: median {data.medianMs.toFixed(1)} / p90 {data.p90Ms.toFixed(1)} ms (n={data.samples})</p>)}
+            {snapshot?.saluteProgress && <>
+              <p className="font-bold text-amber-300">STATE: {result?.saluteSequence?.state ?? snapshot.saluteProgress.state}</p>
+              <p>Wrist y {snapshot.frame.landmarks.rightWrist?.image.y.toFixed(3) ?? '—'} · Rise {snapshot.saluteProgress.wristRise.toFixed(2)} · Velocity {snapshot.saluteProgress.wristVelocity.toFixed(2)} · Elbow {snapshot.saluteProgress.elbowAngle?.toFixed(1) ?? '—'}°</p>
+              <p>Observed {snapshot.saluteProgress.observationCount} · Motion {String(snapshot.saluteProgress.motionObserved)} · Stable {snapshot.saluteProgress.stableMs} ms · Path {snapshot.saluteProgress.pathSmoothness?.toFixed(2) ?? '—'}</p>
+              <p>Hand FPS {snapshot.frame.detectorTelemetry?.handFps.toFixed(1) ?? '—'} · Hand confidence (classification) {snapshot.saluteProgress.hand?.confidence?.toFixed(2) ?? '—'} · Label {snapshot.saluteProgress.hand?.handedness ?? '—'}</p>
+              <p>Hand {snapshot.saluteProgress.hand?.quality ?? 'INSUFFICIENT_HAND_EVIDENCE'} · Valid {snapshot.saluteProgress.hand?.validLandmarks ?? 0}/21 · Age {snapshot.saluteProgress.hand?.ageMs?.toFixed(0) ?? '—'} ms</p>
+              <p>Palm normal {snapshot.saluteProgress.hand?.palmOrientation ? Object.values(snapshot.saluteProgress.hand.palmOrientation).map(v => v.toFixed(2)).join(', ') : '—'} · Extension {snapshot.saluteProgress.hand?.fingerExtension?.map(v => v.toFixed(0)).join(', ') ?? '—'}</p>
+              {snapshot.saluteProgress.hand?.reason && <p className="text-amber-300">{snapshot.saluteProgress.hand.reason}</p>}
+            </>}
+          </section>
           {/* 4 TABS */}
           <nav aria-label="Phân loại chẩn đoán" className="flex border-b border-slate-800 text-[10px]">
             <button
@@ -415,6 +456,25 @@ export function PoseDiagnosticOverlay({
             <div className="p-3 overflow-y-auto space-y-3 max-h-[440px] select-text">
               {/* RECORDING STATUS & CONTROLS */}
               <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+                <p className="text-[10px] text-slate-400">Chỉ ghi số đo, không ghi video. Xuất dữ liệu trước khi bắt đầu phiên mới.</p>
+                {recorderState.truncated && <p className="text-amber-300">Đã chạm giới hạn ghi; dữ liệu phiên chưa đầy đủ.</p>}
+                <label className="block">Mã học sinh (không dùng tên thật)
+                  <input aria-label="Mã học sinh" maxLength={32} disabled={recorderState.isRecording} value={testConfig.participantCode ?? ''}
+                    onChange={e => setTestConfig(prev => ({ ...prev, participantCode: e.target.value }))}
+                    className="w-full bg-slate-800 rounded p-1" placeholder="HS01" />
+                </label>
+                <label className="block">Mã lượt / tình huống
+                  <input aria-label="Mã lượt" maxLength={64} disabled={recorderState.isRecording} value={testConfig.trialCode ?? ''}
+                    onChange={e => setTestConfig(prev => ({ ...prev, trialCode: e.target.value }))}
+                    className="w-full bg-slate-800 rounded p-1" placeholder="L01-quay-dung" />
+                </label>
+                <label className="block">Thiết bị
+                  <select aria-label="Thiết bị" disabled={recorderState.isRecording} value={testConfig.device ?? 'other'}
+                    onChange={e => setTestConfig(prev => ({ ...prev, device: e.target.value as DiagnosticSessionConfig['device'] }))}
+                    className="w-full bg-slate-800 rounded p-1">
+                    <option value="laptop">Laptop</option><option value="phone">Điện thoại</option><option value="other">Khác</option>
+                  </select>
+                </label>
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-emerald-300 text-[11px]">Thu thập mẫu thực nghiệm</span>
                   <span className="text-[10px] text-slate-400">
@@ -430,7 +490,7 @@ export function PoseDiagnosticOverlay({
                       className="flex-1 py-2 px-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold flex items-center justify-center gap-1.5 transition-colors shadow-lg"
                     >
                       <PlayCircle className="w-4 h-4" />
-                      Bắt đầu ghi phiên ({movementId === 'attention' ? 'Nghiêm' : 'Nghỉ'})
+                      Bắt đầu ghi phiên ({movement?.label ?? movementId})
                     </button>
                   ) : (
                     <button
@@ -679,7 +739,7 @@ export function PoseDiagnosticOverlay({
                   </div>
 
                   {/* EXPORT ACTION BUTTONS */}
-                  <div className="flex gap-2 pt-1">
+                  {allowExport && <div className="flex gap-2 pt-1">
                     <button
                       type="button"
                       onClick={handleExportJson}
@@ -696,7 +756,7 @@ export function PoseDiagnosticOverlay({
                       <FileDown className="w-3.5 h-3.5" />
                       Xuất CSV
                     </button>
-                  </div>
+                  </div>}
                 </>
               )}
             </div>
