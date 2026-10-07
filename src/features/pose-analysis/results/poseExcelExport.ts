@@ -3,6 +3,7 @@ import { poseScoreOnTen } from './scoreScale';
 
 export const POSE_EXPORT_COLUMNS = ['Họ tên', 'Lớp', 'Động tác', 'Điểm ghi nhận (thang 10; đối chiếu cột chưa đánh giá)', 'Kết luận', 'Tiêu chí cần sửa', 'Tiêu chí chưa đủ dữ liệu', 'Tiêu chí bắt buộc', 'Độ tin cậy dữ liệu (%)', 'Điểm chưa đánh giá (thang 10)', 'Thời gian xử lý sau động tác (ms)', 'Bắt đầu', 'Hoàn thành', 'Điểm Nghiêm (/10)', 'Điểm Nghỉ (/10)', 'Điểm Chào (/10)', 'Mã lượt', 'Phiên bản chấm', 'Điểm Đứng nghiêm tiền đề (/10)', 'Kết luận tiền đề'] as const;
 const assessmentLabels = { pass: 'Đạt', fail: 'Chưa đạt', incomplete: 'Chưa đủ dữ liệu' };
+const criterionLabels = { PASS: 'Đạt', NEEDS_ADJUSTMENT: 'Cần điều chỉnh', NOT_ACHIEVED: 'Chưa đạt', NOT_SCORABLE: 'Chưa đủ dữ liệu' };
 const timestamp = (value: string) => new Date(value).toLocaleString('vi-VN', { timeZone: 'Asia/Bangkok' });
 
 /** Explicit column projection: no image, video, landmarks or incidental record fields. */
@@ -12,7 +13,7 @@ export function poseExcelRows(records: PoseResultRecord[]): (string | number)[][
       const score = record.stepResults?.find(step => step.movementId === movement)?.score;
       return score == null ? '' : poseScoreOnTen(score);
     };
-    const criteria = record.criteria.filter(item => item.required).map(item => `${item.label}: ${item.statusLevel === 'NOT_SCORABLE' ? 'Chưa đủ dữ liệu' : item.points >= item.maximum * .6 ? 'Đạt' : 'Chưa đạt'}`).join('; ');
+    const criteria = record.criteria.filter(item => item.required).map(item => `${item.label}: ${criterionLabels[item.statusLevel]}`).join('; ');
     return [record.studentName, record.className, record.movementLabel, poseScoreOnTen(record.score), assessmentLabels[record.assessment],
       record.conciseFeedback.filter(item => item.type === 'MOTION_ERROR').map(item => `${item.label}: ${item.message}`).join('; '),
       record.conciseFeedback.filter(item => item.type === 'INSUFFICIENT_EVIDENCE').map(item => `${item.label}: ${item.message}`).join('; '),

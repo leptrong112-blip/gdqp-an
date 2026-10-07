@@ -118,10 +118,10 @@ export default function FloatingAiChatbot() {
           {/* Tooltip badge */}
           <div
             onClick={() => setIsOpen(true)}
-            className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/90 dark:bg-black/90 text-white text-xs font-bold shadow-xl border border-red-500/30 backdrop-blur-md cursor-pointer hover:border-red-400 transition-all hover:scale-105 group"
+            className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/95 dark:bg-slate-900/95 text-slate-800 dark:text-white text-xs font-bold shadow-lg shadow-slate-300/40 dark:shadow-xl border border-slate-200 dark:border-slate-700/80 backdrop-blur-md cursor-pointer hover:border-red-500/50 transition-all hover:scale-105 group"
           >
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-            <span className="text-slate-200 group-hover:text-amber-300 transition-colors">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            <span className="text-slate-800 dark:text-slate-200 group-hover:text-red-600 dark:group-hover:text-amber-300 transition-colors">
               Hỏi trợ giảng AI
             </span>
           </div>

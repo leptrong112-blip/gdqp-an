@@ -15,9 +15,10 @@ export const COMMAND_FLOW = {
 } as const;
 export type PoseCommandText = typeof COMMAND_FLOW[keyof typeof COMMAND_FLOW]['command'] | 'THÔI';
 export type PreconditionStatus = 'WRONG_PRECONDITION' | 'INSUFFICIENT_EVIDENCE' | 'READY';
-export const PREPARATION_STABLE_MS = 700;
+export const PREPARATION_STABLE_MS = 1500;
+export const MOVEMENT_SETTLE_MS = 700;
 export const COMMAND_OVERLAY_MS = 1100;
-export const STOP_OVERLAY_MS = 350;
+export const STOP_OVERLAY_MS = 1500;
 export function commandFlow(id: MovementId) { return id === 'aboutFace' ? undefined : COMMAND_FLOW[id]; }
 export function preparationDefinition(id: MovementId) {
   return commandFlow(id)?.precondition === 'atEase' ? atEaseMovement : attentionMovement;
@@ -25,13 +26,18 @@ export function preparationDefinition(id: MovementId) {
 /** Pose identity gate, not a grade: reuses existing rule bands without changing rubric math. */
 export function postureReadiness(sample: FeatureSample | undefined, definition: MovementDefinition): PreconditionStatus {
   if (!sample) return 'INSUFFICIENT_EVIDENCE';
-  // A mild resting knee can score well on the attention rubric. Pose identity
-  // must still distinguish nghỉ from nghiêm without changing either score.
+  // Natural knee asymmetry inside the attention ideal band is not proof of nghỉ.
+  // Require an observed bend outside that band as well as the resting identity.
   if (definition.id === 'attention') {
     const resting = atEaseMovement.criteria.find(c => c.id === 'legs')!;
     const restingValues = resting.rules.map(rule => sample.values[rule.feature]);
     if (restingValues.some(v => !v || !Number.isFinite(v.value) || v.confidence < .6)) return 'INSUFFICIENT_EVIDENCE';
-    if (resting.rules.every((rule, i) => ruleScore(restingValues[i]!.value, rule) >= .6)) return 'WRONG_PRECONDITION';
+    const attentionLegs = definition.criteria.find(c => c.id === 'legs')!;
+    const naturallyStraight = attentionLegs.rules.every(rule => {
+      const value = sample.values[rule.feature];
+      return !!value && Number.isFinite(value.value) && value.confidence >= .6 && value.value >= rule.ideal[0] && value.value <= rule.ideal[1];
+    });
+    if (!naturallyStraight && resting.rules.every((rule, i) => ruleScore(restingValues[i]!.value, rule) >= .6)) return 'WRONG_PRECONDITION';
   }
   const core = definition.criteria.filter(c => c.required || c.id === 'arms');
   let wrong = false;

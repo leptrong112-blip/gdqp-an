@@ -102,6 +102,16 @@ test('wording and large command overlays are exact; audio failure or hung playba
   }
 });
 
+test('preparation overlay shows the current reason rather than a generic insufficient-data loop', () => {
+  const html=renderToStaticMarkup(React.createElement(PoseViewport,{
+    videoRef:{current:null},canvasRef:{current:null},mirrored:true,stage:'waiting-precondition',progress:0,
+    workflow:{preconditionId:'attention',preconditionLabel:'Đứng nghiêm',status:'INSUFFICIENT_EVIDENCE',scoringPrecondition:false,
+      message:'Chưa nhìn rõ đầu gối và chân trụ. Giữ cả hai chân trong khung hình, tránh che khuất.'},
+  }));
+  assert.match(html,/Chưa nhìn rõ đầu gối và chân trụ/);
+  assert.doesNotMatch(html,/Camera chưa đủ dữ liệu để xác nhận\./);
+});
+
 test('main movement frames cannot overwrite the already frozen attention snapshot or average its score into the main grade', () => {
   const h = harness('atEase', true); let savedPreparation = ''; let preparation: unknown;
   for (let i = 0; i < 240 && !h.p.isFinalized; i++) {

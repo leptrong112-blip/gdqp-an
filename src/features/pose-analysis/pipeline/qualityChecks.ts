@@ -13,8 +13,10 @@ export function lightingMetrics(rgba: ArrayLike<number>): LightingMetrics {
 export class QualityChecker {
   private history: { frame: CanonicalPoseFrame; coverage: number; confidence: number }[] = [];
   private goodSince: number | null = null;
-  reset() { this.history = []; this.goodSince = null; }
-  check(frame: CanonicalPoseFrame, lighting: LightingMetrics, calibration?: CalibrationProfile, options?: { allowTurn?: boolean; assessKnees?: boolean; relaxedPosture?: boolean }): QualityReport {
+  private evidence: { timestampMs:number; passed:boolean }[] = [];
+  private evidenceStartedAt: number | null = null;
+  reset() { this.history = []; this.goodSince = null; this.evidence = []; this.evidenceStartedAt = null; }
+  check(frame: CanonicalPoseFrame, lighting: LightingMetrics, calibration?: CalibrationProfile, options?: { allowTurn?: boolean; assessKnees?: boolean; relaxedPosture?: boolean; countdown?: boolean; transition?: boolean; tolerateBriefLoss?: boolean }): QualityReport {
     const points = REQUIRED.map(n => frame.landmarks[n]), valid = points.filter(usable);
     const coverage = valid.length / REQUIRED.length, confidence = mean(valid.map(p => p.confidence));
     this.history.push({ frame, coverage, confidence });
@@ -38,12 +40,20 @@ export class QualityChecker {
     const staticMovement = options?.relaxedPosture && m.length && length > 0
       ? Math.max(...m.map(v => Math.hypot(v.root.x - center.x, (v.root.y - center.y) / 2))) / length : rootMovement;
     const scaleVariation = variation(m.map(v => v.torsoLength));
+    // Countdown is presentation, not a graded static hold. Permit small settling.
+    // During an action transition, movement is expected and must remain observed.
+    // Missing joints, lighting, framing and orientation still gate each real frame.
+    const motionStability = allowTurn || options?.transition
+      ? rootMovement <= 1.25 && scaleVariation <= 0.35
+      : options?.countdown
+        ? staticMovement <= C.maximumRootMovement * 2 && scaleVariation <= C.maximumScaleVariation * 1.5
+        : staticMovement <= C.maximumRootMovement && scaleVariation <= C.maximumScaleVariation;
     const p = frame.landmarks, ls = p.leftShoulder?.world, rs = p.rightShoulder?.world, lh = p.leftHip?.world, rh = p.rightHip?.world;
     const facing = !!ls && !!rs && !!lh && !!rh && Math.abs(ls.z - rs.z) / Math.max(distance(ls, rs), 1e-6) < 0.35 && Math.abs(lh.z - rh.z) / Math.max(distance(lh, rh), 1e-6) < 0.4;
     const head = allowTurn ? [p.nose, p.leftEar, p.rightEar].find(usable) : p.nose;
     const nose = head?.image, shoulderY = p.leftShoulder && p.rightShoulder ? (p.leftShoulder.image.y + p.rightShoulder.image.y) / 2 : NaN;
     const headroom = nose ? nose.y - Math.abs(shoulderY - nose.y) * 0.3 > C.frameMargin : false;
-    const kneeIssue = options?.assessKnees ? kneeEvidenceIssue(frame, recent.map(v => v.frame)) : null;
+    const kneeIssue = options?.assessKnees ? kneeEvidenceIssue(frame, recent.map(v => v.frame), { allowMotion: options?.transition }) : null;
     // Side-on turns naturally hide the far arm/leg. Require observed torso depth
     // and one complete visible leg, rather than a quota of frontal landmarks.
     const torsoNames = ['leftShoulder', 'rightShoulder', 'leftHip', 'rightHip'] as const;
@@ -60,14 +70,27 @@ export class QualityChecker {
       { id: 'reliability', label: 'Khớp rõ ràng', passed: !kneeIssue && (allowTurn ? torsoReliable && visibleLeg : (rollingCoverage >= C.reliabilityCoverage && rollingConfidence >= C.reliabilityMean && coverage === 1 && confidence >= C.reliabilityMean)), message: kneeIssue ?? (allowTurn ? 'Camera cần thấy rõ hai vai, hông và ít nhất một chân để theo dõi góc quay.' : 'Giữ các khớp không bị che khuất và hướng người về camera.') },
       // Track visible steps so the movement scorer can mark them incorrect.
       // Only excessive tracking disruption should abort the camera evidence.
-      { id: 'stability', label: 'Khung hình ổn định', passed: allowTurn ? (rootMovement <= 1.25 && scaleVariation <= 0.35) : (staticMovement <= C.maximumRootMovement && scaleVariation <= C.maximumScaleVariation), message: allowTurn ? 'Giữ camera cố định và toàn thân trong khung hình.' : 'Đặt máy trên giá cố định và đứng yên tại chỗ.' },
+      { id: 'stability', label: 'Khung hình ổn định', passed: motionStability, message: allowTurn || options?.transition ? 'Giữ camera cố định và toàn thân trong khung hình.' : 'Đặt máy trên giá cố định và đứng yên tại chỗ.' },
       { id: 'orientation', label: 'Nhìn chính diện', passed: allowTurn ? true : facing, message: 'Xoay người và camera để thấy chính diện hai vai và hông.' },
     ];
     const rawPassed = checks.every(c => c.passed);
+    if (frame.timestampMs - (this.evidence.at(-1)?.timestampMs ?? frame.timestampMs) > C.maximumFrameGapMs) {
+      this.evidence = []; this.evidenceStartedAt = null;
+    }
+    this.evidenceStartedAt ??= frame.timestampMs;
+    this.evidence.push({ timestampMs:frame.timestampMs, passed:rawPassed });
+    this.evidence = this.evidence.filter(e => frame.timestampMs-e.timestampMs <= C.qualityWarmupMs).slice(-60);
+    // One intermittent missing wrist must not require another uninterrupted
+    // warmup forever. The current frame still needs ALL acquisition checks.
+    const recoveredWindow = !!options?.tolerateBriefLoss && this.evidence.length >= 6 &&
+      frame.timestampMs-this.evidenceStartedAt >= C.qualityWarmupMs &&
+      frame.timestampMs-this.evidence[0].timestampMs >= C.qualityWarmupMs-C.maximumFrameGapMs &&
+      this.evidence.filter(e=>e.passed).length/this.evidence.length >= C.reliabilityCoverage;
     if (!rawPassed) this.goodSince = null;
     else if (this.goodSince === null) this.goodSince = frame.timestampMs;
-    // Fail immediately for safety; require a continuous second before recovering.
-    const passed = rawPassed && (allowTurn || frame.timestampMs - (this.goodSince ?? frame.timestampMs) >= C.qualityWarmupMs);
+    // Require warmup for acquisition/graded static holds. Repeating that warmup
+    // during a known action discards its first trajectory; use current evidence.
+    const passed = rawPassed && (allowTurn || options?.transition || options?.countdown || recoveredWindow || frame.timestampMs - (this.goodSince ?? frame.timestampMs) >= C.qualityWarmupMs);
     return { passed, reasons: rawPassed && !passed ? ['Giữ ổn định thêm một giây để xác nhận chất lượng.'] : checks.filter(c => !c.passed).map(c => c.message), checks, metrics: { coverage: rollingCoverage, meanConfidence: rollingConfidence, rootMovement, scaleVariation, lighting } };
   }
 }

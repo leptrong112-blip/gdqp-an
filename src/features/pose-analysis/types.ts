@@ -122,7 +122,7 @@ export interface AnalysisSnapshot {
   drillProgress?: { index: number; completed: number; total: number; movementId: 'attention' | 'atEase' | 'salute' };
   features?: Partial<Record<FeatureId, FeatureValue>>;
   dualMeasurements?: DualMeasurement[];
-  workflow?: { preconditionId: 'attention' | 'atEase'; preconditionLabel: string; status: 'WRONG_PRECONDITION' | 'INSUFFICIENT_EVIDENCE' | 'READY'; scoringPrecondition: boolean };
+  workflow?: { preconditionId: 'attention' | 'atEase'; preconditionLabel: string; status: 'WRONG_PRECONDITION' | 'INSUFFICIENT_EVIDENCE' | 'READY'; scoringPrecondition: boolean; message?: string };
   saluteProgress?: SaluteProgress;
   performance?: PosePerformanceTelemetry;
 }

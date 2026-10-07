@@ -342,7 +342,7 @@ export default function PoseAnalysisPage() {
                 <label className="mt-3 flex items-center gap-2"><input type="checkbox" checked={session.muted} onChange={e => session.setMuted(e.target.checked)} />Tắt âm thanh khẩu lệnh</label>
                 {session.movementId !== 'attention' && session.movementId !== 'basicDrill' && <label className="mt-3 flex items-start gap-2">
                   <input type="checkbox" checked={session.scorePrecondition} disabled={!['idle', 'quality-check', 'result', 'blocked'].includes(session.stage)} onChange={e => session.setScorePrecondition(e.target.checked)} />
-                  Chấm riêng Đứng nghiêm tiền đề (thêm 3 giây, không cộng vào điểm động tác chính)
+                  Chấm riêng Đứng nghiêm trước động tác (giữ tối thiểu 3 giây, điểm riêng)
                 </label>}
                 <dl className="mt-3 space-y-2 text-slate-600 dark:text-slate-300">
                   <div>Chế độ: {session.mode || 'Chưa khởi tạo'}</div>

@@ -98,6 +98,19 @@ test('Excel projection preserves sequence step scores and excludes incidental im
   assert.doesNotMatch(JSON.stringify(rows), /PRIVATE-|rawLandmarks|image|video/);
 });
 
+test('Excel required criteria retain recorded statuses instead of reclassifying with a 60 percent threshold', () => {
+  const source = record({ criteria: [
+    { id: 'direction', label: 'Hướng quay', points: 25, maximum: 25, statusLevel: 'PASS', required: true, feedback: 'Đạt' },
+    { id: 'angle', label: 'Góc quay', points: 20, maximum: 25, statusLevel: 'NEEDS_ADJUSTMENT', required: true, feedback: 'Cần điều chỉnh' },
+    { id: 'torso', label: 'Thân thẳng', points: 13, maximum: 20, statusLevel: 'NOT_ACHIEVED', required: true, feedback: 'Chưa đạt' },
+    { id: 'feet', label: 'Bàn chân', points: 0, maximum: 5, statusLevel: 'NOT_SCORABLE', required: true, feedback: 'Chưa đủ dữ liệu' },
+  ] });
+  const row = poseExcelRows([source])[0];
+  assert.equal(row[7], 'Hướng quay: Đạt; Góc quay: Cần điều chỉnh; Thân thẳng: Chưa đạt; Bàn chân: Chưa đủ dữ liệu');
+  assert.equal(row[3], 8.5, 'export does not alter the overall score');
+  assert.equal(row[4], 'Đạt', 'export does not change the stored overall conclusion');
+});
+
 test('management detail and Excel keep preparation and main scores separate without recomputing a combined score', () => {
   const prepared = record({ movementId: 'atEase', score: 75, preconditionResult: {
     movementId: 'attention', movementLabel: 'Đứng nghiêm', score: 90, passed: true, assessment: 'pass', requiredCriteriaPassed: true,

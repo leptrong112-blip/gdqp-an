@@ -46,11 +46,54 @@ test('pixel lighting metrics discriminate dark and bright scenes', () => {
   assert.deepEqual(lightingMetrics([0, 0, 0, 255]), { mean: 0, darkRatio: 1, brightRatio: 0 });
   assert.ok(lightingMetrics([255, 255, 255, 255]).brightRatio === 1);
 });
-test('quality loss or long frame gaps abort an active attempt without a numeric score', () => {
+test('quality loss or long frame gaps during calibration wait for recovery without ending a practice attempt', () => {
   for (const gap of [false, true]) {
     const session = new SessionProcessor(); for (let t = 0; t <= 1100; t += 100) session.process(attentionFrame(t), goodLighting, 10);
     session.command('startCalibration'); let events = [];
     for (let t = 1200; t <= 2000; t += 100) events.push(...session.process(attentionFrame(gap ? t + 1000 : t), { ...goodLighting, mean: 10 }, 10));
-    const refused = events.find(e => e.type === 'score'); assert.ok(refused && refused.result.status === 'notScorable');
+    assert.equal(events.some(e => e.type === 'score' || e.type === 'commandCue'), false);
+    assert.equal(session.isFinalized, false);
+    assert.ok(events.some(e => e.type === 'analysis' && e.snapshot.stage === 'calibrating'));
+  }
+});
+
+test('transition observes body settling immediately but still rejects dark, clipped, missing and multi-person frames', () => {
+  for (const fault of ['none', 'dark', 'clipped', 'missing', 'people']) {
+    const checker = new QualityChecker();
+    for (let t = 0; t <= 1100; t += 100) checker.check(attentionFrame(t), goodLighting);
+    const frame = attentionFrame(1200);
+    for (const point of Object.values(frame.landmarks)) point.image.x += .025;
+    if (fault === 'clipped') frame.landmarks.leftAnkle!.image.y = 1.1;
+    if (fault === 'missing') delete frame.landmarks.leftWrist;
+    if (fault === 'people') frame.personCount = 2;
+    assert.equal(checker.check(frame, fault === 'dark' ? { ...goodLighting, mean: 10 } : goodLighting, undefined, { transition:true }).passed, fault === 'none', fault);
+  }
+});
+
+test('rest transition permits changing knee angles but never treats overlapping or depthless knees as observed', () => {
+  for (const fault of ['moving','overlap','depth']) {
+    const checker = new QualityChecker(); let report;
+    for (let t = 0; t <= 2000; t += 100) {
+      const frame = attentionFrame(t); frame.landmarks.leftKnee!.world!.z = t % 200 ? .03 : 0;
+      if (fault === 'overlap') frame.landmarks.leftKnee!.image = { ...frame.landmarks.rightKnee!.image };
+      if (fault === 'depth') frame.landmarks.leftKnee!.world = undefined;
+      report = checker.check(frame,goodLighting,undefined,{ transition:true,assessKnees:true });
+    }
+    assert.equal(report!.passed,fault==='moving',fault);
+  }
+});
+
+test('brief-loss recovery accepts only current clear frames, never persistent low-quality evidence', () => {
+  for (const persistent of [false,true]) {
+    const checker=new QualityChecker();let accepted=0;
+    for(let t=0;t<=4000;t+=100) {
+      const frame=attentionFrame(t), missing=persistent||t%1000===0;
+      if(missing)delete frame.landmarks.leftWrist;
+      const report=checker.check(frame,goodLighting,undefined,{tolerateBriefLoss:true});
+      if(missing)assert.equal(report.passed,false);
+      else if(t>=1500)assert.equal(report.passed,true);
+      if(report.passed)accepted++;
+    }
+    assert.equal(accepted>0,!persistent);
   }
 });

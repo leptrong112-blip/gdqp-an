@@ -99,6 +99,7 @@ function runDrill(options: { failAt?: number; wrongRest?: boolean; shortGap?: bo
   session.command('selectBasicDrill');
   let snapshot: AnalysisSnapshot | undefined;
   let saluteCommandMs: number | undefined;
+  let shortGapInjected = false;
   const feed = (t: number) => {
     const id = snapshot?.drillProgress?.movementId ?? 'attention';
     const expected = session.expectedPostureId;
@@ -106,7 +107,9 @@ function runDrill(options: { failAt?: number; wrongRest?: boolean; shortGap?: bo
     // Enter the target first; only the scored hold contains this leg error.
     if (options.wrongRest && id === 'atEase' && snapshot?.stage === 'scoring') frame.landmarks.leftKnee!.world!.z = 0;
     if (options.failAt !== undefined && snapshot?.drillProgress?.index === options.failAt && snapshot?.stage === 'scoring') frame.personCount = 0;
-    if (options.shortGap && t === 6800) frame.personCount = 0;
+    if (options.shortGap && !shortGapInjected && snapshot?.stage === 'scoring' && snapshot.progress >= .2) {
+      frame.personCount = 0; shortGapInjected = true;
+    }
     const next = session.process(frame, goodLighting, 10);
     if (next.some(e => e.type === 'commandCue' && e.command === 'CHÀO')) saluteCommandMs = t;
     for (const e of next) if (e.type === 'analysis') snapshot = e.snapshot;
@@ -114,7 +117,7 @@ function runDrill(options: { failAt?: number; wrongRest?: boolean; shortGap?: bo
   };
   for (let t = 0; t <= 1500; t += 100) feed(t);
   session.command('startCalibration');
-  for (let t = 1600; t <= 35000 && !events.some(e => e.type === 'score'); t += 100) feed(t);
+  for (let t = 1600; t <= 45000 && !events.some(e => e.type === 'score'); t += 100) feed(t);
   return { session, events, snapshot };
 }
 

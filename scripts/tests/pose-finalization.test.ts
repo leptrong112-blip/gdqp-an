@@ -19,7 +19,7 @@ function harness(interval = 100) {
   let next = 0;
   for (; next <= 1500; next += interval) feed(attentionFrame(next));
   processor.command('startCalibration', context);
-  for (; next < 10_000; next += interval) {
+  for (; next < 20_000; next += interval) {
     const events = feed(drillFrame(processor.expectedPostureId, next));
     const analysis = events.find(e => e.type === 'analysis');
     if (analysis?.type === 'analysis' && analysis.snapshot.stage === 'scoring') return { processor, feed, context, scoringAt: next, next: next + interval };
@@ -86,7 +86,7 @@ test('basic drill freezes each step before later frames and emits only the final
   let movement = 'attention';
   let saluteCommandMs: number | undefined;
   let final: Extract<WorkerEvent, { type: 'score' }> | undefined;
-  for (let t = 1600; t < 35_000; t += 100) {
+  for (let t = 1600; t < 45_000; t += 100) {
     const events = feed(processor.expectedPostureId === 'salute' && saluteCommandMs !== undefined ? saluteMotionFrame(t, saluteCommandMs) : drillFrame(processor.expectedPostureId, t));
     if (events.some(e => e.type === 'commandCue' && e.command === 'CHÀO')) saluteCommandMs = t;
     const snapshot = events.find(e => e.type === 'analysis');

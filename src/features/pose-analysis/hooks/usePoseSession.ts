@@ -176,7 +176,7 @@ export function usePoseSession(options: {
             if (event.result.assessment !== 'incomplete') previousScoreRef.current = event.result.total;
 
           }
-          // One short presentation boundary. Saving/audio are never awaited.
+          // Keep THÔI readable before opening the result. Saving/audio are never awaited.
           setStage('stop-command');
           const resultId = currentAttempt.id;
           presentationTimer.current = setTimeout(() => {

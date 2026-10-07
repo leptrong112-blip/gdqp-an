@@ -10,6 +10,7 @@ import { evaluate } from '../../src/features/pose-analysis/scoring/scoringEngine
 import { SessionProcessor } from '../../src/features/pose-analysis/runtime/sessionProcessor';
 import { attentionFrame, rotatedPoseFrame, goodLighting } from './fixtures/pose/attention';
 import type { WorkerEvent } from '../../src/features/pose-analysis/runtime/workerProtocol';
+import { waitForPoseCommand } from './fixtures/pose/session';
 
 const module = new WebAssembly.Module(readFileSync(new URL('../../src/features/pose-analysis/scoring/sequence.wasm', import.meta.url)));
 const instance = new WebAssembly.Instance(module);
@@ -127,16 +128,14 @@ test('leaving the final pose after 600ms resets hold; a quality pause also reset
 test('a full SessionProcessor run attaches the actual native report and clears on reset', () => {
   const session = new SessionProcessor(native), events: WorkerEvent[] = [];
   session.command('selectTurnLeft');
-  for (let t = 0; t <= 1500; t += 100) session.process(attentionFrame(t), goodLighting, 20);
-  session.command('startCalibration');
-  for (let t = 1600; t <= 7000; t += 100) session.process(attentionFrame(t), goodLighting, 20);
-  for (let t = 7100; t <= 7700; t += 100) session.process(rotatedPoseFrame(0, t), goodLighting, 20);
-  for (let t = 7800; t <= 8500; t += 100) session.process(rotatedPoseFrame((t - 7800) / 700 * 90, t), goodLighting, 20);
-  for (let t = 8600; t <= 10500; t += 100) events.push(...session.process(rotatedPoseFrame(90, t), goodLighting, 20));
+  const offset = waitForPoseCommand(session) - 7000;
+  for (let t = 7100; t <= 7700; t += 100) session.process(rotatedPoseFrame(0, t + offset), goodLighting, 20);
+  for (let t = 7800; t <= 8500; t += 100) session.process(rotatedPoseFrame((t - 7800) / 700 * 90, t + offset), goodLighting, 20);
+  for (let t = 8600; t <= 10500; t += 100) events.push(...session.process(rotatedPoseFrame(90, t + offset), goodLighting, 20));
   const score = events.find(e => e.type === 'score');
   assert.ok(score?.type === 'score' && score.result.status === 'scored');
   assert.equal(score.result.sequence?.status, 'analyzed');
   if (score.result.sequence?.status === 'analyzed') assert.equal(score.result.sequence.engine, 'wasm');
   session.command('reset');
-  assert.ok(session.process(attentionFrame(10600), goodLighting, 20).some(e => e.type === 'analysis' && e.snapshot.stage === 'quality-check'));
+  assert.ok(session.process(attentionFrame(10600 + offset), goodLighting, 20).some(e => e.type === 'analysis' && e.snapshot.stage === 'quality-check'));
 });

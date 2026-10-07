@@ -16,7 +16,7 @@ import { attentionFrame, goodLighting } from './fixtures/pose/attention';
 import type { CanonicalPoseFrame, AnalysisSnapshot } from '../../src/features/pose-analysis/types';
 import type { WorkerEvent } from '../../src/features/pose-analysis/runtime/workerProtocol';
 
-function runSalute(fps = 10, duration = 1000, mode: 'raise' | 'jump' | 'missingHand' | 'lowConfidence' = 'raise') {
+function runSalute(fps = 10, duration = 1000, mode: 'raise' | 'jump' | 'missingHand' | 'lowConfidence' = 'raise', change?: (frame:CanonicalPoseFrame, cue:number|undefined) => void) {
   const step = 1000 / fps, p = new SessionProcessor(), events: WorkerEvent[] = [];
   const handRequests: { t: number; active: boolean; stage?: string }[] = [];
   let cue: number | undefined, scoringAt: number | undefined, snapshot: AnalysisSnapshot | undefined;
@@ -25,6 +25,7 @@ function runSalute(fps = 10, duration = 1000, mode: 'raise' | 'jump' | 'missingH
     const frame = cue === undefined ? attentionFrame(t) : mode === 'jump' ? drillFrame('salute', t) : saluteMotionFrame(t, cue, duration);
     if (mode === 'missingHand') delete frame.saluteHand;
     if (mode === 'lowConfidence' && frame.saluteHand) frame.saluteHand.confidence = .1;
+    change?.(frame, cue);
     handRequests.push({ t, active: p.needsHandTracking, stage: snapshot?.stage });
     const next = p.process(frame, goodLighting, 15);
     if (next.some(e => e.type === 'commandCue' && e.command === 'CHÀO')) cue = t;
@@ -39,6 +40,21 @@ function runSalute(fps = 10, duration = 1000, mode: 'raise' | 'jump' | 'missingH
   const result = events.find(e => e.type === 'score');
   return { p, events, cue, scoringAt, result: result?.type === 'score' ? result.result : undefined, handRequests, snapshot };
 }
+
+for (const droppedWrist of [false, true]) test(`first salute raise survives body settling after command, wrist dropout=${droppedWrist}`, () => {
+  const h = runSalute(12, 900, 'raise', (frame, cue) => {
+    if (cue === undefined) return;
+    // Small relocation while raising once, then hold that final position.
+    for (const point of Object.values(frame.landmarks)) { point.image.x += .025; if (point.world) point.world.x += .025 * frame.aspectRatio; }
+    frame.saluteHand?.image.forEach(point => { point.x += .025; });
+    if (droppedWrist && frame.timestampMs - cue >= 250 && frame.timestampMs - cue < 335) delete frame.landmarks.rightWrist;
+  });
+  assert.ok(h.result?.status === 'scored', JSON.stringify(h.result));
+  assert.equal(h.result.total, 100);
+  assert.equal(h.result.saluteSequence?.motionObserved, true);
+  assert.equal(h.events.filter(e => e.type === 'commandCue' && e.command === 'CHÀO').length, 1);
+  assert.equal(h.events.filter(e => e.type === 'score').length, 1);
+});
 
 for (const fps of [8, 12, 20]) for (const duration of [900, 1800, 2800]) {
   test(`salute observes attention → raise → stable → hold once at ${fps} FPS, ${duration} ms raise`, () => {

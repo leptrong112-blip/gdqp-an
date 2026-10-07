@@ -14,6 +14,7 @@ import { javascriptSequenceEngine, sequenceEngineFromInstance } from '../../src/
 import { SessionProcessor } from '../../src/features/pose-analysis/runtime/sessionProcessor';
 import type { CanonicalPoseFrame } from '../../src/features/pose-analysis/types';
 import type { WorkerEvent } from '../../src/features/pose-analysis/runtime/workerProtocol';
+import { waitForPoseCommand } from './fixtures/pose/session';
 
 const native = sequenceEngineFromInstance(new WebAssembly.Instance(new WebAssembly.Module(
   readFileSync(new URL('../../src/features/pose-analysis/scoring/sequence.wasm', import.meta.url)),
@@ -65,13 +66,11 @@ test('an observed reversal reduces direction points in both engines, not just fe
 function turnSession(sign: number, mirrored: boolean, jump = false) {
   const session = new SessionProcessor();
   session.command(sign === 1 ? 'selectTurnLeft' : 'selectTurnRight');
-  for (let t = 0; t <= 1500; t += 100) session.process(attentionFrame(t), goodLighting, 20);
-  session.command('startCalibration');
-  for (let t = 1600; t <= 7000; t += 100) session.process(attentionFrame(t), goodLighting, 20);
+  const offset = waitForPoseCommand(session) - 7000;
   const events: WorkerEvent[] = [];
   for (let t = 7100; t <= 15500; t += 100) {
     const yaw = t <= 7700 ? 0 : jump ? 90 : Math.min(90, (t - 7800) / 700 * 90);
-    events.push(...session.process(rotatedPoseFrame(sign * yaw, t, mirrored), goodLighting, 20));
+    events.push(...session.process(rotatedPoseFrame(sign * yaw, t + offset, mirrored), goodLighting, 20));
   }
   return events.find(e => e.type === 'score');
 }
@@ -140,12 +139,10 @@ test('2D straight-looking knees retain distinct 3D scores and correct at-ease fe
 test('an at-ease session aborts with a knee-evidence explanation instead of grading occlusion', () => {
   const session = new SessionProcessor();
   session.command('selectAtEase');
-  for (let t = 0; t <= 1500; t += 100) session.process(attentionFrame(t), goodLighting, 20);
-  session.command('startCalibration');
-  for (let t = 1600; t <= 7000; t += 100) session.process(attentionFrame(t), goodLighting, 20);
+  const offset = waitForPoseCommand(session) - 7000;
   const events: WorkerEvent[] = [];
   for (let t = 7100; t <= 9500; t += 100) {
-    const frame: CanonicalPoseFrame = attentionFrame(t);
+    const frame: CanonicalPoseFrame = attentionFrame(t + offset);
     frame.landmarks.leftKnee!.image = { ...frame.landmarks.rightKnee!.image };
     events.push(...session.process(frame, goodLighting, 20));
   }

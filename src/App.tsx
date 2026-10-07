@@ -158,7 +158,7 @@ function AuthenticatedApp() {
   const openSurveyArea = () => setActiveTab(user?.role === 'admin' ? 'admin' : 'survey');
 
   return (
-    <div className={`${activeTab === "sim" ? "h-dvh overflow-hidden" : "min-h-screen"} flex flex-col font-sans transition-colors duration-200 ${isDark ? "bg-[#0b0f19] text-slate-100" : "bg-slate-100 text-slate-900"}`}>
+    <div className={`${activeTab === "sim" ? "h-dvh overflow-hidden" : "min-h-screen"} flex flex-col font-sans transition-colors duration-200 ${isDark ? "bg-[#081324] text-white" : "bg-[#FAFCFE] text-[#0B1324]"}`}>
       {/* XP Toast Float */}
       <div className="fixed top-16 right-6 z-50 space-y-2 pointer-events-none">
         {xpToasts.map((toast) => (
@@ -180,7 +180,7 @@ function AuthenticatedApp() {
 
       {/* ═══════════════════ TOP HEADER WITH DROPDOWN MENUS ═══════════════════ */}
       <header className={`sticky top-0 z-40 backdrop-blur-xl border-b px-3 sm:px-6 lg:px-10 py-2 sm:py-3 flex items-center justify-between shadow-xs shrink-0 transition-colors ${
-        isDark ? "bg-[#111827]/95 border-slate-800 text-white" : "bg-white/95 border-slate-200/80 text-slate-900"
+        isDark ? "bg-[#0B1627]/95 border-white/10 text-white" : "bg-white/95 border-[#E5EAF1] text-[#0B1324]"
       }`}>
         
         {/* Left Logo + Mobile Menu Button */}
@@ -233,7 +233,7 @@ function AuthenticatedApp() {
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:rotate-180 transition-transform" />
             </button>
 
-            <div className="absolute top-full left-0 mt-1 w-56 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
+            <div className="absolute top-full left-0 mt-1 w-56 bg-white dark:bg-[#0D1B2E] border border-[#E5EAF1] dark:border-white/10 rounded-2xl shadow-xl p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
               <button
                 onClick={() => { setGlobalGrade(10); setActiveTab("theory"); }}
                 className="w-full text-left p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2.5 text-slate-700 dark:text-slate-200 cursor-pointer"
@@ -280,7 +280,7 @@ function AuthenticatedApp() {
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:rotate-180 transition-transform" />
             </button>
 
-            <div className="absolute top-full left-0 mt-1 w-68 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
+            <div className="absolute top-full left-0 mt-1 w-68 bg-white dark:bg-[#0D1B2E] border border-[#E5EAF1] dark:border-white/10 rounded-2xl shadow-xl p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
               <button onClick={() => setActiveTab("pose")} className="w-full text-left p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2.5 text-slate-700 dark:text-slate-200 cursor-pointer"><Camera className="w-4 h-4 text-emerald-500 shrink-0" /><div><div className="font-bold text-xs">Chấm điểm động tác bằng camera</div><div className="text-[10px] text-slate-400">Đứng nghiêm · AI Pose Analysis</div></div></button>
               <button
                 onClick={() => setActiveTab("shooting")}
@@ -371,7 +371,7 @@ function AuthenticatedApp() {
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:rotate-180 transition-transform" />
             </button>
 
-            <div className="absolute top-full right-0 mt-1 w-60 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
+            <div className="absolute top-full right-0 mt-1 w-60 bg-white dark:bg-[#0D1B2E] border border-[#E5EAF1] dark:border-white/10 rounded-2xl shadow-xl p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
               <button
                 onClick={() => setActiveTab("quiz")}
                 className="w-full text-left p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2.5 text-slate-700 dark:text-slate-200 cursor-pointer"

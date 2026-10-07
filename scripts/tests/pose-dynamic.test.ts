@@ -10,6 +10,7 @@ import { buildRequirementCards } from '../../src/features/pose-analysis/scoring/
 import { attentionFrame, goodLighting } from './fixtures/pose/attention';
 import type { CanonicalPoseFrame } from '../../src/features/pose-analysis/types';
 import type { WorkerEvent } from '../../src/features/pose-analysis/runtime/workerProtocol';
+import { waitForPoseCommand } from './fixtures/pose/session';
 
 /**
  * Tạo khung hình xoay thân tổng hợp (Synthetic rotated pose frame).
@@ -116,39 +117,25 @@ test('Dynamic turn left: full session transitions START_READY -> MOVING -> FINAL
   const session = new SessionProcessor();
   session.command('selectTurnLeft');
 
-  // 1. Warmup
-  for (let t = 0; t <= 1500; t += 100) {
-    session.process(attentionFrame(t), goodLighting, 20);
-  }
-
-  // 2. Calibration
-  session.command('startCalibration');
-  for (let t = 1600; t <= 3800; t += 100) {
-    session.process(attentionFrame(t), goodLighting, 20);
-  }
-
-  // 3. Countdown (3 seconds)
-  for (let t = 3900; t <= 7000; t += 100) {
-    session.process(attentionFrame(t), goodLighting, 20);
-  }
+  const offset = waitForPoseCommand(session) - 7000;
 
   // 4. Scoring phase
   // Phase a: Hold ready at 0° for 600ms (7100 - 7700)
   for (let t = 7100; t <= 7700; t += 100) {
-    session.process(rotatedPoseFrame(0, t), goodLighting, 20);
+    session.process(rotatedPoseFrame(0, t + offset), goodLighting, 20);
   }
 
   // Phase b: Turn left from 0° to 90° over 800ms (7800 - 8500)
   for (let t = 7800; t <= 8500; t += 100) {
     const frac = (t - 7800) / 700;
     const yaw = frac * 90;
-    session.process(rotatedPoseFrame(yaw, t), goodLighting, 20);
+    session.process(rotatedPoseFrame(yaw, t + offset), goodLighting, 20);
   }
 
   // Phase c: Final hold at 90° for 1600ms (8600 - 10200)
   const events: WorkerEvent[] = [];
   for (let t = 8600; t <= 10400; t += 100) {
-    events.push(...session.process(rotatedPoseFrame(90, t), goodLighting, 20));
+    events.push(...session.process(rotatedPoseFrame(90, t + offset), goodLighting, 20));
   }
 
   const scoreEvent = events.find(e => e.type === 'score');
@@ -181,25 +168,21 @@ test('Dynamic turn right: full session executes right turn (-90°) and completes
   const session = new SessionProcessor();
   session.command('selectTurnRight');
 
-  // Warmup + Calibration + Countdown
-  for (let t = 0; t <= 1500; t += 100) session.process(attentionFrame(t), goodLighting, 20);
-  session.command('startCalibration');
-  for (let t = 1600; t <= 3800; t += 100) session.process(attentionFrame(t), goodLighting, 20);
-  for (let t = 3900; t <= 7000; t += 100) session.process(attentionFrame(t), goodLighting, 20);
+  const offset = waitForPoseCommand(session) - 7000;
 
   // Ready 0°
-  for (let t = 7100; t <= 7700; t += 100) session.process(rotatedPoseFrame(0, t), goodLighting, 20);
+  for (let t = 7100; t <= 7700; t += 100) session.process(rotatedPoseFrame(0, t + offset), goodLighting, 20);
 
   // Turn right 0° -> -90°
   for (let t = 7800; t <= 8500; t += 100) {
     const frac = (t - 7800) / 700;
-    session.process(rotatedPoseFrame(-frac * 90, t), goodLighting, 20);
+    session.process(rotatedPoseFrame(-frac * 90, t + offset), goodLighting, 20);
   }
 
   // Final hold at -90° for 1600ms
   const events: WorkerEvent[] = [];
   for (let t = 8600; t <= 10400; t += 100) {
-    events.push(...session.process(rotatedPoseFrame(-90, t), goodLighting, 20));
+    events.push(...session.process(rotatedPoseFrame(-90, t + offset), goodLighting, 20));
   }
 
   const scoreEvent = events.find(e => e.type === 'score');
@@ -218,23 +201,19 @@ test('Wrong turn direction: turning right when turnLeft was chosen loses points 
   const session = new SessionProcessor();
   session.command('selectTurnLeft'); // Selected left turn
 
-  // Warmup + Calibration + Countdown
-  for (let t = 0; t <= 1500; t += 100) session.process(attentionFrame(t), goodLighting, 20);
-  session.command('startCalibration');
-  for (let t = 1600; t <= 3800; t += 100) session.process(attentionFrame(t), goodLighting, 20);
-  for (let t = 3900; t <= 7000; t += 100) session.process(attentionFrame(t), goodLighting, 20);
+  const offset = waitForPoseCommand(session) - 7000;
 
   // User erroneously turns RIGHT (-90°)
-  for (let t = 7100; t <= 7700; t += 100) session.process(rotatedPoseFrame(0, t), goodLighting, 20);
+  for (let t = 7100; t <= 7700; t += 100) session.process(rotatedPoseFrame(0, t + offset), goodLighting, 20);
   for (let t = 7800; t <= 8500; t += 100) {
     const frac = (t - 7800) / 700;
-    session.process(rotatedPoseFrame(-frac * 90, t), goodLighting, 20);
+    session.process(rotatedPoseFrame(-frac * 90, t + offset), goodLighting, 20);
   }
 
   // Timeout completes after 8000ms
   const events: WorkerEvent[] = [];
   for (let t = 8600; t <= 15500; t += 100) {
-    events.push(...session.process(rotatedPoseFrame(-90, t), goodLighting, 20));
+    events.push(...session.process(rotatedPoseFrame(-90, t + offset), goodLighting, 20));
   }
 
   const scoreEvent = events.find(e => e.type === 'score');
@@ -285,15 +264,12 @@ test('Long occlusion during scoring (>1500ms) produces notScorable with Vietname
   const session = new SessionProcessor();
   session.command('selectTurnLeft');
 
-  for (let t = 0; t <= 1500; t += 100) session.process(attentionFrame(t), goodLighting, 20);
-  session.command('startCalibration');
-  for (let t = 1600; t <= 3800; t += 100) session.process(attentionFrame(t), goodLighting, 20);
-  for (let t = 3900; t <= 7000; t += 100) session.process(attentionFrame(t), goodLighting, 20);
+  const offset = waitForPoseCommand(session) - 7000;
 
   // In scoring: person vanishes (personCount = 0) for 1800ms
   const events: WorkerEvent[] = [];
   for (let t = 7100; t <= 9000; t += 100) {
-    const badFrame = attentionFrame(t);
+    const badFrame = attentionFrame(t + offset);
     badFrame.personCount = 0;
     events.push(...session.process(badFrame, goodLighting, 20));
   }
@@ -323,19 +299,15 @@ test('COMPLETE freezes score and prevents duplicate score events', () => {
   const session = new SessionProcessor();
   session.command('selectTurnLeft');
 
-  // Calibration + Countdown
-  for (let t = 0; t <= 1500; t += 100) session.process(attentionFrame(t), goodLighting, 20);
-  session.command('startCalibration');
-  for (let t = 1600; t <= 3800; t += 100) session.process(attentionFrame(t), goodLighting, 20);
-  for (let t = 3900; t <= 7000; t += 100) session.process(attentionFrame(t), goodLighting, 20);
+  const offset = waitForPoseCommand(session) - 7000;
 
   // Turn and complete
-  for (let t = 7100; t <= 7700; t += 100) session.process(rotatedPoseFrame(0, t), goodLighting, 20);
-  for (let t = 7800; t <= 8500; t += 100) session.process(rotatedPoseFrame((t - 7800) / 700 * 90, t), goodLighting, 20);
+  for (let t = 7100; t <= 7700; t += 100) session.process(rotatedPoseFrame(0, t + offset), goodLighting, 20);
+  for (let t = 7800; t <= 8500; t += 100) session.process(rotatedPoseFrame((t - 7800) / 700 * 90, t + offset), goodLighting, 20);
 
   const allEvents: WorkerEvent[] = [];
   for (let t = 8600; t <= 11000; t += 100) {
-    allEvents.push(...session.process(rotatedPoseFrame(90, t), goodLighting, 20));
+    allEvents.push(...session.process(rotatedPoseFrame(90, t + offset), goodLighting, 20));
   }
 
   const scoreEvents = allEvents.filter(e => e.type === 'score');

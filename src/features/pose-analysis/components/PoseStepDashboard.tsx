@@ -104,7 +104,7 @@ export function PoseStepDashboard({
   return (
     <div className="flex flex-col h-full space-y-4 text-slate-800 dark:text-slate-100 select-none">
       <p className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm font-bold text-amber-900 dark:bg-amber-950 dark:text-amber-200">Tư thế chuẩn bị: {preparationLabel}</p>
-      {['waiting-precondition', 'precondition-scoring', 'transition'].includes(stage) && <p role="status" className="text-sm">{workflowMessage ?? 'Giữ tư thế chuẩn bị, chờ khẩu lệnh.'}</p>}
+      {['calibrating', 'waiting-precondition', 'precondition-scoring', 'transition'].includes(stage) && <p role="status" className="text-sm">{workflowMessage ?? 'Đứng vào vị trí, giữ tư thế chuẩn bị. Chờ đếm ngược và khẩu lệnh rồi mới thực hiện.'}</p>}
       {/* ══════════ THANH TIẾN TRÌNH 2 BƯỚC ══════════ */}
       <div className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-xs font-bold gap-2">
         <button
@@ -137,7 +137,6 @@ export function PoseStepDashboard({
       </div>
 
       {/* ══════════ NỘI DUNG BƯỚC 1: KIỂM TRA ĐIỀU KIỆN ══════════ */}
-      {!result && <PoseCameraGuidance report={report} stage={stage} />}
       {activeStep === 1 ? (
         <section className="rounded-3xl border border-slate-200 dark:border-slate-700/80 p-5 bg-white dark:bg-slate-900/95 shadow-xl space-y-4 flex-1 flex flex-col justify-between">
           <div className="space-y-3">
@@ -359,9 +358,9 @@ export function PoseStepDashboard({
             {stage === 'calibrating' && (
               <div className="p-3.5 rounded-2xl bg-amber-500/20 border-2 border-amber-500 text-center animate-pulse">
                 <span className="text-xs font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
-                  Đang hiệu chuẩn (2 giây)
+                  Đang đo vị trí đứng
                 </span>
-                <p className="text-base font-black mt-1">Giữ nguyên tư thế để máy đo kích thước...</p>
+                <p className="text-base font-black mt-1">Giữ ổn định; chờ đếm ngược rồi mới thực hiện động tác.</p>
               </div>
             )}
 
@@ -510,6 +509,7 @@ export function PoseStepDashboard({
           </div>
         </section>
       )}
+      {!result && <PoseCameraGuidance report={report} stage={stage} />}
     </div>
   );
 }

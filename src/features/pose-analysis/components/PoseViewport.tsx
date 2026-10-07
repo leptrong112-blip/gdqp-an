@@ -46,10 +46,10 @@ export function PoseViewport({
   const holdSeconds = (progress * 3.0).toFixed(1);
   const labels: Partial<Record<PoseStage, string>> = {
     'loading-model': 'Đang mở camera và tải mô hình…',
-    calibrating: 'Giữ nguyên tư thế để hiệu chuẩn (2 giây)',
+    calibrating: 'Đứng vào vị trí, giữ ổn định để camera đo tỷ lệ cơ thể',
     'waiting-precondition': `Vui lòng vào tư thế ${workflow?.preconditionLabel ?? 'chuẩn bị'} để chuẩn bị.`,
     'precondition-scoring': 'Đang ghi nhận điểm tiền đề Đứng nghiêm · giữ ổn định',
-    transition: 'Chuyển tư thế theo khẩu lệnh · chưa tính điểm lúc chuyển động',
+    transition: `Đang ghi nhận ${movementLabel} sau khẩu lệnh · giữ tư thế cuối để chốt điểm`,
     countdown: `Chuẩn bị ${movementLabel} · ${Math.max(1, Math.ceil(3 * (1 - progress)))}`,
     scoring: dynamicProgress?.message ?? `Đang chấm... Giữ nguyên tư thế (${holdSeconds} / 3.0s)`,
     completed: '✓ Hoàn thành bài! Đang tính điểm...',
@@ -103,8 +103,10 @@ export function PoseViewport({
       {workflow && ['quality-check', 'waiting-precondition', 'calibrating', 'precondition-scoring'].includes(stage) &&
         <div role="status" className="absolute top-20 inset-x-4 z-10 rounded-xl bg-slate-950/90 p-3 text-center text-sm text-white pointer-events-none">
           Tư thế chuẩn bị: <strong>{workflow.preconditionLabel}</strong>
-          {workflow.status === 'WRONG_PRECONDITION' && <p>Vui lòng vào đúng tư thế chuẩn bị.</p>}
-          {workflow.status === 'INSUFFICIENT_EVIDENCE' && <p>Camera chưa đủ dữ liệu để xác nhận.</p>}
+          {workflow.message ? <p>{workflow.message}</p> : <>
+            {workflow.status === 'WRONG_PRECONDITION' && <p>Vui lòng vào đúng tư thế chuẩn bị.</p>}
+            {workflow.status === 'INSUFFICIENT_EVIDENCE' && <p>Camera chưa đủ dữ liệu để xác nhận.</p>}
+          </>}
         </div>}
 
       {stage === 'completed' && (

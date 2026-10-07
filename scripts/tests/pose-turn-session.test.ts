@@ -37,6 +37,31 @@ function sideOcclusion(frame: CanonicalPoseFrame, sign: number) {
   }
 }
 
+test('light settling through countdown still records the first and only turn in both directions', () => {
+  for (const sign of [1,-1]) {
+    const session = new SessionProcessor(); session.command(sign > 0 ? 'selectTurnLeft' : 'selectTurnRight');
+    for (let t = 0; t <= 1500; t += 100) session.process(attentionFrame(t), goodLighting, 0);
+    session.command('startCalibration');
+    let countdownAt:number|undefined, cue:number|undefined;
+    const events:WorkerEvent[]=[];
+    for (let t = 1600; t < 20000 && cue === undefined; t += 100) {
+      const frame=attentionFrame(t);
+      if (countdownAt !== undefined) for (const point of Object.values(frame.landmarks)) point.image.x += t % 200 ? .025 : 0;
+      const next=session.process(frame,goodLighting,0);events.push(...next);
+      if (next.some(e=>e.type==='analysis'&&e.snapshot.stage==='countdown')) countdownAt??=t;
+      if (next.some(e=>e.type==='commandCue')) cue=t;
+    }
+    assert.ok(cue!==undefined&&countdownAt!==undefined);assert.equal(cue-countdownAt,3000);
+    for (let dt = 100; dt <= 5000 && !session.isFinalized; dt += 100) {
+      events.push(...session.process(rotatedPoseFrame(sign*Math.min(90,dt/600*90),cue+dt),goodLighting,0));
+    }
+    const scores=events.filter((e):e is Extract<WorkerEvent,{type:'score'}>=>e.type==='score');
+    assert.equal(scores.length,1);assert.ok(scores[0].result.status==='scored');
+    assert.equal(scores[0].result.criteria.find(c=>c.id==='direction')?.points,25);
+    assert.ok(scores[0].result.sequence?.status==='analyzed'&&scores[0].result.sequence.motionObserved);
+  }
+});
+
 test('turning immediately at the start cue retains countdown baseline and scores both directions', () => {
   for (const sign of [1, -1]) {
     const { session, start } = readySession(sign);

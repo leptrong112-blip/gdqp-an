@@ -10,7 +10,8 @@ import {
   ShieldAlert,
   Sparkles,
   Layers,
-  CheckCircle
+  CheckCircle,
+  ChevronDown
 } from 'lucide-react';
 import { surveyQuestions, roleLabel, type SurveyRole, type SurveyQuestion } from '../data/survey';
 
@@ -19,7 +20,11 @@ export const surveyInput = 'w-full rounded-xl border border-slate-300 dark:borde
 export const surveyButton = 'rounded-xl bg-red-600 hover:bg-red-700 px-6 py-3 font-bold text-white shadow-md shadow-red-600/30 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed';
 export const surveyApi = accountApi;
 
-const quickClasses = ['10A1', '10A2', '10A3', '11B1', '11B2', '11B3', '12C1', '12C2', '12C3'];
+const classGroups = [
+  { label: 'Khối 10', classes: Array.from({ length: 7 }, (_, index) => `10A${index + 1}`) },
+  { label: 'Khối 11', classes: Array.from({ length: 7 }, (_, index) => `11B${index + 1}`) },
+  { label: 'Khối 12', classes: Array.from({ length: 7 }, (_, index) => `12C${index + 1}`) },
+];
 const quickPositions = ['Giáo viên GDQP-AN', 'Tổ trưởng chuyên môn', 'Giáo viên chủ nhiệm', 'Cán bộ quản lý'];
 
 function QuestionCard({
@@ -322,31 +327,30 @@ export default function SurveySection() {
                 <label htmlFor="survey-class" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                   Lớp học <span className="text-red-600">*</span>
                 </label>
-                <input
-                  id="survey-class"
-                  required
-                  type="text"
-                  value={className}
-                  onChange={e => setClassName(e.target.value)}
-                  placeholder="Ví dụ: 11B1"
-                  className={surveyInput}
-                />
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {quickClasses.map(cls => (
-                    <button
-                      key={cls}
-                      type="button"
-                      onClick={() => setClassName(cls)}
-                      className={`text-xs px-2 py-1 rounded-lg border font-mono transition-all cursor-pointer ${
-                        className === cls
-                          ? 'bg-red-600 text-white border-red-600 font-bold'
-                          : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-red-400'
-                      }`}
-                    >
-                      {cls}
-                    </button>
-                  ))}
+                <div className="relative">
+                  <select
+                    id="survey-class"
+                    required
+                    value={className}
+                    onChange={e => setClassName(e.target.value)}
+                    className={`${surveyInput} appearance-none pr-11 cursor-pointer font-mono font-bold`}
+                  >
+                    {classGroups.map(group => (
+                      <optgroup key={group.label} label={group.label}>
+                        {group.classes.map(cls => (
+                          <option key={cls} value={cls}>{cls}</option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    aria-hidden="true"
+                    className="pointer-events-none absolute right-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500 dark:text-slate-300"
+                  />
                 </div>
+                <p className="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                  Nhấn vào ô để chọn nhanh một trong 21 lớp.
+                </p>
               </div>
             ) : (
               <div>

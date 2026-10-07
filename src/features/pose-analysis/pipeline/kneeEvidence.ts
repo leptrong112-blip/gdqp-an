@@ -17,7 +17,7 @@ function kneeAngles(frame: CanonicalPoseFrame): number[] | null {
 }
 
 /** Conservative evidence checks, not a detector of every possible depth ambiguity. */
-export function kneeEvidenceIssue(frame: CanonicalPoseFrame, recent: readonly CanonicalPoseFrame[]): string | null {
+export function kneeEvidenceIssue(frame: CanonicalPoseFrame, recent: readonly CanonicalPoseFrame[], options?: { allowMotion?: boolean }): string | null {
   if (!kneeAngles(frame)) return 'Chưa nhìn rõ đầu gối và chân trụ. Giữ cả hai chân trong khung hình, tránh che khuất.';
   const left = frame.landmarks.leftKnee!, right = frame.landmarks.rightKnee!;
   const torso = measurements(frame)?.torsoLength ?? 0;
@@ -25,7 +25,7 @@ export function kneeEvidenceIssue(frame: CanonicalPoseFrame, recent: readonly Ca
     return 'Hai đầu gối đang chồng hình; camera chưa phân biệt rõ chân chùng và chân trụ. Chỉnh vị trí camera để thấy riêng hai đầu gối.';
   }
   const angles = recent.map(kneeAngles).filter((v): v is number[] => v !== null);
-  if (angles.length >= 6 && [0, 1].some(side => mad(angles.map(v => v[side])) > 8)) {
+  if (!options?.allowMotion && angles.length >= 6 && [0, 1].some(side => mad(angles.map(v => v[side])) > 8)) {
     return 'Số đo đầu gối chưa ổn định. Giữ yên tư thế đứng nghỉ và để camera thấy rõ cả hai chân.';
   }
   return null;
