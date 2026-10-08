@@ -1,4 +1,5 @@
 import type { CanonicalPoseFrame, LandmarkName, Vec3 } from '../types';
+import { POSE_CONFIG as C } from '../config';
 import { drawSkeleton } from './skeletonRenderer';
 
 /** Display-only easing towards the latest observation, never extrapolated motion/evidence. */
@@ -7,7 +8,8 @@ export class VisualSkeleton {
   private lastPaint = 0;
   clear() { this.shown = null; this.lastPaint = 0; }
   frame(latest: CanonicalPoseFrame | null, now: number): CanonicalPoseFrame | null {
-    if (!latest || latest.personCount !== 1 || now - latest.timestampMs > 250 || latest.timestampMs > now + 50) { this.clear(); return null; }
+    // Display age includes inference/transport latency; never scoring evidence.
+    if (!latest || latest.personCount !== 1 || now - latest.timestampMs > C.visualFreshnessMs || latest.timestampMs > now + 50) { this.clear(); return null; }
     const previous = this.shown;
     const alpha = previous ? 1 - Math.exp(-Math.max(0, now - this.lastPaint) / 24) : 1;
     const mix = (a: Vec3, b: Vec3): Vec3 => ({ x: a.x + (b.x-a.x)*alpha, y: a.y + (b.y-a.y)*alpha, z: a.z + (b.z-a.z)*alpha });

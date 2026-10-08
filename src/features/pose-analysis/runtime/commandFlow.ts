@@ -1,4 +1,5 @@
-import type { FeatureSample, MovementId } from '../types';
+import type { FeatureId, FeatureSample, MovementId } from '../types';
+import { mean } from '../pipeline/geometry';
 import type { MovementDefinition } from '../scoring/scoringTypes';
 import { attentionMovement } from '../scoring/attentionMovement';
 import { atEaseMovement } from '../scoring/atEaseMovement';
@@ -59,4 +60,35 @@ export function postureReadiness(sample: FeatureSample | undefined, definition: 
     if (fraction < .6) wrong = true;
   }
   return wrong ? 'WRONG_PRECONDITION' : 'READY';
+}
+
+/** Identity confirmation only. Aggregated values never enter scoring evidence. */
+export class PreparationReadiness {
+  private samples: FeatureSample[] = [];
+  private status: PreconditionStatus = 'INSUFFICIENT_EVIDENCE';
+  private candidate: PreconditionStatus = 'INSUFFICIENT_EVIDENCE';
+  private candidateSince = 0;
+  reset() { this.samples = []; this.status = this.candidate = 'INSUFFICIENT_EVIDENCE'; this.candidateSince = 0; }
+  update(sample: FeatureSample | undefined, definition: MovementDefinition): PreconditionStatus {
+    const options = { allowUnobservedArms:true };
+    if (postureReadiness(sample, definition, options) === 'INSUFFICIENT_EVIDENCE' || !sample) {
+      this.reset(); return this.status;
+    }
+    this.samples.push(sample);
+    this.samples = this.samples.filter(s => sample.timestampMs - s.timestampMs <= 500).slice(-30);
+    const identity: FeatureSample = { timestampMs:sample.timestampMs, values:{} };
+    // Only keys observed NOW may be aggregated; do not carry missing features.
+    for (const key of Object.keys(sample.values) as FeatureId[]) {
+      const observed = this.samples.map(s => s.values[key]).filter(v => v && Number.isFinite(v.value) && v.confidence >= .6);
+      if (observed.length) identity.values[key] = { value:mean(observed.map(v => v!.value)), confidence:Math.min(...observed.map(v => v!.confidence)) };
+    }
+    const next = postureReadiness(identity, definition, options);
+    if (this.status === 'INSUFFICIENT_EVIDENCE') this.status = next;
+    if (next === this.status) { this.candidate = next; this.candidateSince = sample.timestampMs; }
+    else {
+      if (next !== this.candidate) { this.candidate = next; this.candidateSince = sample.timestampMs; }
+      if (sample.timestampMs - this.candidateSince >= 300) this.status = next;
+    }
+    return this.status;
+  }
 }

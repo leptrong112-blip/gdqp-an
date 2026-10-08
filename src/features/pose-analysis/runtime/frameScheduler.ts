@@ -1,4 +1,5 @@
 import { median } from '../pipeline/geometry';
+import { POSE_CONFIG as C } from '../config';
 import type { MovementId, PoseStage } from '../types';
 export class AdaptiveBudget {
   fps: number;
@@ -22,7 +23,9 @@ export class AdaptiveBudget {
     const target = this.phase === 'transition' ? 20 : this.phase === 'scoring' ? 15 : this.phase === 'countdown' ? 12 : 10;
     const cap = this.profile === 'FAST' ? 20 : this.profile === 'NORMAL' ? 15 : 8;
     const cost = this.durations.length ? median(this.durations.slice(-10)) : 0;
-    this.fps = Math.max(4, Math.min(target, cap, cost > 0 ? Math.floor(850 / cost) : cap));
+    // 5 Hz => 200 ms + one display tick, inside the bounded 300 ms evidence gap.
+    // If hardware cannot keep up, reject real gaps; never queue old frames.
+    this.fps = Math.max(C.minimumInferenceFps, Math.min(target, cap, cost > 0 ? Math.floor(850 / cost) : cap));
   }
   observe(duration: number, now = performance.now()) {
     if (!Number.isFinite(duration) || duration < 0) return;

@@ -50,7 +50,7 @@ export class QualityChecker {
     // Missing joints, lighting, framing and orientation still gate each real frame.
     const motionStability = allowTurn || options?.transition
       ? rootMovement <= 1.25 && scaleVariation <= 0.35
-      : options?.countdown
+      : options?.countdown || options?.preparation
         ? staticMovement <= C.maximumRootMovement * 2 && scaleVariation <= C.maximumScaleVariation * 1.5
         : staticMovement <= C.maximumRootMovement && scaleVariation <= C.maximumScaleVariation;
     const p = frame.landmarks, ls = p.leftShoulder?.world, rs = p.rightShoulder?.world, lh = p.leftHip?.world, rh = p.rightHip?.world;
@@ -69,11 +69,16 @@ export class QualityChecker {
     const boundaryPoints = REQUIRED.map(n => p[n]).filter(usable);
     const framing = headroom && (allowTurn ? torsoReliable && visibleLeg : valid.length === required.length) && boundaryPoints.every(v => v.image.x > C.frameMargin && v.image.x < 1 - C.frameMargin && v.image.y > C.frameMargin && v.image.y < 1 - C.frameMargin);
     const footVisible = allowTurn || (['left', 'right'] as const).every(side => { const heel = p[`${side}Heel`], toe = p[`${side}FootIndex`]; return heel && toe && distance(flat(aspectCorrectedImage(frame, heel)), flat(aspectCorrectedImage(frame, toe))) > length * 0.025; });
+    const actuallyCropped = (!!nose && !headroom) || boundaryPoints.some(v => v.image.x <= C.frameMargin || v.image.x >= 1-C.frameMargin || v.image.y <= C.frameMargin || v.image.y >= 1-C.frameMargin);
+    const unclearFeet = !allowTurn && (!footVisible || (['leftHeel','rightHeel','leftFootIndex','rightFootIndex'] as const).some(n => !usable(p[n])));
+    const visibilityMessage = unclearFeet
+      ? 'Camera chưa nhận rõ bàn chân. Giữ chân không bị che và tăng ánh sáng vùng chân.'
+      : 'Camera chưa nhận rõ các khớp. Tăng ánh sáng phía trước và tránh che khuất thân, tay hoặc chân.';
     const checks: QualityCheck[] = [
       { id: 'lighting', label: 'Ánh sáng', passed: Number.isFinite(lighting.mean) && lighting.mean >= C.lighting.minimumMean && lighting.mean <= C.lighting.maximumMean && lighting.darkRatio < C.lighting.maximumDarkRatio && lighting.brightRatio < C.lighting.maximumBrightRatio, message: 'Bổ sung ánh sáng phía trước, tránh ngược sáng.' },
       { id: 'person', label: 'Một người', passed: frame.personCount === 1, message: frame.personCount > 1 ? 'Chỉ để một người trong khung hình.' : 'Đứng vào trước camera.' },
-      { id: 'framing', label: 'Thấy toàn thân', passed: framing && footVisible, message: 'Lùi ra để thấy đầu, hai tay và cả bàn chân; giữ khoảng trống quanh người.' },
-      { id: 'reliability', label: 'Khớp rõ ràng', passed: !kneeIssue && (allowTurn ? torsoReliable && visibleLeg : (rollingCoverage >= C.reliabilityCoverage && rollingConfidence >= C.reliabilityMean && coverage === 1 && confidence >= C.reliabilityMean)), message: kneeIssue ?? (allowTurn ? 'Camera cần thấy rõ hai vai, hông và ít nhất một chân để theo dõi góc quay.' : 'Giữ các khớp không bị che khuất và hướng người về camera.') },
+      { id: 'framing', label: 'Thấy toàn thân', passed: framing && footVisible, message: actuallyCropped ? 'Lùi ra để camera thấy trọn đầu, tay và bàn chân; giữ khoảng trống quanh người.' : visibilityMessage },
+      { id: 'reliability', label: 'Khớp rõ ràng', passed: !kneeIssue && (allowTurn ? torsoReliable && visibleLeg : (rollingCoverage >= C.reliabilityCoverage && rollingConfidence >= C.reliabilityMean && coverage === 1 && confidence >= C.reliabilityMean)), message: kneeIssue ?? (allowTurn ? 'Camera cần thấy rõ hai vai, hông và ít nhất một chân để theo dõi góc quay.' : visibilityMessage) },
       // Track visible steps so the movement scorer can mark them incorrect.
       // Only excessive tracking disruption should abort the camera evidence.
       { id: 'stability', label: 'Khung hình ổn định', passed: motionStability, message: allowTurn || options?.transition ? 'Giữ camera cố định và toàn thân trong khung hình.' : 'Đặt máy trên giá cố định và đứng yên tại chỗ.' },

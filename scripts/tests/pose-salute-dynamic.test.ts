@@ -213,7 +213,9 @@ test('display interpolation uses independent copies, omits missing joints, expir
   assert.equal(JSON.stringify(next),before);
   delete next.landmarks.rightWrist;
   assert.equal(renderer.frame(next,1120)?.landmarks.rightWrist,undefined);
-  assert.equal(renderer.frame(next,1400),null);
+  // Updated bounded display contract includes inference latency at the 5 Hz floor.
+  assert.ok(renderer.frame(next,1400));
+  assert.equal(renderer.frame(next,1601),null);
 });
 
 test('bounded runtime benchmark records real timing samples and HUD exposes phase, hand and latency measurements', () => {

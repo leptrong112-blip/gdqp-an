@@ -3,7 +3,10 @@ export const POSE_CONFIG = {
   landmarkConfidence: 0.6, reliabilityMean: 0.75, reliabilityCoverage: 0.85, frameMargin: 0.03,
   calibrationMs: 2000, countdownMs: 3000, attemptMs: 3000, minimumValidAttemptMs: 2400,
   staticTransitionGraceMs: 1500,
-  maximumQualityGapMs: 500, maximumFrameGapMs: 250, smoothingMs: 100, expiryMs: 200,
+  // Preparation pauses through brief detection jitter; scoring loss remains strict.
+  preparationRecoveryMs: 900,
+  maximumQualityGapMs: 500, maximumFrameGapMs: 300, smoothingMs: 100, expiryMs: 200,
+  minimumInferenceFps: 5, visualFreshnessMs: 500,
   targetFps: 15, uiIntervalMs: 200, stabilityWindowMs: 1000, qualityWarmupMs: 1000,
   maximumRootMovement: 0.08, maximumScaleVariation: 0.08,
   outliers: {

@@ -23,7 +23,7 @@ import { measureTurnFeet } from '../scoring/turnFeet';
 import type { SessionCommand, WorkerEvent } from './workerProtocol';
 import { javascriptSequenceEngine, type SequenceEngine } from '../scoring/sequenceEngine';
 import { freezeSnapshot, poseNowMs, type PoseAttemptContext, type PoseFinalTiming } from './attemptTiming';
-import { commandFlow, preparationDefinition, postureReadiness, PREPARATION_STABLE_MS, MOVEMENT_SETTLE_MS, type PreconditionStatus } from './commandFlow';
+import { commandFlow, preparationDefinition, postureReadiness, PreparationReadiness, PREPARATION_STABLE_MS, MOVEMENT_SETTLE_MS, type PreconditionStatus } from './commandFlow';
 import { SaluteSequenceTracker } from '../pipeline/saluteSequence';
 
 export class SessionProcessor {
@@ -64,9 +64,12 @@ export class SessionProcessor {
   private precondition?: PreconditionScore;
   private preparationSamples: FeatureSample[] = [];
   private preparationStatus: PreconditionStatus = 'INSUFFICIENT_EVIDENCE';
+  private readiness = new PreparationReadiness();
   private preparationSince: number | null = null;
   private preparationHeldMs = 0;
   private preparationLossSince: number | null = null;
+  private preparationStabilitySamples: FeatureSample[] = [];
+  private preparationUnstableSince: number | null = null;
   private transitionStartedAtMs?: number;
   private transitionHeldMs = 0;
   private targetReadyHeldMs = 0;
@@ -79,9 +82,11 @@ export class SessionProcessor {
   private resetPreparationHold() {
     this.preparationSince = null; this.preparationSamples = [];
     this.preparationHeldMs = 0; this.preparationLossSince = null;
+    this.preparationStabilitySamples = []; this.preparationUnstableSince = null;
   }
 
   private waitForPreparation() {
+    this.readiness.reset();
     this.stage = 'waiting-precondition'; this.elapsed = 0; this.samples = []; this.preparationSamples = [];
     this.resetPreparationHold(); this.preparationStatus = 'INSUFFICIENT_EVIDENCE';
     this.transitionStartedAtMs = undefined;
@@ -193,6 +198,7 @@ export class SessionProcessor {
       return;
     }
     if (command === 'reset' || command === 'startCalibration' || command === 'startAttempt') {
+      this.readiness.reset();
       this.precondition = undefined; this.resetPreparationHold();
       this.drillSteps = []; this.drillIndex = 0;
       if (this.drill) this.movement = attentionMovement;
@@ -220,6 +226,7 @@ export class SessionProcessor {
     // Evaluate current raw evidence, never carried-forward smoothed points.
     const preparing = ['quality-check', 'calibrating', 'waiting-precondition', 'precondition-scoring', 'countdown'].includes(this.stage);
     const beforeCommand = preparing;
+    const recoveryMs = preparing ? C.preparationRecoveryMs : C.maximumQualityGapMs;
     const prepDefinition = preparationDefinition(this.movement.id as import('../types').MovementId);
     const quality = this.quality.check(filtered, lighting, this.profile, {
       preparation: preparing,
@@ -256,9 +263,8 @@ export class SessionProcessor {
       if (this.movement.type === 'DYNAMIC') this.dynamicTracker.pause();
       if (rawGood) this.failureSince = null;
       else this.failureSince ??= raw.timestampMs;
-      if (this.stage === 'calibrating' && (!continuous || raw.personCount !== 1 ||
-          quality.checks.some(c=>!c.passed && (c.id==='stability'||c.id==='orientation')) ||
-          this.failureSince !== null && raw.timestampMs-this.failureSince > C.maximumQualityGapMs)) {
+      if (this.stage === 'calibrating' && (!continuous ||
+          this.failureSince !== null && raw.timestampMs-this.failureSince > recoveryMs)) {
         this.elapsed = 0; this.calibration = [];
       }
       if (this.stage === 'scoring' && this.movement.type !== 'DYNAMIC') {
@@ -269,7 +275,7 @@ export class SessionProcessor {
       // Repositioning during preparation is expected; missing/cropped joints are not.
       const onlyRepositioning = ['countdown', 'transition', 'precondition-scoring'].includes(this.stage) && quality.checks.filter(c => !c.passed).every(c => c.id === 'stability' || c.id === 'orientation');
       if (onlyRepositioning) this.failureSince = null;
-      if ((this.failureSince !== null && raw.timestampMs - this.failureSince > C.maximumQualityGapMs) || !continuous) {
+      if ((this.failureSince !== null && raw.timestampMs - this.failureSince > recoveryMs) || !continuous) {
         if (beforeCommand) {
           // Repositioning/acquisition is not a completed attempt. Keep the camera
           // running, discard interrupted evidence and reacquire without a result.
@@ -300,14 +306,15 @@ export class SessionProcessor {
     })();
     const currentPose = provisional ? normalizePose(filtered, provisional, allowTurn) : undefined;
     const currentSample = currentPose ? extractFeatures(currentPose, allowTurn) : undefined;
-    if (preparing) this.preparationStatus = good ? postureReadiness(currentSample, prepDefinition, { allowUnobservedArms: true }) : 'INSUFFICIENT_EVIDENCE';
+    const instantPreparation = postureReadiness(currentSample, prepDefinition, { allowUnobservedArms:true });
+    if (preparing) this.preparationStatus = this.readiness.update(good ? currentSample : undefined, prepDefinition);
     if (this.stage === 'waiting-precondition' || this.stage === 'precondition-scoring') {
-      if (this.preparationStatus !== 'READY' || !currentSample) {
+      if (this.preparationStatus !== 'READY' || instantPreparation !== 'READY' || !currentSample) {
         // An isolated landmark spike must not erase an otherwise valid hold.
         // Warmup after a short quality interruption pauses time, never invents samples.
         if (rawGood && postureReadiness(currentSample, prepDefinition, { allowUnobservedArms: true }) === 'READY') this.preparationLossSince = null;
         else this.preparationLossSince ??= raw.timestampMs;
-        if (this.preparationLossSince !== null && raw.timestampMs - this.preparationLossSince > C.maximumQualityGapMs) {
+        if (this.preparationLossSince !== null && raw.timestampMs - this.preparationLossSince > recoveryMs) {
           this.resetPreparationHold(); this.elapsed = 0; this.stage = 'waiting-precondition';
         }
         message = this.preparationStatus === 'WRONG_PRECONDITION' ? `Vui lòng ${prepDefinition.id === 'atEase' ? 'vào tư thế Đứng nghỉ' : 'về tư thế Đứng nghiêm'} để chuẩn bị. Hệ thống vẫn đang chờ, chưa bắt đầu động tác.`
@@ -315,9 +322,18 @@ export class SessionProcessor {
       } else {
         this.preparationLossSince = null;
         this.preparationSince ??= raw.timestampMs;
-        this.preparationSamples.push(currentSample);
-        this.preparationHeldMs += ['waiting-precondition', 'precondition-scoring'].includes(initialStage) ? duration : 0;
-        if (!stableStaticHold(this.preparationSamples)) { this.preparationSince = raw.timestampMs; this.preparationSamples = [currentSample]; this.preparationHeldMs = 0; }
+        this.preparationStabilitySamples.push(currentSample);
+        this.preparationStabilitySamples = this.preparationStabilitySamples.filter(s => raw.timestampMs - s.timestampMs <= 800);
+        const stable = stableStaticHold(this.preparationStabilitySamples);
+        if (stable) {
+          // Grade only current observed stable samples, never the paused interval.
+          this.preparationSamples.push(currentSample);
+          this.preparationHeldMs += this.preparationUnstableSince === null && ['waiting-precondition', 'precondition-scoring'].includes(initialStage) ? duration : 0;
+          this.preparationUnstableSince = null;
+        } else {
+          this.preparationUnstableSince ??= raw.timestampMs;
+          if (raw.timestampMs - this.preparationUnstableSince > recoveryMs) this.resetPreparationHold();
+        }
         const held = this.preparationHeldMs;
         const scorePrep = this.preconditionScoring && !this.drill && prepDefinition.id === 'attention';
         this.elapsed = held;
@@ -343,9 +359,9 @@ export class SessionProcessor {
         }
       }
     } else if (this.stage === 'countdown' && good) {
-      if (this.preparationStatus !== 'READY') {
+      if (this.preparationStatus !== 'READY' || instantPreparation !== 'READY') {
         this.preparationLossSince ??= raw.timestampMs;
-        if (raw.timestampMs - this.preparationLossSince > C.maximumQualityGapMs) {
+        if (raw.timestampMs - this.preparationLossSince > recoveryMs) {
           this.waitForPreparation();
           message = `Giữ lại tư thế ${prepDefinition.label} để chuẩn bị trước khi bắt đầu động tác.`;
         }
@@ -360,7 +376,7 @@ export class SessionProcessor {
       // An isolated readiness fluctuation must not freeze the visible clock.
       // Countdown never supplies graded hold time; still validate pose at cue.
       this.elapsed += delta;
-      if (this.elapsed >= C.countdownMs && this.preparationStatus === 'READY') {
+      if (this.elapsed >= C.countdownMs && this.preparationStatus === 'READY' && instantPreparation === 'READY') {
         this.countdownFinishedAtMs ??= sourceTimeMs;
         const flow = commandFlow(this.movement.id as import('../types').MovementId)!;
         events.push({ type: 'commandCue', command: flow.command, attemptId: this.attempt?.id, timestampMs: sourceTimeMs });
@@ -491,7 +507,9 @@ export class SessionProcessor {
         };
       })();
       if (provisional) {
-        const norm = normalizePose(smoothed, provisional);
+        // Cached/smoothed skeleton points are presentation only, including HUD
+        // measurements. Missing current arm evidence must stay unavailable.
+        const norm = normalizePose(filtered, provisional);
         if (norm) {
           liveSample = extractFeatures(norm, allowTurn);
           liveDualMeasurements = extractDualMeasurements(norm, allowTurn);
@@ -500,7 +518,8 @@ export class SessionProcessor {
     }
 
     const holdingPreparation = ['waiting-precondition', 'precondition-scoring', 'countdown'].includes(initialStage);
-    this.lastGood = good && (!holdingPreparation || this.preparationStatus === 'READY');
+    this.lastGood = good && (!holdingPreparation ||
+      this.preparationStatus === 'READY' && instantPreparation === 'READY' && this.preparationUnstableSince === null);
     const target = this.stage === 'calibrating' ? C.calibrationMs : this.stage === 'countdown' ? C.countdownMs : this.stage === 'waiting-precondition' ? PREPARATION_STABLE_MS : C.attemptMs;
     const progress = (this.stage === 'scoring' && this.movement.type === 'DYNAMIC')
       ? dynamicRatio
