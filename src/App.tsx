@@ -4,7 +4,6 @@ import {
   BookOpen,
   Trophy,
   Crosshair,
-  Bot,
   Star,
   MapPin,
   Zap,
@@ -32,7 +31,6 @@ import AccountGate, { AccountMenu, useAccount } from "./components/AccountGate";
 import QuizSection from "./components/QuizSection";
 import SimulationSection from "./components/SimulationSection";
 import AiBotSection from "./components/AiBotSection";
-import FloatingAiChatbot from "./components/FloatingAiChatbot";
 import HomePortalSection from "./components/HomePortalSection";
 import Footer from "./components/Footer";
 import { GradeLevel } from "./types";
@@ -347,20 +345,7 @@ function AuthenticatedApp() {
             <span>Di Tích 360° VR</span>
           </button>
 
-          {/* 5. Trợ giảng AI */}
-          <button
-            onClick={() => setActiveTab("chat")}
-            className={`px-2.5 xl:px-3 py-1.5 rounded-xl transition-all flex items-center gap-1 cursor-pointer font-bold text-xs ${
-              activeTab === "chat"
-                ? "bg-red-600 text-white shadow-xs"
-                : isDark ? "text-slate-200 hover:bg-slate-800" : "text-slate-700 hover:bg-slate-100"
-            }`}
-          >
-            <Bot className="w-3.5 h-3.5 text-amber-500" />
-            <span>Trợ giảng AI</span>
-          </button>
-
-          {/* 6. Ôn luyện & Thi thử ▾ Dropdown (ĐỂ CUỐI CÙNG THEO YÊU CẦU CỦA BẠN) */}
+          {/* 5. Ôn luyện & Thi thử ▾ Dropdown (ĐỂ CUỐI CÙNG THEO YÊU CẦU CỦA BẠN) */}
           <div className="relative group">
             <button className={`px-2.5 xl:px-3 py-1.5 rounded-xl transition-all flex items-center gap-1 cursor-pointer ${
               activeTab === "quiz" || activeTab === "exam"
@@ -631,7 +616,7 @@ function AuthenticatedApp() {
               <div className="space-y-1">
                 <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1 pt-1 flex items-center gap-1.5">
                   <Award className="w-3.5 h-3.5 text-purple-500" />
-                  <span>Ôn thi &amp; Trợ giảng AI</span>
+                  <span>Ôn thi &amp; Tiện ích</span>
                 </div>
 
                 <button
@@ -659,18 +644,6 @@ function AuthenticatedApp() {
                 >
                   <FileText className="w-4 h-4 text-red-500 shrink-0" />
                   <span>Thi thử trắc nghiệm THPT</span>
-                </button>
-
-                <button
-                  onClick={() => { setActiveTab("chat"); setIsMobileMenuOpen(false); }}
-                  className={`w-full text-left p-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
-                    activeTab === "chat"
-                      ? "bg-red-600 text-white shadow-xs font-bold"
-                      : "hover:bg-slate-50 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200"
-                  }`}
-                >
-                  <Bot className="w-4 h-4 text-amber-500 shrink-0" />
-                  <span>Trợ giảng AI Trung tá Quyết</span>
                 </button>
               </div>
             </div>
@@ -788,9 +761,6 @@ function AuthenticatedApp() {
         {activeTab !== "sim" && activeTab !== "pose" && <Footer onNavigate={setActiveTab} />}
         {activeTab !== "sim" && activeTab !== "pose" && <div className="flex justify-center gap-6 pb-6 text-sm text-slate-500"><button onClick={openSurveyArea}>{user?.role === 'admin' ? 'Báo cáo khảo sát' : 'Khảo sát trải nghiệm'}</button></div>}
       </div>
-
-      {/* Cục Chatbot AI cố định ở góc dưới bên phải */}
-      {activeTab !== "pose" && <FloatingAiChatbot />}
     </div>
   );
 }

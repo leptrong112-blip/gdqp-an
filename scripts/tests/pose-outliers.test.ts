@@ -104,7 +104,10 @@ test('session rejects outliers before quality checks and does not resurrect them
   const analysis = session.process(bad, goodLighting, 20).find(e => e.type === 'analysis');
   assert.ok(analysis && analysis.type === 'analysis');
   assert.equal(analysis.snapshot.frame.landmarks.leftWrist, undefined);
-  assert.equal(analysis.snapshot.quality.passed, false);
+  // A rejected wrist is not resurrected or graded, but cannot block camera
+  // acquisition when the observed head, torso and legs remain clear.
+  assert.equal(analysis.snapshot.quality.passed, true);
+  assert.equal(analysis.snapshot.features?.leftWristHipDistance, undefined);
   const recovered = session.process(attentionFrame(1700), goodLighting, 20).find(e => e.type === 'analysis');
   assert.ok(recovered && recovered.type === 'analysis' && recovered.snapshot.frame.landmarks.leftWrist);
 });

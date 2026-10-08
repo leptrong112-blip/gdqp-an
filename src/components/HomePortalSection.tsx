@@ -75,7 +75,7 @@ export default function HomePortalSection({ onNavigate }: HomePortalSectionProps
 
             {/* Description */}
             <p className="text-sm sm:text-base text-[#5F6F82] dark:text-[#94A3B8] leading-relaxed max-w-xl font-normal">
-              Học sinh THPT tiếp cận GDQP-AN trực quan: bài học SGK, mô phỏng tháo lắp 3D, phòng thi trắc nghiệm và trợ giảng AI đồng hành.
+              Học sinh THPT tiếp cận GDQP-AN trực quan: bài học SGK, mô phỏng tháo lắp 3D, phòng thi trắc nghiệm và AI Pose chấm động tác.
             </p>
 
             {/* 2 CTA Buttons */}
@@ -395,7 +395,7 @@ export default function HomePortalSection({ onNavigate }: HomePortalSectionProps
             </h2>
           </div>
           <p className="text-xs sm:text-sm text-[#5F6F82] dark:text-[#94A3B8] max-w-md leading-relaxed font-normal sm:text-right">
-            Hệ thống bài giảng, câu hỏi trắc nghiệm và trợ lý ảo hỗ trợ học tập toàn diện.
+            Hệ thống bài giảng, câu hỏi trắc nghiệm, AI Pose và thực hành số toàn diện.
           </p>
         </div>
 
@@ -446,25 +446,25 @@ export default function HomePortalSection({ onNavigate }: HomePortalSectionProps
             </div>
           </div>
 
-          {/* CARD 3: GIÁO VIÊN AI ĐỒNG HÀNH */}
+          {/* CARD 3: AI POSE CHẤM ĐỘNG TÁC */}
           <div
-            onClick={() => onNavigate("chat")}
+            onClick={() => onNavigate("pose")}
             className="group rounded-[22px] bg-white dark:bg-[#102136] hover:bg-[#F8FAFB] dark:hover:bg-[#132842] border border-[#E5EAF1] dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 p-5 sm:p-6 flex flex-col justify-between h-full transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-pointer"
           >
             <div className="space-y-3.5">
               <span className="inline-block px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 font-mono font-bold text-[10px] uppercase border border-blue-200 dark:border-blue-800/40">
-                AI
+                AI POSE
               </span>
               <h3 className="text-base font-bold text-[#0B1324] dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors duration-150">
-                Giáo viên AI đồng hành
+                AI Pose chấm động tác
               </h3>
               <p className="text-xs text-[#5F6F82] dark:text-[#94A3B8] leading-relaxed font-normal">
-                Hỏi đáp thắc mắc bài học và nhận giải thích chi tiết từ trợ lý ảo 24/7.
+                Chấm điểm động tác điều lệnh tự động qua camera thời gian thực với AI thị giác máy tính.
               </p>
             </div>
 
             <div className="pt-4 mt-4 border-t border-[#E5EAF1] dark:border-white/10 flex items-center justify-between text-xs font-semibold text-blue-600 dark:text-blue-400">
-              <span>Hỏi ngay</span>
+              <span>Trải nghiệm ngay</span>
               <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-200" />
             </div>
           </div>
@@ -495,7 +495,7 @@ export default function HomePortalSection({ onNavigate }: HomePortalSectionProps
       </section>
 
       {/* ═══════════════════ 6. FLOATING PROGRESS WIDGET ═══════════════════ */}
-      <div className="hidden sm:block fixed bottom-24 right-4 sm:right-6 z-40">
+      <div className="hidden sm:block fixed bottom-4 sm:bottom-6 right-4 sm:right-6 z-40">
         <AnimatePresence mode="wait">
           {isProgressCollapsed ? (
             <motion.button

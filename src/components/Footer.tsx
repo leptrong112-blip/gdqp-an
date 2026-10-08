@@ -10,7 +10,6 @@ import {
   Target,
   Camera,
   BookOpen,
-  Bot,
   Compass,
   Download,
   ExternalLink,
@@ -212,11 +211,11 @@ export default function Footer({ onNavigate }: FooterProps) {
               </li>
               <li>
                 <button
-                  onClick={() => handleNav("chat")}
-                  className="hover:text-purple-400 transition-colors flex items-center gap-1.5 cursor-pointer text-left"
+                  onClick={() => handleNav("pose")}
+                  className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 cursor-pointer text-left"
                 >
-                  <Bot className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Giảng viên AI</span>
+                  <Camera className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>AI Pose</span>
                 </button>
               </li>
             </ul>

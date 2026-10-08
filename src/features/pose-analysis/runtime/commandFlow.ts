@@ -24,7 +24,7 @@ export function preparationDefinition(id: MovementId) {
   return commandFlow(id)?.precondition === 'atEase' ? atEaseMovement : attentionMovement;
 }
 /** Pose identity gate, not a grade: reuses existing rule bands without changing rubric math. */
-export function postureReadiness(sample: FeatureSample | undefined, definition: MovementDefinition): PreconditionStatus {
+export function postureReadiness(sample: FeatureSample | undefined, definition: MovementDefinition, options?: { allowUnobservedArms?: boolean }): PreconditionStatus {
   if (!sample) return 'INSUFFICIENT_EVIDENCE';
   // Natural knee asymmetry inside the attention ideal band is not proof of nghỉ.
   // Require an observed bend outside that band as well as the resting identity.
@@ -45,10 +45,16 @@ export function postureReadiness(sample: FeatureSample | undefined, definition: 
     const scores: number[] = [], essential: number[] = [];
     for (const rule of criterion.rules) {
       const value = sample.values[rule.feature];
-      if (!value || !Number.isFinite(value.value) || value.confidence < .6) return 'INSUFFICIENT_EVIDENCE';
+      if (!value || !Number.isFinite(value.value) || value.confidence < .6) {
+        // Only acquisition may ignore unavailable arm evidence. Actual observed
+        // arm errors still block readiness, and grading retains its own checks.
+        if (criterion.id === 'arms' && options?.allowUnobservedArms) continue;
+        return 'INSUFFICIENT_EVIDENCE';
+      }
       const score = ruleScore(value.value, rule); scores.push(score);
       if (rule.essential) essential.push(score);
     }
+    if (!scores.length) continue;
     const fraction = definition.robustPosture ? Math.min(scores.reduce((a, b) => a + b, 0) / scores.length, ...essential) : Math.min(...scores);
     if (fraction < .6) wrong = true;
   }

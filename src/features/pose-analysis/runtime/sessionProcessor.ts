@@ -222,6 +222,7 @@ export class SessionProcessor {
     const beforeCommand = preparing;
     const prepDefinition = preparationDefinition(this.movement.id as import('../types').MovementId);
     const quality = this.quality.check(filtered, lighting, this.profile, {
+      preparation: preparing,
       allowTurn, assessKnees: (preparing ? prepDefinition.id : this.movement.id) === 'atEase',
       relaxedPosture: !!this.movement.robustPosture && (this.stage === 'countdown' || this.stage === 'scoring'),
       countdown: this.stage === 'countdown', transition: this.stage === 'transition',
@@ -299,12 +300,12 @@ export class SessionProcessor {
     })();
     const currentPose = provisional ? normalizePose(filtered, provisional, allowTurn) : undefined;
     const currentSample = currentPose ? extractFeatures(currentPose, allowTurn) : undefined;
-    if (preparing) this.preparationStatus = good ? postureReadiness(currentSample, prepDefinition) : 'INSUFFICIENT_EVIDENCE';
+    if (preparing) this.preparationStatus = good ? postureReadiness(currentSample, prepDefinition, { allowUnobservedArms: true }) : 'INSUFFICIENT_EVIDENCE';
     if (this.stage === 'waiting-precondition' || this.stage === 'precondition-scoring') {
       if (this.preparationStatus !== 'READY' || !currentSample) {
         // An isolated landmark spike must not erase an otherwise valid hold.
         // Warmup after a short quality interruption pauses time, never invents samples.
-        if (rawGood && postureReadiness(currentSample, prepDefinition) === 'READY') this.preparationLossSince = null;
+        if (rawGood && postureReadiness(currentSample, prepDefinition, { allowUnobservedArms: true }) === 'READY') this.preparationLossSince = null;
         else this.preparationLossSince ??= raw.timestampMs;
         if (this.preparationLossSince !== null && raw.timestampMs - this.preparationLossSince > C.maximumQualityGapMs) {
           this.resetPreparationHold(); this.elapsed = 0; this.stage = 'waiting-precondition';
@@ -325,7 +326,12 @@ export class SessionProcessor {
           : `Đang xác nhận tư thế ${prepDefinition.label}. Giữ ổn định, chờ đếm ngược và khẩu lệnh rồi mới thực hiện.`;
         if (held >= (scorePrep ? C.attemptMs : PREPARATION_STABLE_MS) && this.preparationSamples.length >= (scorePrep ? prepDefinition.minimumSamples : 6)) {
           const scored = scorePrep ? evaluate(prepDefinition, { samples: this.preparationSamples, validDurationMs: held, qualityPassed: true }) : undefined;
-          if (!scored || (scored.status === 'scored' && scored.passed)) {
+          const unobservedArms = scored?.status === 'notScorable' &&
+            scored.reasons.length === 1 && scored.reasons[0] === `Không đủ dữ liệu rõ ràng cho tiêu chí “${prepDefinition.criteria.find(c => c.id === 'arms')!.label}”.`;
+          // An optional preparation grade must not trap an otherwise observed
+          // stance in a retry loop. Do not attach/fabricate the unavailable grade.
+          if (!scored || (scored.status === 'scored' && scored.passed) || unobservedArms) {
+            if (unobservedArms) message = 'Đã xác nhận tư thế chuẩn bị qua thân và chân. Camera chưa thấy rõ tay sát đùi nên chưa có điểm riêng cho tư thế chuẩn bị; không cần dang tay. Chờ khẩu lệnh để thực hiện.';
             if (scored?.status === 'scored') this.precondition = freezeSnapshot({ movementId: 'attention', result: scored,
               quality: { confidence: scored.confidence, unassessedPoints: scored.unassessedPoints ?? 0 } });
             this.stage = 'countdown'; this.elapsed = 0; this.resetPreparationHold();

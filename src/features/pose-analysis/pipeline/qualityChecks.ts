@@ -5,6 +5,7 @@ import { aspectCorrectedImage, measurements } from './normalization';
 import { usable } from './confidenceFilter';
 import { kneeEvidenceIssue } from './kneeEvidence';
 export const REQUIRED: LandmarkName[] = ['nose', 'leftShoulder', 'rightShoulder', 'leftElbow', 'rightElbow', 'leftWrist', 'rightWrist', 'leftHip', 'rightHip', 'leftKnee', 'rightKnee', 'leftAnkle', 'rightAnkle', 'leftHeel', 'rightHeel', 'leftFootIndex', 'rightFootIndex'];
+const PREPARATION_REQUIRED = REQUIRED.filter(n => !n.endsWith('Elbow') && !n.endsWith('Wrist'));
 export function lightingMetrics(rgba: ArrayLike<number>): LightingMetrics {
   let sum = 0, dark = 0, bright = 0, count = 0;
   for (let i = 0; i < rgba.length; i += 4) { const y = 0.2126 * rgba[i] + 0.7152 * rgba[i + 1] + 0.0722 * rgba[i + 2]; sum += y; dark += Number(y < 25); bright += Number(y > 245); count++; }
@@ -16,9 +17,13 @@ export class QualityChecker {
   private evidence: { timestampMs:number; passed:boolean }[] = [];
   private evidenceStartedAt: number | null = null;
   reset() { this.history = []; this.goodSince = null; this.evidence = []; this.evidenceStartedAt = null; }
-  check(frame: CanonicalPoseFrame, lighting: LightingMetrics, calibration?: CalibrationProfile, options?: { allowTurn?: boolean; assessKnees?: boolean; relaxedPosture?: boolean; countdown?: boolean; transition?: boolean; tolerateBriefLoss?: boolean }): QualityReport {
-    const points = REQUIRED.map(n => frame.landmarks[n]), valid = points.filter(usable);
-    const coverage = valid.length / REQUIRED.length, confidence = mean(valid.map(p => p.confidence));
+  check(frame: CanonicalPoseFrame, lighting: LightingMetrics, calibration?: CalibrationProfile, options?: { preparation?: boolean; allowTurn?: boolean; assessKnees?: boolean; relaxedPosture?: boolean; countdown?: boolean; transition?: boolean; tolerateBriefLoss?: boolean }): QualityReport {
+    // Hands against the thighs may be occluded even in a correct starting pose.
+    // Acquisition needs the full head/torso/legs, not proof of every arm joint.
+    // Observed arms still participate in boundary checks; no points are inferred.
+    const required = options?.preparation ? PREPARATION_REQUIRED : REQUIRED;
+    const points = required.map(n => frame.landmarks[n]), valid = points.filter(usable);
+    const coverage = valid.length / required.length, confidence = mean(valid.map(p => p.confidence));
     this.history.push({ frame, coverage, confidence });
     this.history = this.history.filter(v => frame.timestampMs - v.frame.timestampMs <= C.stabilityWindowMs);
     const recent = this.history.filter(v => frame.timestampMs - v.frame.timestampMs <= 750);
@@ -61,7 +66,8 @@ export class QualityChecker {
       Object.values(p[n]!.world!).every(Number.isFinite));
     const visibleLeg = (['left', 'right'] as const).some(side =>
       usable(p[`${side}Knee`]) && usable(p[`${side}Ankle`]));
-    const framing = headroom && (allowTurn ? torsoReliable && visibleLeg : valid.length === REQUIRED.length) && valid.every(v => v.image.x > C.frameMargin && v.image.x < 1 - C.frameMargin && v.image.y > C.frameMargin && v.image.y < 1 - C.frameMargin);
+    const boundaryPoints = REQUIRED.map(n => p[n]).filter(usable);
+    const framing = headroom && (allowTurn ? torsoReliable && visibleLeg : valid.length === required.length) && boundaryPoints.every(v => v.image.x > C.frameMargin && v.image.x < 1 - C.frameMargin && v.image.y > C.frameMargin && v.image.y < 1 - C.frameMargin);
     const footVisible = allowTurn || (['left', 'right'] as const).every(side => { const heel = p[`${side}Heel`], toe = p[`${side}FootIndex`]; return heel && toe && distance(flat(aspectCorrectedImage(frame, heel)), flat(aspectCorrectedImage(frame, toe))) > length * 0.025; });
     const checks: QualityCheck[] = [
       { id: 'lighting', label: 'Ánh sáng', passed: Number.isFinite(lighting.mean) && lighting.mean >= C.lighting.minimumMean && lighting.mean <= C.lighting.maximumMean && lighting.darkRatio < C.lighting.maximumDarkRatio && lighting.brightRatio < C.lighting.maximumBrightRatio, message: 'Bổ sung ánh sáng phía trước, tránh ngược sáng.' },
