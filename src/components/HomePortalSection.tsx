@@ -85,7 +85,7 @@ export default function HomePortalSection({ onNavigate }: HomePortalSectionProps
                 onClick={() => onNavigate("theory")}
                 className="px-6 py-3.5 rounded-xl bg-[#E53935] hover:bg-red-700 active:scale-[0.98] text-white font-bold text-sm shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
               >
-                Bắt đầu học ngay
+                Trải nghiệm lý thuyết bài học
               </button>
 
               <button
@@ -158,7 +158,7 @@ export default function HomePortalSection({ onNavigate }: HomePortalSectionProps
                     <div className="text-[10px] text-[#5F6F82] dark:text-[#94A3B8] mt-0.5">Bài học SGK</div>
                   </div>
                   <div className="p-2 rounded-lg bg-[#F8FAFB] dark:bg-[#0B182C] border border-[#E5EAF1] dark:border-white/10">
-                    <div className="font-black text-[#0B1324] dark:text-white text-sm">AI + 3D</div>
+                    <div className="font-black text-[#0B1324] dark:text-white text-xs sm:text-sm whitespace-nowrap">AI Pose + 3D</div>
                     <div className="text-[10px] text-[#5F6F82] dark:text-[#94A3B8] mt-0.5">Thực hành số</div>
                   </div>
                   <div className="p-2 rounded-lg bg-[#F8FAFB] dark:bg-[#0B182C] border border-[#E5EAF1] dark:border-white/10">

@@ -15,7 +15,7 @@ export function usePoseCamera() {
         width: { ideal: 1280, min: 640 },
         height: { ideal: 720, min: 480 },
         aspectRatio: { ideal: 16 / 9 },
-        frameRate: { ideal: 24, max: 30 },
+        frameRate: { ideal: 30, max: 30 },
       },
     });
     if (token !== generation.current) { media.getTracks().forEach(t => t.stop()); throw new Error('Phiên đã dừng.'); }

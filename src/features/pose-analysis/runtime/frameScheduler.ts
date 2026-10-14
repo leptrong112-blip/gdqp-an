@@ -5,23 +5,16 @@ export class AdaptiveBudget {
   fps: number;
   profile: 'FAST' | 'NORMAL' | 'LOW';
   private durations: number[] = [];
-  private salute = false;
-  private phase: PoseStage = 'quality-check';
   private healthySince?: number;
-  constructor(private fallback = false) { this.fps = fallback ? 10 : 15; this.profile = fallback ? 'LOW' : 'NORMAL'; }
-  setPhase(stage: PoseStage, movement: MovementId | string) {
-    const wasSalute = this.salute;
-    this.salute = movement === 'salute'; this.phase = stage;
-    if (wasSalute && !this.salute) {
-      this.durations = []; this.healthySince = undefined;
-      this.fps = this.fallback ? 10 : 15; this.profile = this.fallback ? 'LOW' : 'NORMAL';
-    }
-    if (this.salute) this.recompute();
+  constructor(private fallback = false) { this.fps = fallback ? 15 : C.targetFps; this.profile = fallback ? 'NORMAL' : 'FAST'; }
+  setPhase(_stage: PoseStage, _movement: MovementId | string) {
+    // Preparation and countdown also need fresh observations. Keep measured
+    // hardware limits across movements rather than re-learning overload each time.
+    this.recompute();
   }
   private recompute() {
-    if (!this.salute) return;
-    const target = this.phase === 'transition' ? 20 : this.phase === 'scoring' ? 15 : this.phase === 'countdown' ? 12 : 10;
-    const cap = this.profile === 'FAST' ? 20 : this.profile === 'NORMAL' ? 15 : 8;
+    const target = this.fallback ? 15 : C.targetFps;
+    const cap = this.profile === 'FAST' ? C.targetFps : this.profile === 'NORMAL' ? 20 : 8;
     const cost = this.durations.length ? median(this.durations.slice(-10)) : 0;
     // 5 Hz => 200 ms + one display tick, inside the bounded 300 ms evidence gap.
     // If hardware cannot keep up, reject real gaps; never queue old frames.
@@ -30,7 +23,7 @@ export class AdaptiveBudget {
   observe(duration: number, now = performance.now()) {
     if (!Number.isFinite(duration) || duration < 0) return;
     this.durations.push(duration); if (this.durations.length > 30) this.durations.shift();
-    if (this.salute && this.durations.length >= 3) {
+    if (this.durations.length >= 3) {
       const recent = this.durations.slice(-5), worst = Math.max(...recent), typical = median(recent);
       const next = worst > 100 || typical > 80 ? 'LOW' : typical > 45 ? 'NORMAL' : 'FAST';
       const rank = { LOW: 0, NORMAL: 1, FAST: 2 };
@@ -41,12 +34,7 @@ export class AdaptiveBudget {
       } else this.healthySince = undefined;
       this.recompute(); return;
     }
-    if (this.durations.length < 15) return;
-    const typical = median(this.durations);
-    // Lower inference frequency without renegotiating the camera's aspect ratio.
-    if (typical > 80) this.fps = Math.min(this.fps, 10);
-    if (typical > 125) this.fps = 8;
-    if (this.fps <= 10) this.profile = 'LOW';
+    this.recompute();
   }
 }
 export interface FrameScheduleStats { submitted: number; dropped: number; droppedRatio: number }
@@ -64,7 +52,9 @@ export function startFrameScheduler(video: HTMLVideoElement, budget: AdaptiveBud
       const count = metadata && previousPresented !== undefined ? Math.max(1, metadata.presentedFrames - previousPresented) : 1;
       previousPresented = metadata?.presentedFrames; observedFrames += count; dropped += count - 1;
     }
-    if (!busy && video.readyState >= 2 && video.currentTime !== lastVideoTime && now - lastSent >= 1000 / budget.fps) {
+    // Camera clocks commonly report 33.3 ms rather than 33.333... ms. A small
+    // tolerance prevents a 30 Hz target accidentally skipping every other frame.
+    if (!busy && video.readyState >= 2 && video.currentTime !== lastVideoTime && now - lastSent >= 1000 / budget.fps - 1) {
       busy = true; busySince = now; lastVideoTime = video.currentTime; lastSent = now;
       submitted++;
       void analyze(now).catch(error => { if (!stopped) fail(error instanceof Error ? error.message : 'Phân tích bị gián đoạn.'); }).finally(() => { busy = false; });

@@ -27,6 +27,21 @@ test('teacher view renders result filters/details but never exports, downloads, 
   assert.match(admin, /Xuất kết quả AI Pose Excel/); assert.match(admin, /Xóa kết quả của/);
 });
 
+test('management result list paginates after twenty attempts', () => {
+  const results = Array.from({ length: 21 }, (_, index) => record({
+    id: `pose-page-${index + 1}`,
+    studentName: `Học sinh ${index + 1}`,
+  }));
+  const html = renderToStaticMarkup(React.createElement(PoseAdminView, {
+    role: 'teacher', results, filters: {}, onFilters: noop, onRefresh: noop, onExport: noop, onDetail: noop, onDelete: noop,
+  }));
+  assert.match(html, /Học sinh 1/);
+  assert.match(html, /Học sinh 20/);
+  assert.doesNotMatch(html, /Học sinh 21/);
+  assert.match(html, /Hiển thị <strong[^>]*>1–20<\/strong> trong 21 lượt/);
+  assert.match(html, /Trang 1 \/ 2/);
+});
+
 test('insufficient evidence remains distinct from motion failure in management summaries and details', () => {
   const unknown = record({ id: 'pose-unknown-01', score: 30, assessment: 'incomplete', passed: false, requiredCriteriaPassed: null, processingLatencyMs: null,
     criteria: [{ id: 'arm', label: 'Tay phải', points: 0, maximum: 10, statusLevel: 'NOT_SCORABLE', feedback: 'Camera chưa quan sát đủ.', required: true }],

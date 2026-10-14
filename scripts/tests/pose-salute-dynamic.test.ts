@@ -11,6 +11,7 @@ import { RuntimePerformance } from '../../src/features/pose-analysis/diagnostics
 import { SaluteHandDetector } from '../../src/features/pose-analysis/runtime/SaluteHandDetector';
 import { SaluteSequenceSummary } from '../../src/features/pose-analysis/components/SaluteSequenceSummary';
 import { PoseDiagnosticOverlay } from '../../src/features/pose-analysis/components/PoseDiagnosticOverlay';
+import { SaluteSequenceTracker } from '../../src/features/pose-analysis/pipeline/saluteSequence';
 import { drillFrame, saluteMotionFrame } from './fixtures/pose/drill';
 import { attentionFrame, goodLighting } from './fixtures/pose/attention';
 import type { CanonicalPoseFrame, AnalysisSnapshot } from '../../src/features/pose-analysis/types';
@@ -91,6 +92,65 @@ test('very slow but continuous 5 FPS camera waits for actual sample count before
   assert.equal(h.result.total,100);
 });
 
+for (const duration of [300,450,1200,4000]) test(`30 FPS observes one ${duration} ms salute raise without a second movement`, () => {
+  const h=runSalute(30,duration);
+  assert.ok(h.result?.status==='scored',JSON.stringify(h.result));
+  assert.equal(h.result.saluteSequence?.motionObserved,true);
+  assert.equal(h.events.filter(e=>e.type==='commandCue'&&e.command==='CHÀO').length,1);
+  assert.equal(h.events.filter(e=>e.type==='score').length,1);
+});
+
+test('salute preserves an observed resting wrist from countdown when only the cue frame loses it', () => {
+  const expectedCue = runSalute(10,1000).cue;
+  assert.ok(expectedCue !== undefined);
+  const h = runSalute(10, 1000, 'raise', (frame, cue) => {
+    if (cue === undefined && frame.timestampMs === expectedCue) delete frame.landmarks.rightWrist;
+  });
+  assert.equal(h.cue, expectedCue);
+  assert.ok(h.result?.status === 'scored', JSON.stringify(h.result));
+  assert.equal(h.result.saluteSequence?.motionObserved, true);
+});
+
+test('missing baseline/observations still expire the salute sequence instead of waiting forever', () => {
+  const tracker = new SaluteSequenceTracker(), start = attentionFrame(1000);
+  delete start.landmarks.rightWrist; tracker.begin(start);
+  for (let t=1100; t<=16200; t+=100) tracker.update(drillFrame('salute',t), undefined, false);
+  assert.equal(tracker.timedOut, true);
+  assert.equal(tracker.snapshot.motionObserved, false);
+});
+
+test('salute never invents a missing or stale resting wrist, and cannot replace a raise with the final pose', () => {
+  for (const mode of ['missing','stale'] as const) {
+    const tracker = new SaluteSequenceTracker();
+    if (mode === 'stale') tracker.prepare(attentionFrame(0));
+    const cue = attentionFrame(1000); delete cue.landmarks.rightWrist; tracker.begin(cue);
+    for (let t=1100;t<17000;t+=100) tracker.update(drillFrame('salute',t), {timestampMs:t,values:{}}, true);
+    assert.equal(tracker.snapshot.motionObserved,false,mode);
+    assert.equal(tracker.timedOut,true,mode);
+  }
+});
+
+test('regular 260 ms camera observations can complete one salute without a stability deadlock', () => {
+  const h=runSalute(1000/260,1800);
+  assert.ok(h.result?.status==='scored',JSON.stringify(h.result));
+  assert.equal(h.events.filter(e=>e.type==='commandCue'&&e.command==='CHÀO').length,1);
+});
+
+test('a tracked raise with a stable imperfect hand position reaches criterion feedback without repeating the raise', () => {
+  const h = runSalute(10,1000,'raise',(frame,cue) => {
+    if (cue === undefined) return;
+    // Hand arrives a little too far from the head. The trajectory remains
+    // observed; arrival is not permission to award full placement points.
+    const offset = .13*Math.min(1,(frame.timestampMs-cue)/1000);
+    frame.landmarks.rightWrist!.image.x += offset;
+    frame.saluteHand?.image.forEach(p => {p.x += offset;});
+  });
+  assert.ok(h.result?.status === 'scored', JSON.stringify(h.result));
+  const arm = h.result.criteria.find(c => c.id === 'saluteArm')!;
+  assert.ok(arm.points < arm.maximum);
+  assert.equal(h.events.filter(e => e.type === 'commandCue' && e.command === 'CHÀO').length,1);
+});
+
 for (const mode of ['missingHand','lowConfidence'] as const) test(`${mode} does not convert valid body salute to hand pose error`, () => {
   const h = runSalute(8,1800,mode);
   assert.ok(h.result?.status === 'scored', JSON.stringify(h.result));
@@ -100,6 +160,15 @@ for (const mode of ['missingHand','lowConfidence'] as const) test(`${mode} does 
   assert.equal(h.result.assessment, 'incomplete');
   const html = renderToStaticMarkup(React.createElement(SaluteSequenceSummary,{result:h.result}));
   assert.match(html,/chưa đủ dữ liệu để đánh giá/); assert.match(html,/không kết luận tay sai/);
+});
+
+for(const interval of [400,500,600]) test(`salute session grades genuine hand observations sampled every ${interval} ms`,()=>{
+  const h=runSalute(10,1800,'raise',(frame)=>{
+    if(frame.timestampMs%interval!==0)delete frame.saluteHand;
+  });
+  assert.ok(h.result?.status==='scored',JSON.stringify(h.result));
+  assert.equal(h.result.criteria.find(c=>c.id==='saluteHand')?.statusLevel,'PASS');
+  assert.equal(h.result.total,100);
 });
 
 test('hand quality separates small, clipped, low-confidence, unstable identity, blur and stale/future samples', () => {
@@ -154,11 +223,26 @@ test('ROI hand detector does no work for other poses, decimates costly frames, a
     assert.ok(detector.detect({} as TexImageSource,current,960,720,true).saluteHand);
     current=drillFrame('salute',1210);
     detector.detect({} as TexImageSource,current,960,720,true,150); assert.equal(calls,2);
+    current=drillFrame('salute',1350);
+    const waiting=detector.detect({} as TexImageSource,current,960,720,true,150);
+    assert.equal(waiting.handStatus,'waiting');
+    assert.equal(waiting.saluteHand,undefined,'an expired cached sample cannot claim observed');
+    assert.match(waiting.handEvidence!.reason!,/Đang chờ mẫu bàn tay mới/);
     label='Left'; current=drillFrame('salute',1500);
     const changed=detector.detect({} as TexImageSource,current,960,720,true);
     assert.equal(changed.saluteHand,undefined); assert.equal(handFeatures(changed).quality,'INSUFFICIENT_HAND_EVIDENCE');
     assert.match(handFeatures(changed).reason!,/bên tay/);
     detector.detect({} as TexImageSource,current,960,720,false); assert.equal(calls,3);
+    internals.model={detect(){return {landmarks:[],worldLandmarks:[],handedness:[]};},close(){}};
+    current=drillFrame('salute',1800);
+    const absent=detector.detect({} as TexImageSource,current,960,720,true);
+    assert.equal(absent.handStatus,'not-visible');
+    assert.match(absent.handEvidence!.reason!,/chưa tìm thấy bàn tay/);
+    internals.model={detect(){throw new Error('test detector failure');},close(){}};
+    current=drillFrame('salute',2100);
+    const failed=detector.detect({} as TexImageSource,current,960,720,true);
+    assert.equal(failed.handStatus,'unavailable');
+    assert.match(failed.handEvidence!.reason!,/gặp lỗi/);
   } finally {detector.dispose(); if(original) Object.defineProperty(globalThis,'OffscreenCanvas',original); else Reflect.deleteProperty(globalThis,'OffscreenCanvas');}
 });
 
@@ -197,11 +281,11 @@ test('adaptive phase budgets decrease quickly and recover slowly without oscilla
   for(let i=0;i<40;i++) budget.observe(i%2?50:40,500+i*50);
   assert.equal(budget.profile,'LOW');
   for(let i=0;i<150;i++) budget.observe(25,3000+i*100);
-  assert.equal(budget.profile,'FAST'); assert.equal(budget.fps,20);
-  budget.setPhase('countdown','salute'); assert.equal(budget.fps,12);
-  budget.setPhase('waiting-precondition','salute'); assert.equal(budget.fps,10);
-  budget.setPhase('scoring','salute'); assert.equal(budget.fps,15);
-  budget.setPhase('quality-check','attention'); assert.equal(budget.fps,15);
+    assert.equal(budget.profile,'FAST'); assert.equal(budget.fps,30);
+    budget.setPhase('countdown','salute'); assert.equal(budget.fps,30);
+    budget.setPhase('waiting-precondition','salute'); assert.equal(budget.fps,30);
+    budget.setPhase('scoring','salute'); assert.equal(budget.fps,30);
+    budget.setPhase('quality-check','attention'); assert.equal(budget.fps,30);
 });
 
 test('display interpolation uses independent copies, omits missing joints, expires stale skeleton and cannot modify scoring input', () => {
@@ -209,7 +293,7 @@ test('display interpolation uses independent copies, omits missing joints, expir
   const before = JSON.stringify(next);
   renderer.frame(first,1000);
   const display = renderer.frame(next,1101)!;
-  assert.notEqual(display.landmarks.rightWrist!.image.y,next.landmarks.rightWrist!.image.y);
+    assert.equal(display.landmarks.rightWrist!.image.y,next.landmarks.rightWrist!.image.y, 'moving arm follows latest observation on first paint');
   assert.equal(JSON.stringify(next),before);
   delete next.landmarks.rightWrist;
   assert.equal(renderer.frame(next,1120)?.landmarks.rightWrist,undefined);

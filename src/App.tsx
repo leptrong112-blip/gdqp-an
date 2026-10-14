@@ -759,7 +759,6 @@ function AuthenticatedApp() {
           </ErrorBoundary>
         </main>
         {activeTab !== "sim" && activeTab !== "pose" && <Footer onNavigate={setActiveTab} />}
-        {activeTab !== "sim" && activeTab !== "pose" && <div className="flex justify-center gap-6 pb-6 text-sm text-slate-500"><button onClick={openSurveyArea}>{user?.role === 'admin' ? 'Báo cáo khảo sát' : 'Khảo sát trải nghiệm'}</button></div>}
       </div>
     </div>
   );

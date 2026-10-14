@@ -19,9 +19,12 @@ import type { PoseSaveState } from './results/resultSaver';
 import { displayedProcessingLatency } from './results/resultPresentation';
 import { poseScoreOnTen } from './results/scoreScale';
 import { preparationDefinition, STOP_OVERLAY_MS } from './runtime/commandFlow';
+import { shouldAutoCalibrate } from './runtime/autoCalibration';
+import { PoseReadinessStatus } from './components/PoseReadinessStatus';
+import { PoseAdminOnly } from './components/PoseAdminOnly';
 
 export default function PoseAnalysisPage() {
-  const { user } = useAccount();
+  const { user, loading: accountLoading } = useAccount();
   const [student, setStudent] = useState<PoseStudentSession | null>(null);
   const studentRef = useRef<PoseStudentSession | null>(null);
   const attemptStudents = useRef(new Map<string, PoseStudentSession>());
@@ -49,7 +52,7 @@ export default function PoseAnalysisPage() {
   // activeStep: 1 = Kiểm tra vị trí/camera, 2 = Hướng dẫn động tác & thực hiện
   const [activeStep, setActiveStep] = useState<1 | 2>(1);
 
-  // Chế độ chẩn đoán AI dành cho lập trình viên/giáo viên kiểm tra số đo khớp thực tế (?poseDebug=1 hoặc ?debug=1)
+  // Chỉ admin đã đăng nhập được xem chẩn đoán; URL chỉ là tùy chọn bật HUD.
   const [debugMode, setDebugMode] = useState(() => {
     try {
       const search = window.location.search;
@@ -63,6 +66,7 @@ export default function PoseAnalysisPage() {
   });
 
   const handleToggleDebugMode = (enabled: boolean) => {
+    if (accountLoading || user?.role !== 'admin') return;
     setDebugMode(enabled);
     try {
       localStorage.setItem('pose_debug_mode', enabled ? 'true' : 'false');
@@ -119,12 +123,12 @@ export default function PoseAnalysisPage() {
   const ready = !!session.snapshot?.quality.passed;
 
   // The processor owns the only exercise countdown. Auto-calibration does not
-  // run a second 3-2-1 sequence and only starts from the required preparation.
+  // run a second 3-2-1 sequence. Pose identity is checked after measurement,
+  // before the command, and does not block automatic camera calibration.
   useEffect(() => {
     setAutoCountdown(null);
-    if (autoCalibrate && activeStep === 2 && session.stage === 'quality-check' && ready &&
-        session.snapshot?.workflow?.status === 'READY' && !session.result) session.calibrate();
-  }, [autoCalibrate, activeStep, session.stage, ready, session.snapshot?.workflow?.status, session.result, session.calibrate]);
+    if (shouldAutoCalibrate(autoCalibrate, session.stage, ready, !!session.result)) session.calibrate();
+  }, [autoCalibrate, session.stage, ready, session.result, session.calibrate]);
 
   const handleSelectMovement = (id: MovementId) => {
     session.changeMovement(id);
@@ -272,10 +276,15 @@ export default function PoseAnalysisPage() {
             drillProgress={session.snapshot?.drillProgress}
             dynamicProgress={session.snapshot?.dynamicProgress}
             handStatus={session.snapshot?.frame.handStatus}
+            handReason={session.snapshot?.frame.handEvidence?.reason}
             commandCue={session.commandCue}
             workflow={session.snapshot?.workflow}
             saluteProgress={session.snapshot?.saluteProgress}
+            readinessStatus={<PoseAdminOnly user={user} loading={accountLoading}>
+              <PoseReadinessStatus snapshot={session.snapshot} stage={session.stage} autoCalibrate={autoCalibrate} />
+            </PoseAdminOnly>}
             diagnosticOverlay={debugMode ? (
+              <PoseAdminOnly user={user} loading={accountLoading}>
               <PoseDiagnosticOverlay
                 snapshot={session.snapshot}
                 stage={session.stage}
@@ -284,6 +293,7 @@ export default function PoseAnalysisPage() {
                 onClose={() => handleToggleDebugMode(false)}
                 allowExport={user?.role === 'admin'}
               />
+              </PoseAdminOnly>
             ) : undefined}
           />
 
@@ -344,6 +354,7 @@ export default function PoseAnalysisPage() {
                   <input type="checkbox" checked={session.scorePrecondition} disabled={!['idle', 'quality-check', 'result', 'blocked'].includes(session.stage)} onChange={e => session.setScorePrecondition(e.target.checked)} />
                   Chấm riêng Đứng nghiêm trước động tác (giữ tối thiểu 3 giây, điểm riêng)
                 </label>}
+                <PoseAdminOnly user={user} loading={accountLoading}>
                 <dl className="mt-3 space-y-2 text-slate-600 dark:text-slate-300">
                   <div>Chế độ: {session.mode || 'Chưa khởi tạo'}</div>
                   <div>FPS phân tích: {session.snapshot?.inferenceFps.toFixed(1) ?? '—'}</div>
@@ -351,6 +362,7 @@ export default function PoseAnalysisPage() {
                   <div>Số người phát hiện: {session.snapshot?.frame.personCount ?? '—'}</div>
                   <div>Độ tin cậy: {session.snapshot ? Math.round(session.snapshot.quality.metrics.meanConfidence * 100) : '—'}%</div>
                 </dl>
+                </PoseAdminOnly>
                 <label className="mt-3 flex items-start gap-2">
                   <input
                     type="checkbox"
@@ -361,6 +373,7 @@ export default function PoseAnalysisPage() {
                   Thử GPU trong Worker (tự về CPU nếu không hỗ trợ)
                 </label>
 
+                <PoseAdminOnly user={user} loading={accountLoading}>
                 <div className="pt-3 mt-3 border-t border-slate-200 dark:border-slate-700">
                   <label className="flex items-center justify-between cursor-pointer text-slate-700 dark:text-slate-300">
                     <span className="font-semibold text-xs flex items-center gap-1.5">
@@ -377,6 +390,7 @@ export default function PoseAnalysisPage() {
                     Bật HUD trực tiếp trên camera hiển thị: Số đo thực tế → Dải chuẩn → Đóng góp điểm → Độ tin cậy (Hỗ trợ URL <code className="text-amber-500">?poseDebug=1</code>).
                   </p>
                 </div>
+                </PoseAdminOnly>
               </details>
             </>
           )}

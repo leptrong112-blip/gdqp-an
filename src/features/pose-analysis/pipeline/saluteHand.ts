@@ -51,28 +51,33 @@ export function raisedSaluteWrist(frame: CanonicalPoseFrame): boolean {
 }
 
 /** Associate by anatomical Pose wrist proximity; display mirroring/handedness labels do not decide. */
-export function matchSaluteHand(frame: CanonicalPoseFrame, images: Vec3[][], worlds: Vec3[][], width: number, height: number) {
-  if (!raisedSaluteWrist(frame)) return undefined;
+export function matchSaluteHand(frame: CanonicalPoseFrame, images: Vec3[][], worlds: Vec3[][], width: number, height: number, reasons?: string[]) {
+  const reject = (reason: string) => { reasons?.push(reason); return []; };
+  if (!raisedSaluteWrist(frame)) { reject('Chưa xác nhận được cổ tay phải ở vùng chào.'); return undefined; }
   const right = frame.landmarks.rightWrist!, left = frame.landmarks.leftWrist;
   const ls = frame.landmarks.leftShoulder, rs = frame.landmarks.rightShoulder;
-  if (!ls || !rs) return undefined;
+  if (!ls || !rs) { reject('Thiếu khớp vai để đối chiếu bàn tay phải.'); return undefined; }
   const px = (p: Vec3) => ({ x: p.x * width, y: p.y * height, z: 0 });
   const span = distance(px(ls.image), px(rs.image));
-  if (span < 30) return undefined;
+  if (span < 30) { reject('Người quá nhỏ trong ảnh gốc để đối chiếu bàn tay; tiến gần hơn nhưng vẫn giữ đủ toàn thân.'); return undefined; }
+  if (!images.length) reject('Mô hình chưa tìm thấy bàn tay trong vùng cổ tay phải; cần nhìn rõ bàn tay và các ngón.');
   const candidates = images.flatMap((image, i) => {
     const world = worlds[i];
-    if (image.length !== 21 || world?.length !== 21 || !image.every(finite) || !world.every(finite) ||
-      image.some(p => p.x <= 0 || p.x >= 1 || p.y <= 0 || p.y >= 1)) return [];
+    if (image.length !== 21 || world?.length !== 21 || !image.every(finite) || !world.every(finite)) return reject('Chưa có đủ 21 điểm bàn tay hợp lệ.');
+    if (image.some(p => p.x <= 0 || p.x >= 1 || p.y <= 0 || p.y >= 1)) return reject('Bàn tay hoặc ngón tay bị cắt khỏi ảnh gốc.');
     const wrist = px(image[0]), dr = distance(wrist, px(right.image));
-    if (dr > span * .4 || (left && left.confidence >= .6 && distance(wrist, px(left.image)) <= dr + span * .12)) return [];
+    if (dr > span * .4) return reject('Điểm bàn tay tìm được không khớp cổ tay phải; chưa ghép được với cơ thể.');
+    if (left && left.confidence >= .6 && distance(wrist, px(left.image)) <= dr + span * .12) return reject('Chưa phân biệt chắc bàn tay phải với tay trái.');
     const palmPixels = distance(px(image[5]), px(image[17]));
     const handPixels = Math.max(...image.map(p => distance(px(p), wrist)));
-    if (palmPixels < 8 || handPixels < 28 || handPixels > span * 1.2) return [];
+    if (palmPixels < 8 || handPixels < 28) return reject(`Bàn tay quá nhỏ/nghiêng mỏng trên ảnh gốc: ngang lòng bàn tay ${palmPixels.toFixed(1)} px (cần 8), cổ tay–ngón ${handPixels.toFixed(1)} px (cần 28).`);
+    if (handPixels > span * 1.2) return reject('Kích thước bàn tay nhận diện không phù hợp với cơ thể.');
     const palm = distance(world[5], world[17]);
-    if (palm < .015 || palm > .15 || HAND_EDGES.some(([a,b]) => distance(world[a], world[b]) < .001)) return [];
+    if (palm < .015 || palm > .15 || HAND_EDGES.some(([a,b]) => distance(world[a], world[b]) < .001)) return reject('Hình học 3D bàn tay bị co sập hoặc không hợp lý.');
     return [{ dr, observation: { timestampMs: frame.timestampMs, image, world, sourceWidth: width, sourceHeight: height } }];
   }).sort((a,b) => a.dr - b.dr);
-  if (!candidates.length || (candidates[1] && candidates[1].dr - candidates[0].dr < span * .15)) return undefined;
+  if (!candidates.length) return undefined;
+  if (candidates[1] && candidates[1].dr - candidates[0].dr < span * .15) { reject('Có nhiều bàn tay gần cổ tay phải; chưa xác định được bàn tay cần chấm.'); return undefined; }
   return candidates[0].observation;
 }
 

@@ -103,7 +103,8 @@ export function PoseStepDashboard({
 
   return (
     <div className="flex flex-col h-full space-y-4 text-slate-800 dark:text-slate-100 select-none">
-      <p className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm font-bold text-amber-900 dark:bg-amber-950 dark:text-amber-200">Tư thế chuẩn bị: {preparationLabel}</p>
+      {['idle','loading-model','quality-check','calibrating','waiting-precondition','precondition-scoring','countdown'].includes(stage) &&
+        <p className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm font-bold text-amber-900 dark:bg-amber-950 dark:text-amber-200">Tư thế chuẩn bị: {preparationLabel}</p>}
       {['calibrating', 'waiting-precondition', 'precondition-scoring', 'transition'].includes(stage) && <p role="status" className="text-sm">{workflowMessage ?? 'Đứng vào vị trí, giữ tư thế chuẩn bị. Chờ đếm ngược và khẩu lệnh rồi mới thực hiện.'}</p>}
       {/* ══════════ THANH TIẾN TRÌNH 2 BƯỚC ══════════ */}
       <div className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-xs font-bold gap-2">

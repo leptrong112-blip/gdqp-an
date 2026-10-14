@@ -17,8 +17,8 @@ import { TemporalMotionBuffer } from '../pipeline/motionBuffer';
 import { DynamicTurnTracker } from '../scoring/dynamicMovementAnalyzer';
 import type { MovementDefinition, DrillStepResult, ScoreResult, PreconditionScore } from '../scoring/scoringTypes';
 import { BASIC_DRILL, DRILL_IDS, summarizeDrill } from '../scoring/basicDrill';
-import { stableStaticHold } from '../pipeline/staticHold';
-import { saluteHandMetrics } from '../pipeline/saluteHand';
+import { stableStaticHold, stablePreparationHold } from '../pipeline/staticHold';
+import { saluteHandMetrics, handFeatures } from '../pipeline/saluteHand';
 import { measureTurnFeet } from '../scoring/turnFeet';
 import type { SessionCommand, WorkerEvent } from './workerProtocol';
 import { javascriptSequenceEngine, type SequenceEngine } from '../scoring/sequenceEngine';
@@ -226,7 +226,8 @@ export class SessionProcessor {
     // Evaluate current raw evidence, never carried-forward smoothed points.
     const preparing = ['quality-check', 'calibrating', 'waiting-precondition', 'precondition-scoring', 'countdown'].includes(this.stage);
     const beforeCommand = preparing;
-    const recoveryMs = preparing ? C.preparationRecoveryMs : C.maximumQualityGapMs;
+    const recoveringSalute = !preparing && this.movement.id === 'salute';
+    const recoveryMs = preparing ? C.preparationRecoveryMs : recoveringSalute ? C.saluteRecoveryMs : C.maximumQualityGapMs;
     const prepDefinition = preparationDefinition(this.movement.id as import('../types').MovementId);
     const quality = this.quality.check(filtered, lighting, this.profile, {
       preparation: preparing,
@@ -259,10 +260,10 @@ export class SessionProcessor {
     };
 
     if (active && !good) {
-      if (this.movement.id === 'salute') this.saluteTracker.pause();
+      if (this.movement.id === 'salute') this.saluteTracker.interrupt();
       if (this.movement.type === 'DYNAMIC') this.dynamicTracker.pause();
       if (rawGood) this.failureSince = null;
-      else this.failureSince ??= raw.timestampMs;
+      else this.failureSince ??= recoveringSalute && !continuous ? raw.timestampMs-delta : raw.timestampMs;
       if (this.stage === 'calibrating' && (!continuous ||
           this.failureSince !== null && raw.timestampMs-this.failureSince > recoveryMs)) {
         this.elapsed = 0; this.calibration = [];
@@ -274,8 +275,9 @@ export class SessionProcessor {
       if (beforeCommand) message = `Đang chờ bạn ổn định vị trí. ${quality.reasons[0] ?? 'Giữ tư thế chuẩn bị và nhìn thẳng camera.'} Chưa bắt đầu động tác.`;
       // Repositioning during preparation is expected; missing/cropped joints are not.
       const onlyRepositioning = ['countdown', 'transition', 'precondition-scoring'].includes(this.stage) && quality.checks.filter(c => !c.passed).every(c => c.id === 'stability' || c.id === 'orientation');
-      if (onlyRepositioning) this.failureSince = null;
-      if ((this.failureSince !== null && raw.timestampMs - this.failureSince > recoveryMs) || !continuous) {
+      if (onlyRepositioning && continuous) this.failureSince = null;
+      const terminalGap = !continuous && (!recoveringSalute || delta > recoveryMs);
+      if ((this.failureSince !== null && raw.timestampMs - this.failureSince > recoveryMs) || terminalGap) {
         if (beforeCommand) {
           // Repositioning/acquisition is not a completed attempt. Keep the camera
           // running, discard interrupted evidence and reacquire without a result.
@@ -306,10 +308,19 @@ export class SessionProcessor {
     })();
     const currentPose = provisional ? normalizePose(filtered, provisional, allowTurn) : undefined;
     const currentSample = currentPose ? extractFeatures(currentPose, allowTurn) : undefined;
-    const instantPreparation = postureReadiness(currentSample, prepDefinition, { allowUnobservedArms:true });
+    const instantReasons: string[] = [], stabilityReasons: string[] = [];
+    const instantPreparation = postureReadiness(currentSample, prepDefinition, { allowUnobservedArms:true, reasons:instantReasons });
+    if (this.movement.id === 'salute') {
+      if (preparing && good && instantPreparation === 'READY') this.saluteTracker.prepare(filtered);
+      if (!preparing) this.saluteTracker.advance(raw.timestampMs);
+    }
     if (preparing) this.preparationStatus = this.readiness.update(good ? currentSample : undefined, prepDefinition);
     if (this.stage === 'waiting-precondition' || this.stage === 'precondition-scoring') {
-      if (this.preparationStatus !== 'READY' || instantPreparation !== 'READY' || !currentSample) {
+      // Use temporally confirmed identity for acquisition. Requiring two raw
+      // READY frames in a row here defeats hysteresis at a knee-angle boundary.
+      // Current quality/essential evidence is still mandatory; the command cue
+      // below also checks the instantaneous stance. Grade samples stay unmodified.
+      if (this.preparationStatus !== 'READY' || !good || !currentSample) {
         // An isolated landmark spike must not erase an otherwise valid hold.
         // Warmup after a short quality interruption pauses time, never invents samples.
         if (rawGood && postureReadiness(currentSample, prepDefinition, { allowUnobservedArms: true }) === 'READY') this.preparationLossSince = null;
@@ -324,7 +335,7 @@ export class SessionProcessor {
         this.preparationSince ??= raw.timestampMs;
         this.preparationStabilitySamples.push(currentSample);
         this.preparationStabilitySamples = this.preparationStabilitySamples.filter(s => raw.timestampMs - s.timestampMs <= 800);
-        const stable = stableStaticHold(this.preparationStabilitySamples);
+        const stable = stablePreparationHold(this.preparationStabilitySamples, stabilityReasons);
         if (stable) {
           // Grade only current observed stable samples, never the paused interval.
           this.preparationSamples.push(currentSample);
@@ -342,20 +353,13 @@ export class SessionProcessor {
           : `Đang xác nhận tư thế ${prepDefinition.label}. Giữ ổn định, chờ đếm ngược và khẩu lệnh rồi mới thực hiện.`;
         if (held >= (scorePrep ? C.attemptMs : PREPARATION_STABLE_MS) && this.preparationSamples.length >= (scorePrep ? prepDefinition.minimumSamples : 6)) {
           const scored = scorePrep ? evaluate(prepDefinition, { samples: this.preparationSamples, validDurationMs: held, qualityPassed: true }) : undefined;
-          const unobservedArms = scored?.status === 'notScorable' &&
-            scored.reasons.length === 1 && scored.reasons[0] === `Không đủ dữ liệu rõ ràng cho tiêu chí “${prepDefinition.criteria.find(c => c.id === 'arms')!.label}”.`;
-          // An optional preparation grade must not trap an otherwise observed
-          // stance in a retry loop. Do not attach/fabricate the unavailable grade.
-          if (!scored || (scored.status === 'scored' && scored.passed) || unobservedArms) {
-            if (unobservedArms) message = 'Đã xác nhận tư thế chuẩn bị qua thân và chân. Camera chưa thấy rõ tay sát đùi nên chưa có điểm riêng cho tư thế chuẩn bị; không cần dang tay. Chờ khẩu lệnh để thực hiện.';
-            if (scored?.status === 'scored') this.precondition = freezeSnapshot({ movementId: 'attention', result: scored,
-              quality: { confidence: scored.confidence, unassessedPoints: scored.unassessedPoints ?? 0 } });
-            this.stage = 'countdown'; this.elapsed = 0; this.resetPreparationHold();
-          } else {
-            message = scored.status === 'notScorable' ? scored.reasons.join(' ')
-              : `Điểm tư thế chuẩn bị chưa đạt. ${scored.corrections.join(' ') || 'Chỉnh tư thế theo hướng dẫn rồi giữ ổn định.'}`;
-            this.waitForPreparation();
-          }
+          // Readiness has already confirmed the starting stance. A separate,
+          // optional grade is feedback, never another gate into the exercise.
+          // Preserve observed low scores; omit unavailable grades without inventing points.
+          if (scored?.status === 'notScorable') message = 'Đã xác nhận tư thế chuẩn bị. Chưa đủ dữ liệu để có điểm riêng cho tư thế này; không cần dang tay. Chờ khẩu lệnh để thực hiện.';
+          if (scored?.status === 'scored') this.precondition = freezeSnapshot({ movementId: 'attention', result: scored,
+            quality: { confidence: scored.confidence, unassessedPoints: scored.unassessedPoints ?? 0 } });
+          this.stage = 'countdown'; this.elapsed = 0; this.resetPreparationHold();
         }
       }
     } else if (this.stage === 'countdown' && good) {
@@ -395,11 +399,12 @@ export class SessionProcessor {
     } else if (this.stage === 'transition') {
       this.preparationStatus = good ? postureReadiness(currentSample, this.movement) : 'INSUFFICIENT_EVIDENCE';
       if (this.movement.id === 'salute') {
-        const stable = good && this.saluteTracker.update(filtered, currentSample, this.preparationStatus === 'READY');
-        message = this.saluteTracker.snapshot.motionObserved ? 'Đã ghi nhận nâng tay. Giữ tư thế Chào ổn định để bắt đầu chấm.' : 'Nâng tay phải sau khẩu lệnh CHÀO; hệ thống đang theo dõi chuyển động, chưa tính lỗi tư thế cuối.';
+        const stable = this.saluteTracker.update(filtered, good ? currentSample : undefined, good && this.preparationStatus === 'READY');
+        message = !good ? 'Camera đang nhận lại hình; lượt chào chưa kết thúc. Đoạn thiếu khung hình không được tính là chuyển động đã quan sát.'
+          : this.saluteTracker.snapshot.motionObserved ? 'Đã ghi nhận nâng tay. Giữ tư thế Chào ổn định để bắt đầu chấm.' : 'Nâng tay phải sau khẩu lệnh CHÀO; hệ thống đang theo dõi chuyển động, chưa tính lỗi tư thế cuối.';
         if (this.saluteTracker.timedOut) {
           this.finish({ status: 'notScorable', reasons: ['Chưa ghi nhận đủ chuỗi nâng tay và giữ Chào sau khẩu lệnh. Hãy thử lại từ Đứng nghiêm; đây là thiếu dữ liệu chuyển động, không kết luận tay sai.'] }, events);
-        } else if (stable) { this.stage = 'scoring'; this.elapsed = 0; this.samples = []; this.saluteTracker.scoring(filtered); }
+        } else if (stable) { this.stage = 'scoring'; this.elapsed = 0; this.samples = []; this.quality.beginStaticHold(); this.saluteTracker.scoring(filtered); }
       } else {
       if (!good || !currentSample) {
         // Pause a short tracking loss. Only current observed samples contribute
@@ -420,12 +425,14 @@ export class SessionProcessor {
           this.lastTargetReady = this.preparationStatus === 'READY';
         }
         // Readiness is useful during settling, but is not permission to grade.
-        // Once the command's transition grace has elapsed, a clear stable wrong
-        // stance must receive criterion feedback instead of waiting forever.
+        // After transition grace, an observed stable stance can be evaluated.
+        // The scorer supplies criterion feedback or refuses missing feature data;
+        // an unavailable identity feature must not trap the transition forever.
         const canGrade = this.targetReadyHeldMs >= MOVEMENT_SETTLE_MS ||
-          this.preparationStatus === 'WRONG_PRECONDITION' && raw.timestampMs-(this.transitionStartedAtMs ?? raw.timestampMs) >= C.staticTransitionGraceMs;
+          raw.timestampMs-(this.transitionStartedAtMs ?? raw.timestampMs) >= C.staticTransitionGraceMs;
         if (canGrade && this.transitionHeldMs >= MOVEMENT_SETTLE_MS && this.preparationSamples.length >= 6) {
           this.stage = 'scoring'; this.elapsed = 0; this.samples = []; this.preparationSamples = []; this.preparationSince = null;
+          this.quality.beginStaticHold();
         }
       }
       message = good ? `Đã nhận khẩu lệnh. Đang ghi nhận ${this.movement.label}; giữ tư thế cuối để chốt điểm. Nếu tư thế chưa đúng, hệ thống sẽ nhận xét theo tiêu chí.`
@@ -449,7 +456,10 @@ export class SessionProcessor {
       const normalized = normalizePose(observed, this.profile, allowTurn);
       if (normalized) {
         const sample = extractFeatures(normalized, allowTurn);
-        if (this.movement.id === 'salute') sample.saluteHand = saluteHandMetrics(filtered);
+        if (this.movement.id === 'salute') {
+          sample.saluteHand = saluteHandMetrics(filtered);
+          sample.saluteHandReason = handFeatures(filtered).reason;
+        }
         if (this.movement.id === 'salute') this.saluteTracker.scoring(filtered);
         liveSample = sample;
         liveDualMeasurements = extractDualMeasurements(normalized, allowTurn);
@@ -488,6 +498,24 @@ export class SessionProcessor {
       }
     }
 
+    if (this.movement.id === 'salute' && this.stage === 'scoring' && this.saluteTracker.timedOut) {
+      this.windowFinishedAtMs = sourceTimeMs; this.finalizationStartedAtMs = this.now();
+      this.finish({ status:'notScorable', reasons:['Đã ghi nhận nâng tay chào nhưng camera chưa thu đủ dữ liệu giữ tư thế để chốt điểm. Giữ mặt và tay phải rõ trong hình rồi thử lại; lượt này chưa có điểm.'] }, events);
+      return finalEvents();
+    }
+
+    // Do not silently wait forever when repeated instability/partial depth keeps
+    // restarting a static window. A timeout reports unavailable evidence, not a fail grade.
+    if (this.movement.robustPosture && this.transitionStartedAtMs !== undefined &&
+        ['transition', 'scoring'].includes(this.stage) && raw.timestampMs - this.transitionStartedAtMs >= C.staticObservationTimeoutMs) {
+      this.windowFinishedAtMs = sourceTimeMs;
+      this.finalizationStartedAtMs = this.now();
+      this.finish({ status:'notScorable', reasons:[
+        'Đã nhận động tác nhưng chưa thu đủ dữ liệu ổn định để chốt điểm. Giữ toàn thân và bàn chân rõ trong hình, bổ sung ánh sáng phía trước rồi thử lại. Lượt này không bị tính là thực hiện sai.',
+      ] }, events);
+      return finalEvents();
+    }
+
     // Telemetry fallback: compute live measurements in any stage for developer HUD
     if (!liveSample) {
       const provisional = this.profile ?? (() => {
@@ -517,24 +545,43 @@ export class SessionProcessor {
       }
     }
 
+    if (this.movement.id === 'salute' && ['quality-check','calibrating','waiting-precondition','precondition-scoring'].includes(this.stage) &&
+        this.preparationStatus === 'WRONG_PRECONDITION' && (currentSample?.values.rightWristHeadDistance?.value ?? Infinity) <= 1.1) {
+      message = 'Hạ tay phải, buông hai tay dọc thân để chuẩn bị. Chờ đếm ngược và khẩu lệnh CHÀO rồi mới nâng tay.';
+    }
     const holdingPreparation = ['waiting-precondition', 'precondition-scoring', 'countdown'].includes(initialStage);
     this.lastGood = good && (!holdingPreparation ||
-      this.preparationStatus === 'READY' && instantPreparation === 'READY' && this.preparationUnstableSince === null);
+      this.preparationStatus === 'READY' && this.preparationUnstableSince === null);
     const target = this.stage === 'calibrating' ? C.calibrationMs : this.stage === 'countdown' ? C.countdownMs : this.stage === 'waiting-precondition' ? PREPARATION_STABLE_MS : C.attemptMs;
     const progress = (this.stage === 'scoring' && this.movement.type === 'DYNAMIC')
       ? dynamicRatio
       : Math.min(1, this.elapsed / target);
 
+    const prepStage = ['quality-check','calibrating','waiting-precondition','precondition-scoring','countdown'].includes(this.stage);
+    const blockers = !continuous ? ['Khoảng cách khung hình vượt 300 ms; chưa có chuỗi quan sát liên tục.']
+      : !good ? quality.reasons
+      : this.stage === 'calibrating' ? [message ?? 'Đang thu số đo tỷ lệ cơ thể; chưa chấm động tác.']
+      : prepStage && this.preparationStatus !== 'READY' ? this.readiness.diagnosticReasons
+      : this.stage === 'countdown' && instantPreparation !== 'READY' ? instantReasons
+      : stabilityReasons;
+
     events.push({
       type: 'analysis',
       attemptId: this.attempt?.id,
       snapshot: {
-        frame: this.movement.id === 'salute' ? filtered : smoothed,
+        // Display the newest accepted observation for every movement/precondition.
+        // Scoring keeps its own smoothing/evidence rules above.
+        frame: filtered,
         quality,
         stage: this.stage,
         progress,
         inferenceMs,
         inferenceFps: delta > 0 ? 1000 / delta : 0,
+        readinessDebug: prepStage ? { blockers, instantStatus:instantPreparation, confirmedStatus:this.preparationStatus,
+          validMs:this.stage === 'quality-check' ? 0 : this.elapsed, requiredMs:target,
+          sampleCount:this.stage === 'calibrating' ? this.calibration.length : this.preparationSamples.length,
+          requiredSamples:this.stage === 'calibrating' ? 12 : this.stage === 'precondition-scoring' ? prepDefinition.minimumSamples : this.stage === 'waiting-precondition' ? 6 : 0,
+          frameGapMs:delta, rejectedJoints:[...rejected] } : undefined,
         dynamicProgress,
         message,
         workflow: { preconditionId: this.preparationMovementId, preconditionLabel: prepDefinition.label, status: this.preparationStatus, scoringPrecondition: this.stage === 'precondition-scoring', message: message ?? quality.reasons[0] },

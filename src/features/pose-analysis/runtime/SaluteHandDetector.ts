@@ -35,6 +35,9 @@ export class SaluteHandDetector {
     } catch { if (!this.disposed) this.state = 'failed'; }
   }
   detect(source: TexImageSource, frame: CanonicalPoseFrame, width: number, height: number, enabled: boolean, poseMs = 0): CanonicalPoseFrame {
+    const unavailable = (reason: string, validLandmarks = 0) => {
+      this.evidence = { available:false, quality:'INSUFFICIENT_HAND_EVIDENCE', validLandmarks, reason };
+    };
     const report = (value: CanonicalPoseFrame, handMs = 0, fps = this.lastFps): CanonicalPoseFrame => ({ ...value,
       handEvidence: !value.saluteHand && this.evidence ? { ...this.evidence, available: false, quality: 'INSUFFICIENT_HAND_EVIDENCE', reason: this.evidence.reason ?? 'Bàn tay chưa có quan sát mới đủ rõ.' } : undefined,
       detectorTelemetry: {
@@ -43,12 +46,22 @@ export class SaluteHandDetector {
     } });
     if (!enabled || this.disposed) { this.lastHand = undefined; this.lastLabel = undefined; this.labelRun = 0; this.evidence = undefined; this.lastFps = 0; return report(frame); }
     if (this.state === 'idle') void this.prepare();
-    if (this.state !== 'ready') return report({ ...frame, handStatus: this.state === 'failed' ? 'unavailable' : 'loading' });
-    if (!raisedSaluteWrist(frame)) { this.lastHand = undefined; this.evidence = undefined; return report({ ...frame, handStatus: 'waiting' }); }
+    if (this.state !== 'ready') {
+      unavailable(this.state === 'failed' ? 'Không tải được mô hình bàn tay. Thử tải lại trang; phần cơ thể vẫn được theo dõi.' : 'Đang tải mô hình nhận diện bàn tay; chưa có số đo ngón tay.');
+      return report({ ...frame, handStatus: this.state === 'failed' ? 'unavailable' : 'loading' });
+    }
+    if (!raisedSaluteWrist(frame)) {
+      this.lastHand = undefined; this.lastLabel = undefined; this.labelRun = 0;
+      unavailable('Chưa xác nhận cổ tay phải đủ rõ ở vùng chào để kiểm tra bàn tay.');
+      return report({ ...frame, handStatus: 'waiting' });
+    }
     // Pose first. A costly hand call is decimated, not queued on intervening frames.
     const interval = Math.max(poseMs > 90 ? 166 : poseMs > 55 ? 100 : 65, (poseMs + this.lastCost) * 2);
-    if (frame.timestampMs - this.lastTime < interval) return report({ ...frame, handStatus: this.lastHand ? 'observed' : 'waiting',
-      saluteHand: this.lastHand && frame.timestampMs - this.lastHand.timestampMs <= 100 ? this.lastHand : undefined });
+    if (frame.timestampMs - this.lastTime < interval) {
+      const fresh = this.lastHand && frame.timestampMs - this.lastHand.timestampMs <= 100 ? this.lastHand : undefined;
+      if (!fresh && this.evidence?.available) unavailable(`Đang chờ mẫu bàn tay mới; nhịp lấy mẫu dự kiến ${Math.round(interval)} ms.`,21);
+      return report({ ...frame, handStatus: fresh ? 'observed' : 'waiting', saluteHand:fresh });
+    }
     const gap = frame.timestampMs - this.lastTime, started = performance.now();
     this.lastTime = frame.timestampMs;
     try {
@@ -68,7 +81,8 @@ export class SaluteHandDetector {
       ctx.drawImage(source as CanvasImageSource,x,y,size,size,0,0,384,384);
       const result = this.model!.detect(this.canvas);
       const images = result.landmarks.map(hand => hand.map(p => ({ x:(x+p.x*size)/width, y:(y+p.y*size)/height, z:p.z*size/width })));
-      this.lastHand = matchSaluteHand(frame,images,result.worldLandmarks,width,height);
+      const reasons:string[]=[];
+      this.lastHand = matchSaluteHand(frame,images,result.worldLandmarks,width,height,reasons);
       if (this.lastHand) {
         const index = images.indexOf(this.lastHand.image);
         const classification = result.handedness[index]?.[0];
@@ -80,14 +94,19 @@ export class SaluteHandDetector {
           identityStable: this.labelRun >= 2, sharpness };
         this.evidence = handFeatures({ ...frame, saluteHand: this.lastHand });
         if (!this.evidence.available) this.lastHand = undefined;
-      } else this.evidence = undefined;
+      } else {
+        this.lastLabel = undefined; this.labelRun = 0;
+        unavailable(reasons[0] ?? 'Chưa ghép được bàn tay hợp lệ với cổ tay phải.',Math.max(0,...images.map(points=>points.length)));
+      }
       this.lastCost = performance.now() - started;
       this.lastFps = Number.isFinite(gap) ? 1000/gap : 0;
       return report({ ...frame, handStatus: this.lastHand ? 'observed' : 'not-visible', saluteHand:this.lastHand }, this.lastCost);
     } catch {
       this.lastHand = undefined;
+      this.lastLabel = undefined; this.labelRun = 0;
+      unavailable('Bộ xử lý bàn tay gặp lỗi ở khung hình này; đang chờ lần nhận diện tiếp theo.');
       this.lastCost = performance.now() - started;
-      return report({ ...frame, handStatus:'unavailable' }, this.lastCost);
+      return report({ ...frame, handStatus:'unavailable', saluteHand:undefined }, this.lastCost);
     }
   }
   dispose() { this.disposed = true; this.model?.close(); this.model = null; this.canvas = null; this.qualityCanvas = null; this.lastHand = undefined; }

@@ -1,5 +1,6 @@
 import type { FeatureId, FeatureSample } from '../types';
 import { mad } from './geometry';
+import { featureLabel } from '../diagnostics/featureLabels';
 
 // Robust spread, not absolute height: mild lowering of the whole body is not an error.
 // These are stability tolerances (degrees/body-normalized distance), not pose grades.
@@ -9,10 +10,22 @@ const limits: Partial<Record<FeatureId, number>> = {
   leftWristHipDistance: 0.12, rightWristHipDistance: 0.12,
 };
 export function stableStaticHold(samples: readonly FeatureSample[]): boolean {
+  return stableHold(samples, false);
+}
+
+/** Acquisition only: noisy elbow depth must not veto an already-confirmed
+ * standing identity while the wrists/body remain still. Readiness still checks
+ * observed arm posture; grading retains every original stability constraint. */
+export function stablePreparationHold(samples: readonly FeatureSample[], reasons?: string[]): boolean {
+  return stableHold(samples, true, reasons);
+}
+
+function stableHold(samples: readonly FeatureSample[], preparation: boolean, reasons?: string[]): boolean {
   const end = samples.at(-1)?.timestampMs ?? 0;
   const recent = samples.filter(s => end - s.timestampMs <= 800);
   if (recent.length < 6) return true; // Need enough evidence before assessing variability.
   return Object.entries(limits).every(([key, limit]) => {
+    if (preparation && (key === 'leftElbowAngle' || key === 'rightElbowAngle')) return true;
     const values = recent.map(s => s.values[key as FeatureId]).filter(v => v && v.confidence >= 0.6).map(v => v!.value);
     if (values.length < 6) return true;
     values.sort((a, b) => a - b);
@@ -20,6 +33,8 @@ export function stableStaticHold(samples: readonly FeatureSample[]): boolean {
     // MAD alone is zero when a slight majority is identical, even during two-pose oscillation.
     // Central spread catches repeated changes while ignoring isolated extremes.
     const spread = values[values.length - 1 - trim] - values[trim];
-    return mad(values) <= limit! && spread <= limit! * 2;
+    const stable = mad(values) <= limit! && spread <= limit! * 2;
+    if (!stable) reasons?.push(`${featureLabel(key as FeatureId)}: số đo dao động ${spread.toFixed(2)}, giới hạn ổn định ${((limit ?? 0)*2).toFixed(2)}. Có thể do chuyển động hoặc nhiễu nhận diện.`);
+    return stable;
   });
 }

@@ -17,6 +17,9 @@ export class QualityChecker {
   private evidence: { timestampMs:number; passed:boolean }[] = [];
   private evidenceStartedAt: number | null = null;
   reset() { this.history = []; this.goodSince = null; this.evidence = []; this.evidenceStartedAt = null; }
+  // The response to a command is expected motion, not instability of the next
+  // static hold. Retain camera acquisition evidence, start a fresh motion window.
+  beginStaticHold() { this.history = []; }
   check(frame: CanonicalPoseFrame, lighting: LightingMetrics, calibration?: CalibrationProfile, options?: { preparation?: boolean; allowTurn?: boolean; assessKnees?: boolean; relaxedPosture?: boolean; countdown?: boolean; transition?: boolean; tolerateBriefLoss?: boolean }): QualityReport {
     // Hands against the thighs may be occluded even in a correct starting pose.
     // Acquisition needs the full head/torso/legs, not proof of every arm joint.

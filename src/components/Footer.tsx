@@ -108,7 +108,7 @@ export default function Footer({ onNavigate }: FooterProps) {
                   <School className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                   <div>
                     <div className="text-white font-black text-xs leading-snug">
-                      Trường TH - THCS - THPT Tân Phú
+                      Trường TH, THCS và THPT Tân Phú
                     </div>
                     <div className="text-[11px] text-slate-400 font-normal">
                       Tập đoàn Giáo dục IGC • TP. Hồ Chí Minh
@@ -129,16 +129,16 @@ export default function Footer({ onNavigate }: FooterProps) {
             <div className="space-y-2.5 text-xs text-slate-400">
               <div className="flex items-start gap-2.5">
                 <MapPin className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-                <span>Trường TH-THCS-THPT Tân Phú, Quận Tân Phú, TP. Hồ Chí Minh</span>
+                <span>Trường TH, THCS và THPT Tân Phú, Quận Tân Phú, TP. Hồ Chí Minh</span>
               </div>
 
               <div className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-amber-400 shrink-0" />
                 <a
-                  href="mailto:letrongphuc.12c3.tanphu@gmail.com"
+                  href="mailto:leptrong112@gmail.com"
                   className="hover:text-amber-300 transition-colors font-mono text-[11px]"
                 >
-                  letrongphuc.12c3.tanphu@gmail.com
+                  leptrong112@gmail.com
                 </a>
               </div>
 
@@ -149,7 +149,7 @@ export default function Footer({ onNavigate }: FooterProps) {
 
               <div className="pt-2 border-t border-slate-800/80">
                 <div className="text-[11px] text-slate-400 leading-relaxed">
-                  <strong>Giáo viên hướng dẫn:</strong> Thầy giáo bộ môn Giáo dục Quốc phòng &amp; An ninh - Tổ Tin học Trường TH-THCS-THPT Tân Phú.
+                  <strong>Giáo viên hướng dẫn:</strong> Thầy giáo bộ môn Giáo dục Quốc phòng &amp; An ninh - Tổ Tin học Trường TH, THCS và THPT Tân Phú.
                 </div>
               </div>
             </div>
@@ -284,7 +284,7 @@ export default function Footer({ onNavigate }: FooterProps) {
         <div className="pt-8 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 font-sans">
           <div className="text-center sm:text-left space-y-1">
             <div className="text-slate-300 font-bold">
-              © 2026 Bản quyền thuộc về <strong className="text-white">Lê Trọng Phúc (12C3)</strong> &amp; <strong className="text-white">Nguyễn Anh Khôi (12C7)</strong> – Trường TH-THCS-THPT Tân Phú.
+              © 2026 Bản quyền thuộc về <strong className="text-white">Lê Trọng Phúc (12C3)</strong> &amp; <strong className="text-white">Nguyễn Anh Khôi (12C7)</strong> – Trường TH, THCS và THPT Tân Phú.
             </div>
             <div className="text-[11px] text-slate-500">
               Sản phẩm học tập số phi thương mại phục vụ đổi mới dạy và học môn Giáo dục Quốc phòng &amp; An ninh THPT.

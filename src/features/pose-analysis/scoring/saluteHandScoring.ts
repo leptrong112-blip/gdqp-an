@@ -3,12 +3,21 @@ import type { CriterionResult } from './scoringTypes';
 import { median, mad } from '../pipeline/geometry';
 
 export function scoreSaluteHand(samples: FeatureSample[]): CriterionResult {
-  const unknown = (): CriterionResult => ({ id:'saluteHand', label:'Bàn tay và ngón tay chào', points:0, maximum:10,
-    status:'improve', statusLevel:'NOT_SCORABLE', feedback:'Camera chưa quan sát rõ và ổn định bàn tay phải ở tư thế chào. Phần này chưa được đánh giá, không trừ điểm vì thiếu hình ảnh.', mistakes:[], measurements:[] });
+  const unknown = (reason: string): CriterionResult => ({ id:'saluteHand', label:'Bàn tay và ngón tay chào', points:0, maximum:10,
+    status:'improve', statusLevel:'NOT_SCORABLE', feedback:`${reason} Phần này chưa được đánh giá, không trừ điểm vì thiếu hình ảnh.`, mistakes:[], measurements:[] });
   const end = samples.at(-1)?.timestampMs ?? 0;
-  const recent = samples.filter(s => s.timestampMs >= end - 1600 && s.saluteHand && Object.values(s.saluteHand).every(Number.isFinite));
-  if (recent.length < 4 || end - recent.at(-1)!.timestampMs > 250 || recent.at(-1)!.timestampMs - recent[0].timestampMs < 600 ||
-    recent.some((s,i) => i > 0 && (s.timestampMs <= recent[i-1].timestampMs || s.timestampMs - recent[i-1].timestampMs > 300))) return unknown();
+  // Hands are intentionally sampled more slowly than Pose. Require independent,
+  // current observations across a bounded window, not a 300 ms Pose cadence.
+  // This never copies cached landmarks or changes the posture/angle score bands.
+  const keys: (keyof SaluteHandMetrics)[] = ['extension','spread','thumbGap','wristBend','tipHeadDistance'];
+  const recent = samples.filter(s => Number.isFinite(s.timestampMs) && s.timestampMs >= end - 2400 && s.timestampMs <= end &&
+    s.saluteHand && keys.every(key => Number.isFinite(s.saluteHand![key])));
+  if (recent.length < 4) return unknown(`Chỉ có ${recent.length}/4 mẫu bàn tay hợp lệ trong 2,4 giây cuối. ${samples.at(-1)?.saluteHandReason ?? 'Chưa thấy đủ chi tiết bàn tay ổn định.'}`);
+  if (end - recent.at(-1)!.timestampMs > 600) return unknown('Bàn tay chưa có mẫu mới trong 600 ms cuối.');
+  if (recent.at(-1)!.timestampMs - recent[0].timestampMs < 600) return unknown('Các mẫu bàn tay chưa trải dài ít nhất 0,6 giây.');
+  if (recent.some((s,i) => i > 0 && s.timestampMs <= recent[i-1].timestampMs)) return unknown('Mẫu bàn tay bị trùng hoặc sai thứ tự thời gian.');
+  const maxGap = Math.max(...recent.slice(1).map((s,i)=>s.timestampMs-recent[i].timestampMs));
+  if (maxGap > 600) return unknown(`Mẫu bàn tay bị gián đoạn ${Math.round(maxGap)} ms; cần các mẫu cách nhau không quá 600 ms.`);
   const rules: { key:keyof SaluteHandMetrics; feature:FeatureId; good:number; bad:number; variability:number; message:string }[] = [
     { key:'extension', feature:'saluteFingerExtension', good:155, bad:125, variability:15, message:'Các ngón tay còn co; duỗi tự nhiên khi chào.' },
     { key:'spread', feature:'saluteFingerSpread', good:18, bad:35, variability:12, message:'Các ngón tay đang xòe; khép các ngón lại.' },
@@ -20,7 +29,7 @@ export function scoreSaluteHand(samples: FeatureSample[]): CriterionResult {
   const mistakes: string[] = [], measurements: CriterionResult['measurements'] = [];
   for (const rule of rules) {
     const values = recent.map(s => s.saluteHand![rule.key]), value = median(values), variability = mad(values);
-    if (variability > rule.variability || values.filter(v => Math.abs(v-value) <= rule.variability).length / values.length < .75) return unknown();
+    if (variability > rule.variability || values.filter(v => Math.abs(v-value) <= rule.variability).length / values.length < .75) return unknown('Số đo bàn tay/ngón tay còn dao động; chưa đủ ổn định để kết luận.');
     const fraction = Math.max(0,Math.min(1,(value-rule.bad)/(rule.good-rule.bad)));
     points += 2 * fraction;
     if (fraction < .8) mistakes.push(rule.message);

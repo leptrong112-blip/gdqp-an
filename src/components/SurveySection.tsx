@@ -99,7 +99,7 @@ export default function SurveySection() {
   const [name, setName] = useState(user?.name || '');
   const [className, setClassName] = useState('11B1');
   const [position, setPosition] = useState('Giáo viên GDQP-AN');
-  const [school, setSchool] = useState('Trường THPT Tân Phú');
+  const [school, setSchool] = useState('Trường TH, THCS và THPT Tân Phú');
 
   // Bộ câu trả lời độc lập cho 2 phần (Trước và Sau)
   const [beforeAnswers, setBeforeAnswers] = useState<Record<string, number[]>>({});

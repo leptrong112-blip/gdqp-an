@@ -47,7 +47,7 @@ function Step($s,$x,$y,$w,[string]$num,[string]$title,[string]$body){
 try {
  $s=Slide 'ĐỀ TÀI NGHIÊN CỨU KHOA HỌC KỸ THUẬT • 2026' 'HỌC QPAN 3D' 'Website hỗ trợ học tập lý thuyết và thực hành môn GDQP-AN' 'Dựa trên báo cáo DOCX do nhóm cung cấp'
  [void](Txt $s 'Ứng dụng tái tạo 3D và AI tạo sinh' 36 174 470 74 27 $navy $true)
- [void](Txt $s "Lê Trọng Phúc • 12C3`nNguyễn Anh Khôi • 12C7`nTrường TH–THCS–THPT Tân Phú" 36 269 470 95 19 $ink)
+ [void](Txt $s "Lê Trọng Phúc • 12C3`nNguyễn Anh Khôi • 12C7`nTrường TH, THCS và THPT Tân Phú" 36 269 470 95 19 $ink)
  Pic $s 'doc_image6.png' 528 178 396 230
  [void](Txt $s 'Ảnh giao diện sản phẩm trong báo cáo' 534 413 390 20 11 $muted)
  Banner $s '01  Lý do chọn đề tài     →     02  Chức năng sản phẩm     →     03  Kỹ thuật thực hiện'

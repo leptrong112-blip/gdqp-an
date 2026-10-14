@@ -90,7 +90,7 @@ export interface PosePerformanceTelemetry {
   benchmark?: Partial<Record<'pose' | 'hand' | 'worker' | 'age', { medianMs: number; p90Ms: number; samples: number }>>;
 }
 export interface FeatureValue { value: number; confidence: number }
-export interface FeatureSample { timestampMs: number; values: Partial<Record<FeatureId, FeatureValue>>; saluteHand?: SaluteHandMetrics }
+export interface FeatureSample { timestampMs: number; values: Partial<Record<FeatureId, FeatureValue>>; saluteHand?: SaluteHandMetrics; saluteHandReason?: string }
 export interface FeatureWindow { samples: FeatureSample[]; validDurationMs: number; qualityPassed: boolean }
 export type PoseStage = 'idle' | 'loading-model' | 'quality-check' | 'calibrating' | 'waiting-precondition' | 'precondition-scoring' | 'countdown' | 'transition' | 'scoring' | 'stop-command' | 'completed' | 'result' | 'blocked' | 'unsupported' | 'error';
 export type DynamicPhase = 'WAITING_FOR_START' | 'START_READY' | 'MOVING' | 'FINAL_HOLD' | 'COMPLETE';
@@ -125,4 +125,8 @@ export interface AnalysisSnapshot {
   workflow?: { preconditionId: 'attention' | 'atEase'; preconditionLabel: string; status: 'WRONG_PRECONDITION' | 'INSUFFICIENT_EVIDENCE' | 'READY'; scoringPrecondition: boolean; message?: string };
   saluteProgress?: SaluteProgress;
   performance?: PosePerformanceTelemetry;
+  /** Live diagnostics only; never part of a saved score/student record. */
+  readinessDebug?: { blockers: string[]; instantStatus: string; confirmedStatus: string;
+    validMs: number; requiredMs: number; sampleCount: number; requiredSamples: number;
+    frameGapMs: number; rejectedJoints: string[] };
 }

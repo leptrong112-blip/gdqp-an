@@ -57,7 +57,7 @@ export function usePoseSession(options: {
   const [stage, setStage] = useState<PoseStage>('idle'), [snapshot, setSnapshot] = useState<AnalysisSnapshot | null>(null);
   const [result, setResult] = useState<ScoreResult | null>(null), [error, setError] = useState(''), [mode, setMode] = useState('');
   const [sequenceEngine, setSequenceEngine] = useState<'loading' | SequenceEngine['kind']>('loading');
-  const [facing, setFacing] = useState<'user' | 'environment'>('user'), [preferGpu, setPreferGpu] = useState(false), [reduced, setReduced] = useState(false);
+  const [facing, setFacing] = useState<'user' | 'environment'>('user'), [preferGpu, setPreferGpu] = useState(true), [reduced, setReduced] = useState(false);
   const [movementId, setMovementId] = useState<MovementId>('attention');
   const [muted, setMuted] = useState(false), mutedRef = useRef(false); mutedRef.current = muted;
   const [scorePrecondition, setScorePrecondition] = useState(false);
@@ -200,7 +200,7 @@ export function usePoseSession(options: {
             renderFps, profile: budget.profile, targetFps: budget.fps,
             benchmark: measurements.summary() };
           latest.current = event.snapshot;
-          if (budget.fps < C.targetFps) setReduced(true);
+          setReduced(engine.fallback || budget.fps < C.targetFps);
           if (performance.now() - lastUi >= C.uiIntervalMs || event.snapshot.stage !== lastStage) {
             lastUi = performance.now(); lastStage = event.snapshot.stage; setSnapshot(event.snapshot); setStage(event.snapshot.stage);
           }

@@ -3,11 +3,14 @@ export const POSE_CONFIG = {
   landmarkConfidence: 0.6, reliabilityMean: 0.75, reliabilityCoverage: 0.85, frameMargin: 0.03,
   calibrationMs: 2000, countdownMs: 3000, attemptMs: 3000, minimumValidAttemptMs: 2400,
   staticTransitionGraceMs: 1500,
+  staticObservationTimeoutMs: 15000,
   // Preparation pauses through brief detection jitter; scoring loss remains strict.
   preparationRecoveryMs: 900,
+  // Salute can recover a short inference stall; the missing interval is never evidence.
+  saluteRecoveryMs: 1200,
   maximumQualityGapMs: 500, maximumFrameGapMs: 300, smoothingMs: 100, expiryMs: 200,
   minimumInferenceFps: 5, visualFreshnessMs: 500,
-  targetFps: 15, uiIntervalMs: 200, stabilityWindowMs: 1000, qualityWarmupMs: 1000,
+  targetFps: 30, uiIntervalMs: 200, stabilityWindowMs: 1000, qualityWarmupMs: 1000,
   maximumRootMovement: 0.08, maximumScaleVariation: 0.08,
   outliers: {
     historySize: 15, minimumBoneSamples: 5, resetAfterMs: 1500,

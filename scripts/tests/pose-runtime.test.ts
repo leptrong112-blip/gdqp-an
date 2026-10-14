@@ -6,14 +6,13 @@ import { goodLighting } from './fixtures/pose/attention';
 import { AdaptiveBudget } from '../../src/features/pose-analysis/runtime/frameScheduler';
 import { createPoseAttempt, poseNowMs } from '../../src/features/pose-analysis/runtime/attemptTiming';
 
-test('slow inference reduces analysis frequency while camera geometry stays untouched', () => {
+test('slow inference reduces analysis frequency promptly while camera geometry stays untouched', () => {
   const budget = new AdaptiveBudget();
-  for (let i = 0; i < 14; i++) budget.observe(100);
-  assert.equal(budget.fps, 15);
-  budget.observe(100);
-  assert.equal(budget.fps, 10);
-  for (let i = 0; i < 30; i++) budget.observe(150);
+  assert.equal(budget.fps, 30);
+  for (let i = 0; i < 3; i++) budget.observe(100);
   assert.equal(budget.fps, 8);
+  for (let i = 0; i < 30; i++) budget.observe(150);
+  assert.equal(budget.fps, 5);
 });
 test('worker transport drops overlap, closes late bitmaps and disposes on abort', async () => {
   const keys = ['Worker', 'OffscreenCanvas', 'createImageBitmap'] as const;

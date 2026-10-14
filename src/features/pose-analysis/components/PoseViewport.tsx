@@ -5,22 +5,9 @@ import { DRILL_LABELS } from '../scoring/basicDrill';
 import type { PoseCommandText } from '../runtime/commandFlow';
 
 export function PoseViewport({
-  videoRef,
-  canvasRef,
-  mirrored,
-  stage,
-  progress,
-  isFullscreen = false,
-  onToggleFullscreen,
-  autoCountdown = null,
-  movementLabel = 'Đứng nghiêm',
-  qualityPassed = true,
-  pauseReason,
-  drillProgress,
-  dynamicProgress,
-  diagnosticOverlay,
-  handStatus,
-  commandCue, workflow, saluteProgress,
+  videoRef, canvasRef, mirrored, stage, progress, isFullscreen = false, onToggleFullscreen,
+  autoCountdown = null, movementLabel = 'Đứng nghiêm', qualityPassed = true, pauseReason,
+  drillProgress, dynamicProgress, diagnosticOverlay, handStatus, handReason, commandCue, workflow, saluteProgress, readinessStatus,
 }: {
   videoRef: RefObject<HTMLVideoElement>;
   canvasRef: RefObject<HTMLCanvasElement>;
@@ -36,32 +23,55 @@ export function PoseViewport({
   drillProgress?: AnalysisSnapshot['drillProgress'];
   dynamicProgress?: AnalysisSnapshot['dynamicProgress'];
   diagnosticOverlay?: React.ReactNode;
+  readinessStatus?: React.ReactNode;
   handStatus?: AnalysisSnapshot['frame']['handStatus'];
+  handReason?: string;
   commandCue?: { command: PoseCommandText } | null;
   workflow?: AnalysisSnapshot['workflow'];
   saluteProgress?: AnalysisSnapshot['saluteProgress'];
 }) {
   const container = useRef<HTMLDivElement>(null), [localExpanded, setLocalExpanded] = useState(false);
-  const active = ['quality-check', 'calibrating', 'waiting-precondition', 'precondition-scoring', 'countdown', 'transition', 'scoring', 'stop-command', 'completed', 'blocked'].includes(stage);
-  const holdSeconds = (progress * 3.0).toFixed(1);
-  const labels: Partial<Record<PoseStage, string>> = {
-    'loading-model': 'Đang mở camera và tải mô hình…',
-    calibrating: 'Đứng vào vị trí, giữ ổn định để camera đo tỷ lệ cơ thể',
-    'waiting-precondition': `Vui lòng vào tư thế ${workflow?.preconditionLabel ?? 'chuẩn bị'} để chuẩn bị.`,
-    'precondition-scoring': 'Đang ghi nhận điểm tiền đề Đứng nghiêm · giữ ổn định',
-    transition: `Đang ghi nhận ${movementLabel} sau khẩu lệnh · giữ tư thế cuối để chốt điểm`,
-    countdown: `Chuẩn bị ${movementLabel} · ${Math.max(1, Math.ceil(3 * (1 - progress)))}`,
-    scoring: dynamicProgress?.message ?? `Đang chấm... Giữ nguyên tư thế (${holdSeconds} / 3.0s)`,
-    completed: '✓ Hoàn thành bài! Đang tính điểm...',
-    result: 'Đã hoàn tất bài tập · Sẵn sàng thực hiện lại',
-  };
-
   const expanded = isFullscreen || localExpanded;
+  const preparing = ['quality-check', 'calibrating', 'waiting-precondition', 'precondition-scoring'].includes(stage);
+  const performing = ['transition', 'scoring'].includes(stage);
+  const finished = ['completed', 'result', 'blocked'].includes(stage);
+  const active = preparing || performing || ['countdown','stop-command'].includes(stage);
+  const countdown = Math.max(1, Math.ceil(3 * (1 - progress)));
+  const holdSeconds = (progress * 3).toFixed(1);
+
+  let title = '', detail = '';
+  if (preparing) {
+    title = `Tư thế chuẩn bị: ${workflow?.preconditionLabel ?? 'Đứng nghiêm'}`;
+    detail = workflow?.message ?? (workflow?.status === 'WRONG_PRECONDITION' ? 'Vào tư thế chuẩn bị, chờ khẩu lệnh rồi mới thực hiện.'
+      : workflow?.status === 'INSUFFICIENT_EVIDENCE' ? 'Camera đang nhận lại tư thế. Giữ toàn thân rõ trong hình.'
+      : stage === 'calibrating' ? 'Giữ ổn định để camera đo tỷ lệ cơ thể.'
+      : stage === 'precondition-scoring' ? 'Đang ghi nhận điểm tiền đề Đứng nghiêm · giữ ổn định.'
+      : 'Buông tay tự nhiên, giữ vị trí và chờ đếm ngược.');
+  } else if (stage === 'countdown') {
+    title = qualityPassed ? `Chuẩn bị bắt đầu · ${movementLabel}` : 'Tạm dừng chuẩn bị';
+    detail = qualityPassed ? `Giữ tư thế ${workflow?.preconditionLabel ?? 'chuẩn bị'}; chờ khẩu lệnh rồi mới thực hiện.`
+      : pauseReason || 'Đứng lại trong vùng nhận diện.';
+  } else if (performing) {
+    title = stage === 'transition' ? `Đang ghi nhận ${movementLabel}`
+      : dynamicProgress?.message ?? `Đang chấm · giữ tư thế (${holdSeconds} / 3.0s)`;
+    detail = !qualityPassed ? pauseReason || 'Camera đang nhận lại hình. Giữ toàn thân rõ trong khung hình.'
+      : saluteProgress ? saluteProgress.motionObserved ? 'Đã ghi nhận nâng tay · giữ Chào ổn định để chốt điểm.' : 'Nâng tay phải sau khẩu lệnh CHÀO.'
+      : stage === 'transition' ? 'Thực hiện động tác sau khẩu lệnh, rồi giữ tư thế cuối.' : '';
+  }
+  if (commandCue) { title = commandCue.command; detail = commandCue.command === 'THÔI' ? 'Đã kết thúc lượt đánh giá.' : `Thực hiện ${movementLabel} ngay bây giờ.`; }
+  if (autoCountdown !== null && stage === 'quality-check') detail = `Đã đủ vị trí · tự động hiệu chuẩn sau ${autoCountdown} giây.`;
+  const handMessage = performing && !commandCue && handStatus
+    ? handReason && handStatus !== 'observed' ? `Bàn tay: ${handReason}`
+      : handStatus === 'loading' ? 'Đang tải nhận diện bàn tay…'
+      : handStatus === 'unavailable' ? 'Chưa chạy được nhận diện bàn tay. Các tiêu chí cơ thể vẫn được đánh giá.'
+      : handStatus === 'observed' ? 'Đã thấy bàn tay phải · giữ tư thế chào tự nhiên.'
+      : handStatus === 'not-visible' ? 'Camera chưa thấy rõ chi tiết bàn tay phải; phần tay chưa được xác nhận.' : ''
+    : stage === 'scoring' && saluteProgress && !saluteProgress.hand?.available
+      ? 'Chưa đủ dữ liệu để đánh giá bàn tay. Giữ tay phải rõ trong khung hình.' : '';
 
   const handleToggle = async () => {
-    if (onToggleFullscreen) {
-      onToggleFullscreen();
-    } else {
+    if (onToggleFullscreen) onToggleFullscreen();
+    else {
       if (document.fullscreenElement) await document.exitFullscreen().catch(() => {});
       else if (!localExpanded && container.current?.requestFullscreen) await container.current.requestFullscreen().catch(() => setLocalExpanded(true));
       else setLocalExpanded(!localExpanded);
@@ -69,163 +79,51 @@ export function PoseViewport({
   };
 
   return (
-    <div
-      ref={container}
-      className={`${
-        isFullscreen
-          ? 'relative h-full w-full'
-          : localExpanded
-          ? 'fixed inset-0 z-[100] h-dvh'
-          : 'relative h-[62vh] min-h-[360px] lg:h-[75vh] xl:h-[78vh]'
-      } overflow-hidden rounded-3xl bg-slate-950 border border-slate-700 shadow-2xl transition-all`}
-    >
-      <div className="absolute inset-0" style={{ transform: mirrored ? 'scaleX(-1)' : undefined }}>
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted
-          className="absolute inset-0 h-full w-full object-contain"
-          aria-label="Hình ảnh trực tiếp từ camera"
-        />
-        <canvas ref={canvasRef} className="absolute inset-0 z-[1] h-full w-full pointer-events-none" aria-hidden="true" />
-      </div>
-
-      {commandCue && <div role="status" aria-live="assertive" aria-label={`Khẩu lệnh ${commandCue.command}`}
-        className="absolute inset-0 z-30 grid place-content-center pointer-events-none px-4 text-center">
-        <p className="rounded-3xl border-2 border-amber-300 bg-slate-950/90 px-8 py-6 text-4xl sm:text-6xl font-black text-amber-300 shadow-2xl">{commandCue.command}</p>
-      </div>}
-      {saluteProgress && !commandCue && ['transition', 'scoring'].includes(stage) && <div role="status"
-        className="absolute bottom-4 inset-x-4 z-10 rounded-xl bg-slate-950/90 p-3 text-center text-xs text-white pointer-events-none">
-        <p>{stage === 'scoring' ? 'Đã ghi nhận chuỗi nâng tay · giữ Chào ổn định để chấm.' : saluteProgress.motionObserved ? 'Đã ghi nhận nâng tay · giữ tư thế Chào ổn định.' : 'Đang theo dõi nâng tay phải sau khẩu lệnh CHÀO.'}</p>
-        {stage === 'scoring' && !saluteProgress.hand?.available && <p className="mt-1 text-amber-300">Chưa đủ dữ liệu để đánh giá bàn tay. Hãy giữ tay rõ trong khung hình.</p>}
-      </div>}
-      {workflow && ['quality-check', 'waiting-precondition', 'calibrating', 'precondition-scoring'].includes(stage) &&
-        <div role="status" className="absolute top-20 inset-x-4 z-10 rounded-xl bg-slate-950/90 p-3 text-center text-sm text-white pointer-events-none">
-          Tư thế chuẩn bị: <strong>{workflow.preconditionLabel}</strong>
-          {workflow.message ? <p>{workflow.message}</p> : <>
-            {workflow.status === 'WRONG_PRECONDITION' && <p>Vui lòng vào đúng tư thế chuẩn bị.</p>}
-            {workflow.status === 'INSUFFICIENT_EVIDENCE' && <p>Camera chưa đủ dữ liệu để xác nhận.</p>}
-          </>}
-        </div>}
-
-      {stage === 'completed' && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20 animate-in zoom-in-95 duration-200">
-          <div className="bg-emerald-950/90 border-2 border-emerald-400 text-white px-7 py-5 rounded-3xl shadow-2xl flex items-center gap-3.5 backdrop-blur-xl">
-            <span className="text-3xl">🎉</span>
-            <div>
-              <p className="font-black text-lg text-amber-300">✓ Hoàn thành bài!</p>
-              <p className="text-xs text-emerald-100 font-medium">Đang tổng hợp kết quả đánh giá...</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {stage === 'idle' && (
-        <div className="absolute inset-0 grid place-content-center px-8 text-center text-slate-300 pointer-events-none">
-          <p className="text-lg font-bold">Sẵn sàng vào tư thế</p>
-          <p className="text-sm mt-2">Bật camera, đặt máy cố định thấy rõ từ đầu đến bàn chân.</p>
-        </div>
-      )}
-      {handStatus && !['completed','result','blocked'].includes(stage) && <div className="absolute bottom-4 left-4 right-4 z-10 rounded-xl bg-slate-950/85 px-3 py-2 text-xs text-sky-100 pointer-events-none" role="status">
-        {handStatus === 'loading' ? 'Đang tải nhận diện bàn tay…'
-          : handStatus === 'unavailable' ? 'Chưa chạy được nhận diện bàn tay. Các tiêu chí cơ thể vẫn được đánh giá.'
-          : handStatus === 'observed' ? 'Đã thấy bàn tay phải · Giữ tư thế chào tự nhiên.'
-          : handStatus === 'not-visible' ? 'Camera chưa thấy rõ chi tiết bàn tay phải; phần tay chưa được xác nhận.'
-          : 'Nhận diện ngón tay khi tay phải đưa lên chào.'}
-      </div>}
-
-      <div className="absolute top-4 left-4 right-4 flex justify-between gap-3 items-start z-10">
-        <span className="rounded-full bg-slate-900/90 backdrop-blur-md px-3.5 py-2 text-xs font-semibold text-white border border-slate-700/50 shadow-md flex items-center gap-2">
-          {stage === 'completed' || stage === 'result' ? (
-            <>
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span>Đã kết thúc lượt đánh giá</span>
-            </>
-          ) : active ? (
-            <>
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-              <span>Camera đang bật · xử lý trên thiết bị</span>
-            </>
-          ) : stage === 'loading-model' ? (
-            <>
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-              <span>Đang khởi tạo camera</span>
-            </>
-          ) : (
-            <>
-              <span className="w-2 h-2 rounded-full bg-slate-500" />
-              <span>Camera đã tắt</span>
-            </>
-          )}
+    <div ref={container} className={`${isFullscreen ? 'relative h-full w-full' : localExpanded ? 'fixed inset-0 z-[100] h-dvh'
+      : 'relative h-[62vh] min-h-[360px] lg:h-[75vh] xl:h-[78vh]'} flex flex-col overflow-hidden rounded-3xl bg-slate-950 border border-slate-700 shadow-2xl`}>
+      <div className="shrink-0 flex items-center justify-between gap-3 border-b border-slate-800 px-3 py-2 sm:px-4 sm:py-3">
+        <span className="flex min-w-0 items-center gap-2 text-[11px] sm:text-xs font-semibold text-slate-200">
+          <span className={`h-2 w-2 shrink-0 rounded-full ${finished ? 'bg-emerald-400' : active ? 'bg-red-500' : 'bg-slate-500'}`} />
+          {finished ? 'Đã kết thúc lượt đánh giá' : active ? 'Camera đang bật · xử lý trên thiết bị' : stage === 'loading-model' ? 'Đang khởi tạo camera' : 'Camera đã tắt'}
         </span>
-
-        <button
-          aria-label={expanded ? 'Thu nhỏ khung hình' : 'Phóng to toàn màn hình'}
-          onClick={handleToggle}
-          className="flex items-center gap-2 px-3 py-2 bg-slate-900/90 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl border border-slate-700/60 shadow-lg cursor-pointer transition-all hover:scale-105"
-          title={expanded ? 'Thu nhỏ khung hình' : 'Bật toàn màn hình để dễ quan sát khi lùi xa máy'}
-        >
+        <button aria-label={expanded ? 'Thu nhỏ khung hình' : 'Phóng to toàn màn hình'} onClick={handleToggle}
+          className="shrink-0 flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800 cursor-pointer">
           {expanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
           <span className="hidden sm:inline">{expanded ? 'Thu nhỏ' : 'Toàn màn hình'}</span>
         </button>
       </div>
-
-      {/* Banner đếm ngược tự động hiệu chuẩn khi người dùng đứng đủ vị trí (rất hữu ích khi đứng xa 2.5m) */}
-      {drillProgress && <ol aria-label="Tiến trình chuỗi" className="absolute top-20 left-4 right-4 flex gap-2 z-10 text-xs text-white">
-        {DRILL_LABELS.map((label, i) => <li key={label} aria-current={i === drillProgress.index ? 'step' : undefined}
-          className={`rounded-xl px-3 py-2 ${i < drillProgress.completed ? 'bg-emerald-800' : i === drillProgress.index ? 'bg-amber-600' : 'bg-slate-900/90'}`}>
-          {i < drillProgress.completed ? '✓' : i + 1} {label}
-        </li>)}
-      </ol>}
-      {!commandCue && stage === 'countdown' && <div role="status" aria-live="polite"
-        className="absolute inset-0 z-10 grid place-content-center pointer-events-none text-center px-6">
-        <div className="rounded-3xl bg-slate-950/90 border border-amber-400 p-6 text-white shadow-2xl max-w-lg">
-          <p className="text-lg font-black">{!qualityPassed ? 'Tạm dừng chuẩn bị' : stage === 'countdown' ? 'Chuẩn bị bắt đầu' : 'Bắt đầu'}</p>
-          <p className="mt-2 text-xl font-bold text-amber-300">{movementLabel}</p>
-          {qualityPassed && stage === 'countdown' && <p className="text-7xl font-black my-3">{Math.max(1, Math.ceil(3 * (1 - progress)))}</p>}
-          <p className="mt-2 text-sm">{!qualityPassed ? pauseReason || 'Đứng lại trong vùng nhận diện.' : `Giữ tư thế ${workflow?.preconditionLabel ?? 'chuẩn bị'}; chờ khẩu lệnh rồi mới thực hiện.`}</p>
+      {/* Status is outside the image. Video and skeleton share the same contain geometry. */}
+      <div data-pose-camera-region className="relative flex-1 min-h-0 w-full">
+        <div className="absolute inset-0" style={{ transform: mirrored ? 'scaleX(-1)' : undefined }}>
+          <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 h-full w-full object-contain" aria-label="Hình ảnh trực tiếp từ camera" />
+          <canvas ref={canvasRef} className="absolute inset-0 z-[1] h-full w-full pointer-events-none" aria-hidden="true" />
         </div>
+        {stage === 'idle' && <div className="absolute inset-0 grid place-content-center px-6 text-center text-slate-300 pointer-events-none">
+          <p className="text-lg font-bold">Sẵn sàng vào tư thế</p>
+          <p className="mt-2 text-sm">Bật camera, đặt máy cố định thấy rõ từ đầu đến bàn chân.</p>
+        </div>}
+        {diagnosticOverlay}
+      </div>
+      {(title || drillProgress) && <div data-pose-status-strip className="shrink-0 max-h-[40%] overflow-y-auto border-t border-slate-700 bg-slate-900 px-3 py-2 sm:px-4 sm:py-3 text-white">
+        {drillProgress && <ol aria-label="Tiến trình chuỗi" className="mb-2 flex flex-wrap gap-2 text-xs">
+          {DRILL_LABELS.map((label,i) => <li key={label} aria-current={i === drillProgress.index ? 'step' : undefined}
+            className={`rounded-lg px-2 py-1 ${i < drillProgress.completed ? 'bg-emerald-800' : i === drillProgress.index ? 'bg-amber-700' : 'bg-slate-800'}`}>
+            {i < drillProgress.completed ? '✓' : i+1} {label}
+          </li>)}
+        </ol>}
+        <div className="flex items-center gap-3" role="status" aria-live={commandCue ? 'assertive' : 'polite'} aria-label={commandCue ? `Khẩu lệnh ${commandCue.command}` : undefined}>
+          {!commandCue && stage === 'countdown' && qualityPassed && <span className="shrink-0 text-5xl font-black tabular-nums text-amber-300">{countdown}</span>}
+          <div className="min-w-0 flex-1 break-words">
+            <p className={commandCue ? 'text-2xl sm:text-4xl font-black text-amber-300' : 'text-sm sm:text-base font-bold'}>{title}</p>
+            {detail && <p className="mt-1 text-xs sm:text-sm leading-relaxed text-slate-300">{detail}</p>}
+            {handMessage && <p className="mt-1 text-xs text-sky-200">{handMessage}</p>}
+          </div>
+        </div>
+        {!commandCue && ['calibrating','waiting-precondition','precondition-scoring','scoring'].includes(stage) && <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-700" aria-hidden="true">
+          <div className={`h-full transition-all duration-150 ${stage === 'scoring' ? 'bg-amber-400' : 'bg-emerald-400'}`} style={{width:`${Math.max(0,Math.min(1,progress))*100}%`}} />
+        </div>}
+        {!commandCue && readinessStatus}
       </div>}
-      {stage === 'scoring' && !qualityPassed && <p role="alert" className="absolute bottom-6 inset-x-6 z-20 rounded-xl bg-amber-950 p-4 text-amber-100">{pauseReason || 'Tạm dừng: chưa đủ dữ liệu theo dõi.'}</p>}
-      {autoCountdown !== null && stage === 'quality-check' && (
-        <div className="absolute bottom-6 left-6 right-6 z-20 bg-emerald-950/95 border-2 border-emerald-400 text-white rounded-3xl p-4 shadow-2xl backdrop-blur-xl flex items-center justify-between gap-4 animate-in fade-in zoom-in-95 duration-200">
-          <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/25 border-2 border-amber-300 flex items-center justify-center font-black font-mono text-2xl text-amber-300 shrink-0 shadow-lg animate-pulse">
-              {autoCountdown}
-            </div>
-            <div>
-              <p className="font-black text-sm sm:text-base text-amber-300 flex items-center gap-1.5">
-                <span>🎯</span> ĐÃ ĐẠT CHUẨN VỊ TRÍ · TỰ ĐỘNG HIỆU CHUẨN
-              </p>
-              <p className="text-xs text-emerald-100 font-medium mt-0.5">
-                Đứng nghiêm/nghỉ ngay ngắn. Máy sẽ tự động đo tỷ lệ cơ thể sau <span className="font-bold text-amber-300 font-mono">{autoCountdown}s</span>...
-              </p>
-            </div>
-          </div>
-          <div className="hidden sm:flex items-center gap-1.5 text-xs text-emerald-200 font-bold bg-emerald-900/80 px-3 py-1.5 rounded-full border border-emerald-400/30 shrink-0">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span>Tập một mình</span>
-          </div>
-        </div>
-      )}
-
-      {active && labels[stage] && stage !== 'countdown' && stage !== 'completed' && autoCountdown === null && qualityPassed && (
-        <div className="absolute bottom-6 left-6 right-6 bg-slate-950/90 rounded-2xl p-4 text-center text-white border border-slate-800 backdrop-blur-md shadow-2xl">
-          <p className="font-bold text-base sm:text-lg" role="status">
-            {labels[stage]}
-          </p>
-          <div className="h-2 bg-slate-800 rounded-full mt-2.5 overflow-hidden">
-            <div
-              className={`h-full transition-all duration-150 ${
-                stage === 'scoring' ? 'bg-amber-400' : 'bg-emerald-400'
-              }`}
-              style={{ width: `${progress * 100}%` }}
-            />
-          </div>
-        </div>
-      )}
-      {diagnosticOverlay}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { AlertCircle, Camera, CheckCircle2, ChevronLeft, Eye, FileSpreadsheet, Filter, RefreshCw, Search, Trash2, X } from 'lucide-react';
+import { AlertCircle, Camera, CheckCircle2, ChevronLeft, ChevronRight, Eye, FileSpreadsheet, Filter, RefreshCw, Search, Trash2, X } from 'lucide-react';
 import { useAccount } from '../../../components/AccountGate';
 import { deletePoseResult, getPoseExportResults, getPoseResult, listPoseResults } from '../results/poseResultsApi';
 import type { PoseResultFilters, PoseResultRecord } from '../results/poseResultTypes';
@@ -12,6 +12,7 @@ const input = 'w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 te
 const button = 'flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700';
 const labels = { pass: 'Đạt', fail: 'Chưa đạt', incomplete: 'Chưa đủ dữ liệu' };
 const criterionLabels = { PASS: 'Đạt', NEEDS_ADJUSTMENT: 'Cần điều chỉnh', NOT_ACHIEVED: 'Chưa đạt', NOT_SCORABLE: 'Chưa đủ dữ liệu' };
+const RESULTS_PER_PAGE = 20;
 const time = (value: string) => new Date(value).toLocaleString('vi-VN', { timeZone: 'Asia/Bangkok' });
 type ObservedScore = Pick<PoseResultRecord, 'score' | 'quality'>;
 export function poseObservedScore({ score, quality }: ObservedScore) {
@@ -57,7 +58,14 @@ interface ViewProps {
 export function PoseAdminView({ role, results, filters, onFilters, loading, exporting, busyId, error, onRefresh, onExport, onDetail, onDelete, onBack }: ViewProps) {
   const stats = useMemo(() => poseAdminStats(results), [results]);
   const fields = useId();
-  const change = (key: keyof PoseResultFilters, value: string) => onFilters({ ...filters, [key]: value || undefined });
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(results.length / RESULTS_PER_PAGE));
+  const currentPage = Math.min(page, totalPages);
+  const firstResultIndex = (currentPage - 1) * RESULTS_PER_PAGE;
+  const visibleResults = results.slice(firstResultIndex, firstResultIndex + RESULTS_PER_PAGE);
+  useEffect(() => setPage(previous => Math.min(previous, totalPages)), [totalPages]);
+  const applyFilters = (next: Partial<PoseResultFilters>) => { setPage(1); onFilters(next); };
+  const change = (key: keyof PoseResultFilters, value: string) => applyFilters({ ...filters, [key]: value || undefined });
   return <div className="mx-auto w-full max-w-7xl space-y-6">
     <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
       <div>
@@ -91,12 +99,12 @@ export function PoseAdminView({ role, results, filters, onFilters, loading, expo
         <label className="text-xs font-bold text-slate-600 dark:text-slate-300">Từ ngày<input type="date" className={`${input} mt-1.5`} value={filters.from ?? ''} onChange={event => change('from', event.target.value)} /></label>
         <label className="text-xs font-bold text-slate-600 dark:text-slate-300">Đến ngày<input type="date" className={`${input} mt-1.5`} value={filters.to ?? ''} min={filters.from} onChange={event => change('to', event.target.value)} /></label>
         <label className="text-xs font-bold text-slate-600 dark:text-slate-300">Sắp xếp<select className={`${input} mt-1.5`} value={filters.sort ?? 'newest'} onChange={event => change('sort', event.target.value)}><option value="newest">Mới nhất</option><option value="score">Điểm cao nhất</option></select></label>
-        <button type="button" className={`${button} self-end`} onClick={() => onFilters({ sort: 'newest' })}>Xóa bộ lọc</button>
+        <button type="button" className={`${button} self-end`} onClick={() => applyFilters({ sort: 'newest' })}>Xóa bộ lọc</button>
       </div>
     </section>
     <section className={`${panel} overflow-hidden p-0`} aria-label="Danh sách lượt thực hiện">
       <div className="flex items-center justify-between border-b border-slate-200 p-4 dark:border-slate-700"><h2 className="font-bold">Danh sách kết quả</h2><span className="text-xs text-slate-500">{results.length} lượt</span></div>
-      {loading ? <p role="status" className="p-10 text-center text-sm text-slate-500">Đang tải kết quả AI Pose…</p> : !results.length ? <p className="p-10 text-center text-sm text-slate-500">Chưa có kết quả phù hợp với bộ lọc.</p> : <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-slate-50 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300"><tr>{['Họ tên', 'Lớp', 'Động tác', 'Điểm', 'Kết luận', 'Thời gian', 'Chi tiết'].map(label => <th scope="col" key={label} className="whitespace-nowrap px-4 py-3">{label}</th>)}{role === 'admin' && <th scope="col" className="px-4 py-3">Xóa</th>}</tr></thead><tbody className="divide-y divide-slate-100 dark:divide-slate-800">{results.map(record => <tr key={record.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50"><td className="px-4 py-3 font-bold">{record.studentName}</td><td className="px-4 py-3">{record.className}</td><td className="px-4 py-3">{record.movementLabel}</td><td className="px-4 py-3"><RecordedScore record={record} /></td><td className="px-4 py-3"><PoseAssessmentBadge assessment={record.assessment} /></td><td className="whitespace-nowrap px-4 py-3 text-xs text-slate-500">{time(record.finishedAt)}</td><td className="px-4 py-3"><button type="button" className={button} disabled={busyId === record.id} onClick={() => onDetail(record)} aria-label={`Xem kết quả của ${record.studentName}`}><Eye size={15} />Xem</button></td>{role === 'admin' && <td className="px-4 py-3"><button type="button" disabled={busyId === record.id} onClick={() => onDelete(record)} className="rounded-lg p-2 text-red-600 hover:bg-red-50 disabled:opacity-50 dark:hover:bg-red-950" aria-label={`Xóa kết quả của ${record.studentName}`}><Trash2 size={17} /></button></td>}</tr>)}</tbody></table></div>}
+      {loading ? <p role="status" className="p-10 text-center text-sm text-slate-500">Đang tải kết quả AI Pose…</p> : !results.length ? <p className="p-10 text-center text-sm text-slate-500">Chưa có kết quả phù hợp với bộ lọc.</p> : <><div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-slate-50 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300"><tr>{['Họ tên', 'Lớp', 'Động tác', 'Điểm', 'Kết luận', 'Thời gian', 'Chi tiết'].map(label => <th scope="col" key={label} className="whitespace-nowrap px-4 py-3">{label}</th>)}{role === 'admin' && <th scope="col" className="px-4 py-3">Xóa</th>}</tr></thead><tbody className="divide-y divide-slate-100 dark:divide-slate-800">{visibleResults.map(record => <tr key={record.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50"><td className="px-4 py-3 font-bold">{record.studentName}</td><td className="px-4 py-3">{record.className}</td><td className="px-4 py-3">{record.movementLabel}</td><td className="px-4 py-3"><RecordedScore record={record} /></td><td className="px-4 py-3"><PoseAssessmentBadge assessment={record.assessment} /></td><td className="whitespace-nowrap px-4 py-3 text-xs text-slate-500">{time(record.finishedAt)}</td><td className="px-4 py-3"><button type="button" className={button} disabled={busyId === record.id} onClick={() => onDetail(record)} aria-label={`Xem kết quả của ${record.studentName}`}><Eye size={15} />Xem</button></td>{role === 'admin' && <td className="px-4 py-3"><button type="button" disabled={busyId === record.id} onClick={() => onDelete(record)} className="rounded-lg p-2 text-red-600 hover:bg-red-50 disabled:opacity-50 dark:hover:bg-red-950" aria-label={`Xóa kết quả của ${record.studentName}`}><Trash2 size={17} /></button></td>}</tr>)}</tbody></table></div>{totalPages > 1 && <nav aria-label="Phân trang kết quả" className="flex flex-col items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 dark:border-slate-700 sm:flex-row"><p className="text-xs text-slate-500">Hiển thị <strong className="text-slate-700 dark:text-slate-200">{firstResultIndex + 1}–{Math.min(firstResultIndex + RESULTS_PER_PAGE, results.length)}</strong> trong {results.length} lượt</p><div className="flex items-center gap-2"><button type="button" className={button} disabled={currentPage === 1} onClick={() => setPage(previous => Math.max(1, previous - 1))}><ChevronLeft size={15} />Trước</button><span className="min-w-24 text-center text-xs font-bold text-slate-600 dark:text-slate-300">Trang {currentPage} / {totalPages}</span><button type="button" className={button} disabled={currentPage === totalPages} onClick={() => setPage(previous => Math.min(totalPages, previous + 1))}>Sau<ChevronRight size={15} /></button></div></nav>}</>}
     </section>
   </div>;
 }
